@@ -26,9 +26,7 @@ public class QuestionController {
     @Operation(summary = "질문글 작성")
     @PostMapping(value = "/question", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ResQuestionDto>> createQuestion(@AuthenticationPrincipal UserDetails userDetails,
-                                                                      @RequestPart ReqQuestionDto reqQuestionDto,
-                                                                      @RequestPart(value = "file", required = false) MultipartFile multipartFile) {
-
+                                                                      @RequestPart ReqQuestionDto reqQuestionDto, @RequestPart(value = "file", required = false) MultipartFile multipartFile) {
         Question question = questionService.save(reqQuestionDto, userDetails.getUsername(), multipartFile);
         return ResponseEntity.ok(ApiResponse.ok(new ResQuestionDto(question)));
     }

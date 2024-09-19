@@ -32,6 +32,7 @@ public class ResDatasetListDto {
         private Integer view;
         private Type type;
         private List<Theme> themeList;
+        private Integer scrap;
 
         public SimpleDataset(Dataset dataset) {
             this.datasetId = dataset.getDatasetId();
@@ -45,6 +46,7 @@ public class ResDatasetListDto {
             if(dataset.getDatasetThemeList()!=null) {
                 this.themeList = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
             }
+            this.scrap = dataset.getScrapList().size();
         }
     }
 }

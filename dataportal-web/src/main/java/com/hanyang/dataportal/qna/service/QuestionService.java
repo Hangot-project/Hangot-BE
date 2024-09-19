@@ -30,18 +30,17 @@ public class QuestionService {
     private final UserService userService;
     private final QuestionSearchRepository questionSearchRepository;
     private final S3StorageManager s3StorageManager;
-    private final int PAGE_SIZE = 10;
+    private final static int PAGE_SIZE = 10;
+    private final static String folderName = "Question";
 
     public Question save(ReqQuestionDto reqQuestionDto, String email, MultipartFile file) {
         User user = userService.findByEmail(email);
         Question question = reqQuestionDto.toEntity();
         question.setUser(user);
 
-        if (file != null ) {
-            // MultipartFile file = (MultipartFile) reqQuestionDto.getFile();
-            FileInfoDto fileInfoDto = s3StorageManager.uploadFile(question.getQuestionId(), file);
-            question.setS3Url(fileInfoDto.getUrl()); // 업로드된 파일의 S3 키 저장
-            System.out.println("s3 ~ 저장완료 ");
+        if (file != null) {
+            FileInfoDto fileInfoDto = s3StorageManager.uploadFile(folderName,question.getQuestionId(), file);
+            question.setImageUrl(fileInfoDto.getUrl());
         }
 
         return questionRepository.save(question);

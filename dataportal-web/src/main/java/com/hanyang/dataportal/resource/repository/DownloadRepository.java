@@ -9,8 +9,7 @@ import java.util.List;
 
 @Repository
 public interface DownloadRepository extends JpaRepository<Download,Long> {
-
-
     int countByUser(User user);
-    List<Download> findAllByUser_userId(Long userId);
+    List<Download> findByUser(User user);
+
 }

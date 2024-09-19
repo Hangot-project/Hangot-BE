@@ -30,6 +30,7 @@ public class ScrapService {
      */
     public Scrap create(String email, Long datasetId) {
         Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
+        dataset.updateScrap();
         User user = userService.findByEmail(email);
         checkDuplicateByDatasetAndUser(dataset, user);
 

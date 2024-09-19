@@ -54,4 +54,7 @@ public class User{
     public void updateName(String name) {
         this.name = name;
     }
+    public void withdraw() {
+        this.isActive = false;
+    }
 }

@@ -31,9 +31,7 @@
         private User user;
         @OneToOne(mappedBy = "question", cascade = CascadeType.ALL)
         private Answer answer;
-
-        private String s3Url;
-
+        private String imageUrl;
         private boolean isOpen;
         public void setUser(User user) {
             this.user = user;

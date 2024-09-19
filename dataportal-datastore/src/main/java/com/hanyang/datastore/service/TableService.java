@@ -10,10 +10,12 @@ import com.hanyang.datastore.domain.TableData;
 import com.hanyang.datastore.dto.DatasetMetaDataDto;
 import com.hanyang.datastore.dto.ResChartDto;
 import com.hanyang.datastore.dto.ResChartTableDto;
+import com.hanyang.datastore.infrastructure.S3StorageManager;
 import com.hanyang.datastore.repository.MetaDataRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -32,7 +34,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.unwi
 @RequiredArgsConstructor
 @Transactional
 public class TableService {
-    private final S3Service s3Service;
+    private final S3StorageManager s3StorageManager;
     private final DataPortalService dataPortalService;
     private final MetaDataRepository metaDataRepository;
     private final MongoTemplate mongoTemplate;
@@ -45,7 +47,7 @@ public class TableService {
 
         DatasetMetaDataDto datasetMetaDataDto = dataPortalService.findDataset(datasetId);
 
-        InputStream file = s3Service.getFile(datasetId);
+        InputStream file = s3StorageManager.getFile(datasetId);
 
         Workbook workbook = new XSSFWorkbook(file);
         DataFormatter dataFormatter = new DataFormatter();
@@ -55,6 +57,7 @@ public class TableService {
         MetaData metaData;
         if(findMeta.isPresent()){
             metaData = findMeta.get();
+            metaData.updateDataset(datasetMetaDataDto);
             metaData.setDataListClean();
         }
         else{
@@ -88,14 +91,16 @@ public class TableService {
                     }
                     map.put(columns[i],cellValue);
                 }
-                tableData.setData(map);
-                tableDataList.add(tableData);
+                if(row.getPhysicalNumberOfCells() != 0){
+                    tableData.setData(map);
+                    tableDataList.add(tableData);
+                }
         }
         metaData.setDataList(tableDataList);
         metaDataRepository.save(metaData);
     }
 
-    public ResChartDto getAggregationLabel(String datasetId, String colName) throws JsonProcessingException {
+    public ResChartDto getAggregationLabel(String datasetId, String colName,Integer type) throws JsonProcessingException {
 
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").is(datasetId));
@@ -112,6 +117,7 @@ public class TableService {
         MatchOperation matchOperation = Aggregation.match(Criteria.where("_id").is(datasetId));
         UnwindOperation unwindOperation = unwind("dataList");
         GroupOperation groupOperation = Aggregation.group("data."+colName);
+        SortOperation sortOperation = Aggregation.sort(Sort.by(Sort.Direction.ASC, "_id"));
 
         //순서보장을 위해 LinkedHashSet으로
         Set<Map.Entry<String, Object>> entries = new LinkedHashSet<>(meta.getDataList().get(0).getData().entrySet());
@@ -126,7 +132,12 @@ public class TableService {
                 isAxisExists = true;
             }
             if(!Objects.equals(map.getKey(), colName) && map.getValue() instanceof Double){
-                groupOperation = groupOperation.sum("data."+map.getKey()).as(map.getKey());
+                if(type == 0){
+                    groupOperation = groupOperation.sum("data."+map.getKey()).as(map.getKey());
+                }
+                else{
+                    groupOperation = groupOperation.avg("data."+map.getKey()).as(map.getKey());
+                }
                 dataList.add(new ArrayList<>());
                 dataName.add(map.getKey());
             }
@@ -142,7 +153,8 @@ public class TableService {
                 project().andInclude("dataList").andExclude("_id"),
                 unwindOperation,
                 project().and("dataList.data").as("data"),
-                groupOperation
+                groupOperation,
+                sortOperation
         );
 
         //pipeLine을 통해 나온 필요한 값들 추출
@@ -226,11 +238,18 @@ public class TableService {
         for(TableData tableData:meta.getDataList()){
             List<String> data = new ArrayList<>();
             for (Map.Entry<String, Object> map :tableData.getData().entrySet()) {
-                data.add(map.getValue().toString());
+                data.add(removeTrailingPointZero(map.getValue().toString()));
             }
             dataList.add(data);
         }
         return new ResChartTableDto(labelList,dataList);
+    }
+
+    private String removeTrailingPointZero(String str) {
+        if (str != null && str.matches("\\d+\\.0$")) {
+            return str.substring(0, str.length() - 2);
+        }
+        return str;
     }
 
 

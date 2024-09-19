@@ -22,20 +22,24 @@ public class S3StorageManager {
     private String bucket;
     private final S3Client s3Client;
 
-    public FileInfoDto uploadFile(Long datasetId, MultipartFile multipartFile){
+    public FileInfoDto uploadFile(String folderName,Long id, MultipartFile multipartFile){
 
         String fileName = multipartFile.getOriginalFilename();
 
         assert fileName != null;
-        String s3ObjectPath = datasetId + "/" + fileName;
+        String s3ObjectPath = folderName + "/" + id + "/" + fileName;
         String type = fileName.split("\\.")[1];
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+        PutObjectRequest.Builder putObjectRequestBuilder = PutObjectRequest.builder()
                 .bucket(bucket)
-                .key(s3ObjectPath)
-                .build();
+                .key(s3ObjectPath);
+
+        if ("pdf".equalsIgnoreCase(type)) {
+            putObjectRequestBuilder.contentType(multipartFile.getContentType());
+        }
+
         try {
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(multipartFile.getBytes()));
+            s3Client.putObject(putObjectRequestBuilder.build(), RequestBody.fromBytes(multipartFile.getBytes()));
         } catch (IOException e) {
             throw new FileException("s3 서버 오류");
         }
@@ -52,10 +56,10 @@ public class S3StorageManager {
         return fileInfoDto;
     }
 
-    public void deleteFolder(Long datasetId) {
+    public void deleteFolder(String folderName,Long id) {
         ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
                 .bucket(bucket)
-                .prefix(datasetId+"/")
+                .prefix(folderName+"/"+id+"/")
                 .build();
         ListObjectsV2Response listObjectsResponse = s3Client.listObjectsV2(listObjectsRequest);
 

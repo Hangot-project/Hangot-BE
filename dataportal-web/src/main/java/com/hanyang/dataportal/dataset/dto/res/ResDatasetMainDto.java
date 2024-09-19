@@ -35,7 +35,8 @@ public class ResDatasetMainDto {
             }
             this.organization = dataset.getOrganization();
             this.themeList = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
-            this.scrap = dataset.getScrapList().size();
+            this.scrap = dataset.getScrap();
+
         }
     }
 }

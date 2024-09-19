@@ -19,16 +19,13 @@ public class MetaData {
     @Id
     private String datasetId;
     private String title;
-    private String description;
-    private String content;
+
     @Embedded
     private List<TableData> dataList = new ArrayList<>();
 
     public MetaData(DatasetMetaDataDto datasetMetaDataDto) {
         this.datasetId = datasetMetaDataDto.getDatasetId();
         this.title = datasetMetaDataDto.getTitle();
-        this.description = datasetMetaDataDto.getDescription();
-        this.content = datasetMetaDataDto.getTitle()+" "+datasetMetaDataDto.getDescription();
     }
 
     public void setDataListClean() {
@@ -38,4 +35,11 @@ public class MetaData {
     public void setDataList(List<TableData> dataList) {
         this.dataList = dataList;
     }
+
+    public void updateDataset(DatasetMetaDataDto datasetMetaDataDto) {
+        this.datasetId = datasetMetaDataDto.getDatasetId();
+        this.title = datasetMetaDataDto.getTitle();
+    }
+
+
 }

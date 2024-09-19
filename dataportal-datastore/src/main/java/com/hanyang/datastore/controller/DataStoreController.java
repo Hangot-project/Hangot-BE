@@ -36,7 +36,7 @@ public class DataStoreController {
     @Operation(summary = "파일 데이터 시각화 차트 데이터")
     @GetMapping("/dataset/{datasetId}/chart")
     public ResponseEntity<ApiResponse<ResChartDto>> chart(@PathVariable String datasetId, @RequestParam String colName) throws JsonProcessingException {
-        return ResponseEntity.ok(ApiResponse.ok(tableService.getAggregationLabel(datasetId,colName)));
+        return ResponseEntity.ok(ApiResponse.ok(tableService.getAggregationLabel(datasetId,colName,0)));
     }
 
     @Operation(summary = "축 리스트 가져오기")

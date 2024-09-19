@@ -24,7 +24,7 @@ public class NoticeController {
 
     @Operation(summary = "공지사항 작성")
     @PostMapping("/notice")
-    public ResponseEntity<ApiResponse<ResNoticeDto>> createNotice(@AuthenticationPrincipal UserDetails userDetails, @RequestBody ReqNoticeDto reqNoticeDto ) {
+    public ResponseEntity<ApiResponse<ResNoticeDto>> createNotice(@AuthenticationPrincipal UserDetails userDetails, @RequestBody ReqNoticeDto reqNoticeDto) {
         Notice notice = noticeService.create(reqNoticeDto, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok(new ResNoticeDto(notice)));
     }

@@ -9,6 +9,5 @@ public class DatasetMetaDataDto {
     private String datasetId;
     @JsonProperty("title")
     private String title;
-    @JsonProperty("description")
-    private String description;
+
 }

@@ -19,22 +19,16 @@ public class Notice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long noticeId;
-
-    private String label;
-
     private String title;
-
     private String content;
-
     private LocalDate createDate;
     private LocalDate updateDate;
     private Integer view;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
     private User admin;
-
-    private NoticeLabel noticeLabel;
-
+    @Enumerated(EnumType.STRING)
+    private NoticeLabel label;
     @PrePersist
     public void onPrePersist() {
         createDate = LocalDate.now();

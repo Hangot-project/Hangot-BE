@@ -45,7 +45,7 @@ class DatasetSearchRepositoryTest {
             }
 
             Dataset dataset = da.build();
-            //TODO 테마 변경 필요
+
             dataset.addTheme(Theme.입학);
             if(i<2010){
                 dataset.addTheme(Theme.장학);

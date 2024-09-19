@@ -1,8 +1,10 @@
 package com.hanyang.dataportal.user.controller;
 
 import com.hanyang.dataportal.core.jwt.component.AuthorizationExtractor;
+import com.hanyang.dataportal.core.jwt.component.JwtTokenResolver;
 import com.hanyang.dataportal.core.jwt.dto.TokenDto;
 import com.hanyang.dataportal.core.response.ApiResponse;
+import com.hanyang.dataportal.user.domain.Role;
 import com.hanyang.dataportal.user.dto.req.ReqLoginDto;
 import com.hanyang.dataportal.user.dto.req.ReqOauthDto;
 import com.hanyang.dataportal.user.dto.res.ResLoginDto;
@@ -14,7 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.stream.Collectors;
 
 @Tag(name = "유저 로그인 API")
 @RestController
@@ -23,15 +28,19 @@ import org.springframework.web.bind.annotation.*;
 public class UserLoginController {
     private final UserLoginService userLoginService;
     private final OauthLoginService oauthLoginService;
+    private final JwtTokenResolver jwtTokenResolver;
 
     @Operation(summary = "유저 로그인")
     @PostMapping("")
     public ResponseEntity<ApiResponse<ResLoginDto>> login(@RequestBody ReqLoginDto reqLoginDto){
         final TokenDto tokenDto = userLoginService.login(reqLoginDto);
         final ResponseCookie responseCookie = userLoginService.generateRefreshCookie(tokenDto);
+        final String role = jwtTokenResolver.getAuthentication(tokenDto.getAccessToken()).getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
-                .body(ApiResponse.ok(new ResLoginDto(AuthorizationExtractor.AUTH_TYPE, tokenDto.getAccessToken())));
+                .body(ApiResponse.ok(new ResLoginDto(AuthorizationExtractor.AUTH_TYPE, tokenDto.getAccessToken(),role)));
     }
 
     @Operation(summary = "소셜 로그인")
@@ -44,6 +53,6 @@ public class UserLoginController {
         final ResponseCookie responseCookie = userLoginService.generateRefreshCookie(tokenDto);
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
-                .body(ApiResponse.ok(new ResLoginDto(AuthorizationExtractor.AUTH_TYPE, tokenDto.getAccessToken())));
+                .body(ApiResponse.ok(new ResLoginDto(AuthorizationExtractor.AUTH_TYPE, tokenDto.getAccessToken(), Role.ROLE_USER.name())));
     }
 }

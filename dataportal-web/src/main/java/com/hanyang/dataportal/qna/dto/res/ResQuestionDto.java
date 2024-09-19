@@ -24,6 +24,6 @@ public class ResQuestionDto {
         this.content = question.getContent();
         this.answerStatus = question.getAnswerStatus();
         this.userName = question.getUser().getName();
-        this.s3Url = question.getS3Url();
+        this.s3Url = question.getImageUrl();
     }
 }

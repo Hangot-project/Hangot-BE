@@ -48,13 +48,23 @@ public class UserService {
         User user = findByEmail(email);
         int scrapCount =  scrapRepository.countByUser(user);
         int downloadCount = downloadRepository.countByUser(user);
-        return new ResUserInfoDto(email,scrapCount,downloadCount);
+        if(user.getEmail().matches("\\d+")){
+            return new ResUserInfoDto(user,scrapCount,downloadCount,true);
+        }
+        else{
+            return new ResUserInfoDto(user,scrapCount,downloadCount,false);
+        }
     }
 
     public User updateName(String email,String name){
         User user = findByEmail(email);
         user.updateName(name);
         return user;
+    }
+
+    public void delete(String email){
+        User user = findByEmail(email);
+        user.withdraw();
     }
 
     private boolean isExistByName(String name){

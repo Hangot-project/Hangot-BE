@@ -6,7 +6,7 @@ import com.hanyang.dataportal.core.exception.NullException;
 import java.util.stream.Stream;
 
 public enum Type {
-    csv, xls, xlsx, pdf, json, docx, png, jpg, jpeg, ;
+    csv, xls, xlsx, pdf, json, docx, png, jpg, jpeg;
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static Type findByType(String type) {
         return Stream.of(Type.values())

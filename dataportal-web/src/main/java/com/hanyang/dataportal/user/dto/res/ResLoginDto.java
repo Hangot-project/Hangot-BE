@@ -10,4 +10,5 @@ import lombok.Data;
 public class ResLoginDto {
     private String grantType;
     private String accessToken;
+    private String role;
 }
