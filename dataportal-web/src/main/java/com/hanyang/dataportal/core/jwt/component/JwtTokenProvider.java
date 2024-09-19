@@ -1,7 +1,6 @@
 package com.hanyang.dataportal.core.jwt.component;
 
 import com.hanyang.dataportal.core.jwt.dto.TokenDto;
-import com.hanyang.dataportal.user.infrastructure.RedisManager;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.annotation.Nullable;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private final JwtSecretKey jwtSecretKey;
-    private final RedisManager redisManager;
+//    private final RedisManager redisManager;
 
     public static final Long SESSION_COOKIE_MAX_AGE = -1L;
     public static final String REFRESH_COOKIE_KEY = "refreshToken";
@@ -58,15 +57,14 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    private String generateRefreshToken(
-            final Authentication authentication,
-            final boolean isAutoLogin,
-            final Long expiredInMillisecond
-    ) {
-        final String refreshToken = generateToken(authentication, isAutoLogin, expiredInMillisecond);
-        redisManager.setCode(authentication.getName(), refreshToken, expiredInMillisecond);
-        return refreshToken;
-    }
+//    private String generateRefreshToken(
+//            final Authentication authentication,
+//            final boolean isAutoLogin,
+//            final Long expiredInMillisecond
+//    ) {
+//        return generateToken(authentication, isAutoLogin, expiredInMillisecond);
+//        redisManager.setCode(authentication.getName(), refreshToken, expiredInMillisecond);
+//    }
 
     /**
      * 액세스 토큰과 리프레시 토큰을 새로 발급하는 메서드
@@ -76,7 +74,7 @@ public class JwtTokenProvider {
      */
     public TokenDto generateLoginToken(final Authentication authentication, final boolean isAutoLogin) {
         final String accessToken = generateToken(authentication, isAutoLogin, accessExpire);
-        final String refreshToken = generateRefreshToken(authentication, isAutoLogin, refreshExpire);
+        final String refreshToken = generateToken(authentication, isAutoLogin, refreshExpire);
         return TokenDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

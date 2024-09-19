@@ -55,7 +55,7 @@ public class UserLoginService {
     public TokenDto reissueToken(final String refreshToken) throws TokenExpiredException {
         final Authentication authentication = jwtTokenResolver.getAuthentication(refreshToken);
         final boolean autoLogin = jwtTokenResolver.getAutoLogin(refreshToken);
-        if (jwtTokenValidator.validateRefreshToken(authentication.getName(), refreshToken)) {
+        if (jwtTokenValidator.validateToken(refreshToken)) {
             return jwtTokenProvider.generateLoginToken(authentication, autoLogin);
         }
         throw new TokenExpiredException(ResponseMessage.REFRESH_EXPIRED);
