@@ -20,20 +20,14 @@ public class Answer {
     private String content;
     private String title;
     private LocalDate creatDate;
+    @Setter
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "questionId")
     private Question question;
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
     private User admin;
-
-    public void setQuestion(Question question) {
-        this.question = question;
-    }
-
-    public void setAdmin(User admin) {
-        this.admin = admin;
-    }
 
     public void update(ReqAnswerDto reqAnswerDto){
         this.content = reqAnswerDto.getContent();

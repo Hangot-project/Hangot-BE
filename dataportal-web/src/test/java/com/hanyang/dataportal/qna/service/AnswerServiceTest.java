@@ -1,84 +1,124 @@
-//package com.hanyang.dataportal.qna.service;
-//
-//import com.hanyang.dataportal.qna.domain.Answer;
-//import com.hanyang.dataportal.qna.domain.Question;
-//import com.hanyang.dataportal.qna.dto.req.ReqAnswerDto;
-//import com.hanyang.dataportal.qna.repository.AnswerRepository;
-//import com.hanyang.dataportal.qna.repository.QuestionRepository;
-//import com.hanyang.dataportal.user.domain.Role;
-//import com.hanyang.dataportal.user.domain.User;
-//import com.hanyang.dataportal.user.repository.UserRepository;
-//import org.assertj.core.api.Assertions;
-//import org.junit.jupiter.api.DisplayName;
-//import org.junit.jupiter.api.Test;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.context.SpringBootTest;
-//import org.springframework.test.context.ActiveProfiles;
-//import org.springframework.test.context.jdbc.Sql;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-//@ActiveProfiles("test")
-//@Sql("/h2-truncate.sql")
-//@Transactional
-//public class AnswerServiceTest {
-//
-//    @Autowired
-//    private AnswerRepository answerRepository;
-//    @Autowired
-//    private AnswerService answerService;
-//    @Autowired
-//    private QuestionRepository questionRepository;
-//    @Autowired
-//    private UserRepository userRepository;
-//
-//    @Test
-//    @DisplayName("답변글을 등록한다")
-//    void save(){
-//        //given
-//        User admin = User.builder().email("admin@email.com").role(Role.ROLE_ADMIN).build();
-//        userRepository.save(admin);
-//        questionRepository.save(Question.builder().questionId(1L).build());
-//        ReqAnswerDto reqAnswerDto = ReqAnswerDto.builder().title("답변").build();
-//
-//        //when
-//        Answer answer = answerService.save(reqAnswerDto, 1L,admin.getEmail());
-//
-//        //then
-//        Assertions.assertThat(answerRepository.findById(answer.getAnswerId())).isPresent();
-//        Assertions.assertThat(answerRepository.findById(answer.getAnswerId())).isPresent();
-//
-//    }
-//
-//    @Test
-//    @DisplayName("답변을 수정한다")
-//    void update() {
-//        //given
-//        User admin = User.builder().email("admin@email.com").role(Role.ROLE_ADMIN).build();
-//        userRepository.save(admin);
-//        Question question = questionRepository.save(Question.builder().build());
-//        ReqAnswerDto reqAnswerDto = ReqAnswerDto.builder().title("답변").build();
-//
-//        //when
-//        Answer answer = answerService.save(reqAnswerDto,question.getQuestionId(), admin.getEmail());
-//
-//        //then
-//        Assertions.assertThat(answerRepository.findById(answer.getAnswerId())).isPresent();
-//    }
-//
-//    @Test
-//    @DisplayName("답변을 조회 한다")
-//    void find(){
-//        //given
-//        User admin = User.builder().email("admin@email.com").role(Role.ROLE_ADMIN).build();
-//        userRepository.save(admin);
-//        Question question = questionRepository.save(Question.builder().build());
-//        Answer savedAnswer = answerRepository.save(Answer.builder().question(question).build());
-//
-//        //when
-//        Answer answer = answerService.findByQuestionId(question.getQuestionId());
-//
-//        //then
-//        Assertions.assertThat(answer.getAnswerId()).isEqualTo(savedAnswer.getAnswerId());
-//    }
-//}
+package com.hanyang.dataportal.qna.service;
+
+import com.hanyang.dataportal.core.exception.ResourceExistException;
+import com.hanyang.dataportal.qna.domain.Answer;
+import com.hanyang.dataportal.qna.domain.AnswerStatus;
+import com.hanyang.dataportal.qna.domain.Question;
+import com.hanyang.dataportal.qna.dto.req.ReqAnswerDto;
+import com.hanyang.dataportal.qna.repository.AnswerRepository;
+import com.hanyang.dataportal.qna.repository.QuestionRepository;
+import com.hanyang.dataportal.user.domain.User;
+import com.hanyang.dataportal.user.service.UserService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("Answer Service 테스트")
+class AnswerServiceTest {
+
+    @InjectMocks
+    private AnswerService answerService;
+
+    @Mock
+    private AnswerRepository answerRepository;
+
+    @Mock
+    private QuestionRepository questionRepository;
+
+    @Mock
+    private UserService userService;
+
+    @Test
+    @DisplayName("답변을 저장할 수 있다.")
+    void save_answer_success() {
+        // given
+        ReqAnswerDto reqAnswerDto = ReqAnswerDto.builder()
+                .title("제목")
+                .content("본문")
+                .build();
+        Long questionId = 1L;
+        String username = "test@example.com";
+
+        User user = new User();
+        Question question = new Question();
+
+        when(userService.findByEmail(username)).thenReturn(user);
+        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
+        when(answerRepository.findByQuestion(question)).thenReturn(Optional.empty());
+        when(answerRepository.save(any(Answer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        Answer answer = answerService.save(reqAnswerDto, questionId, username);
+
+        // then
+        assertNotNull(answer);
+        assertEquals(reqAnswerDto.getTitle(), answer.getTitle());
+        assertEquals(reqAnswerDto.getContent(), answer.getContent());
+    }
+
+
+    @Test
+    @DisplayName("답변을 성공적으로 저장하면 답변의 상태는 완료가 된다.")
+    void save_answer_status_complete() {
+        // given
+        ReqAnswerDto reqAnswerDto = ReqAnswerDto.builder()
+                .title("제목")
+                .content("본문")
+                .build();
+        Long questionId = 1L;
+        String username = "test@example.com";
+
+        User user = new User();
+        Question question = Question.builder().answerStatus(AnswerStatus.대기).build();
+
+        when(userService.findByEmail(username)).thenReturn(user);
+        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
+        when(answerRepository.findByQuestion(question)).thenReturn(Optional.empty());
+
+        // when
+        answerService.save(reqAnswerDto, questionId, username);
+
+        // then
+        assertEquals(question.getAnswerStatus(), AnswerStatus.완료);
+    }
+
+    @Test
+    @DisplayName("답변이 이미 존재하면 에러를 반환한다.")
+    void answer_error() {
+        // given
+        ReqAnswerDto reqAnswerDto = ReqAnswerDto.builder()
+                .title("제목")
+                .content("본문")
+
+                .build();
+        Long questionId = 1L;
+        String username = "test@example.com";
+
+        User user = new User();
+        Question question = new Question();
+        Answer answer = new Answer();
+
+        when(userService.findByEmail(username)).thenReturn(user);
+        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
+        when(answerRepository.findByQuestion(question)).thenReturn(Optional.of(answer));
+
+        // when&then
+        ResourceExistException exception = assertThrows(
+                ResourceExistException.class,
+                () -> answerService.save(reqAnswerDto, questionId, username)
+        );
+
+        assertEquals("해당 질문에 대한 답변이 이미 존재합니다", exception.getMessage());
+    }
+}
