@@ -31,8 +31,6 @@ public class DatasetSearchRepository {
     public Page<Dataset> searchDatasetList(DataSearch dataSearch){
         Pageable pageable = PageRequest.of(dataSearch.getPage(), 10);
         JPAQuery<Dataset> query = queryFactory.selectFrom(dataset)
-                .leftJoin(dataset.resource, resource)
-                .leftJoin(dataset.scrapList, scrap)
                 .where(titleLike(dataSearch.getKeyword()),
                         organizationIn(dataSearch.getOrganization()),
                         typeIn(dataSearch.getType()),
@@ -40,7 +38,7 @@ public class DatasetSearchRepository {
 
         switch (dataSearch.getSort().name()) {
             case "스크랩" -> {
-                query.orderBy(dataset.scrapList.size().desc());
+                query.orderBy(dataset.scrap.desc());
             }
             case "조회" -> {
                 query.orderBy(dataset.view.desc());
@@ -49,7 +47,7 @@ public class DatasetSearchRepository {
                 query.orderBy(dataset.download.desc());
             }
             case "인기" ->{
-                query.orderBy(Expressions.numberTemplate(Integer.class, "{0} + 5 * size({1})", dataset.view, dataset.scrapList).desc());
+                query.orderBy(Expressions.numberTemplate(Integer.class, "{0} + 5 * {1}", dataset.view, dataset.scrap).desc());
             }
             default -> {
                 query.orderBy(dataset.createdDate.desc());

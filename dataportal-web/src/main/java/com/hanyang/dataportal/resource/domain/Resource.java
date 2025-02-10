@@ -3,10 +3,7 @@ package com.hanyang.dataportal.resource.domain;
 import com.hanyang.dataportal.dataset.domain.Dataset;
 import com.hanyang.dataportal.dataset.domain.vo.Type;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
@@ -22,6 +19,7 @@ public class Resource {
     @Enumerated(EnumType.STRING)
     private Type type;
     private String resourceName;
+    @Setter
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "datasetId")
     private Dataset dataset;
@@ -32,7 +30,4 @@ public class Resource {
         this.resourceName = fileName;
     }
 
-    public void setDataset(Dataset dataset) {
-        this.dataset = dataset;
-    }
 }

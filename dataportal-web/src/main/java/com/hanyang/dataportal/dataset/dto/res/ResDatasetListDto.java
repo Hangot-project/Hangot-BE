@@ -46,7 +46,7 @@ public class ResDatasetListDto {
             if(dataset.getDatasetThemeList()!=null) {
                 this.themeList = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
             }
-            this.scrap = dataset.getScrapList().size();
+            this.scrap = dataset.getScrap();
         }
     }
 }
