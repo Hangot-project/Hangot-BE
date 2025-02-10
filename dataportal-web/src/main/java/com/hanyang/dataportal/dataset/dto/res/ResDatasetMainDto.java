@@ -34,7 +34,9 @@ public class ResDatasetMainDto {
                 this.type = dataset.getResource().getType();
             }
             this.organization = dataset.getOrganization();
-            this.themeList = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
+            if(dataset.getDatasetThemeList()!=null) {
+                this.themeList = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
+            }
             this.scrap = dataset.getScrap();
 
         }

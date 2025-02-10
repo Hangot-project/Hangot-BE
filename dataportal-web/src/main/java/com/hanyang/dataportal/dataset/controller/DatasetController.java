@@ -30,26 +30,13 @@ public class DatasetController {
     @GetMapping("/datasets")
     public ResponseEntity<ApiResponse<ResDatasetListDto>> getDatasetList(ReqDataSearchDto reqDataSearchDto){
         Page<Dataset> datasetList = datasetService.getDatasetList(reqDataSearchDto);
-        return ResponseEntity.ok(ok(new ResDatasetListDto(datasetList)));
+        return ResponseEntity.ok(ApiResponse.ok(new ResDatasetListDto(datasetList)));
     }
-
 
     @Operation(summary = "dataset 상세 보기")
     @GetMapping("/dataset/{datasetId}")
     public ResponseEntity<ApiResponse<ResDatasetDetailDto>> getDataset(@PathVariable Long datasetId){
-        return ResponseEntity.ok(ok(datasetService.getDatasetDetail(datasetId)));
-    }
-
-    @Operation(summary = "인기 데이터 리스트가져오기")
-    @GetMapping(value = "/dataset/popular")
-    public ResponseEntity<ApiResponse<ResDatasetMainDto>> popularData() {
-        return ResponseEntity.ok(ApiResponse.ok(new ResDatasetMainDto(datasetService.getPopular())));
-    }
-
-    @Operation(summary = "신규 데이터 리스트가져오기")
-    @GetMapping(value = "/dataset/new")
-    public ResponseEntity<ApiResponse<ResDatasetMainDto>> newData() {
-        return ResponseEntity.ok(ApiResponse.ok(new ResDatasetMainDto(datasetService.getNew())));
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getDatasetDetail(datasetId)));
     }
 
 }

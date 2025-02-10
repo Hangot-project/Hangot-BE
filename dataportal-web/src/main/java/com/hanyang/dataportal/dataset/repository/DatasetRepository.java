@@ -17,7 +17,7 @@ public interface DatasetRepository extends JpaRepository<Dataset,Long>{
     @Query("select d from Dataset d left join fetch d.datasetThemeList where d.datasetId = :datasetId")
     Optional<Dataset> findByIdWithTheme(Long datasetId);
     List<Dataset> findByTitleContaining(String keyword);
-    @Query("select d from Dataset d left join fetch d.datasetThemeList left join d.resource order by (d.view+ 5*d.scrap) DESC")
+    @Query("select d from Dataset d left join d.resource order by (d.view+ 5*d.scrap) DESC")
     List<Dataset> findOrderByPopular(Pageable pageable);
     @Query("select d from Dataset d left join fetch d.datasetThemeList left join d.resource order by d.createdDate desc ")
     List<Dataset> findOrderByDateDesc(Pageable pageable);

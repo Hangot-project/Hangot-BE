@@ -87,14 +87,4 @@ public class DatasetService {
     public List<String> getByKeyword(String keyword) {
         return datasetRepository.findByTitleContaining(keyword).stream().map(Dataset::getTitle).toList();
     }
-
-    public List<Dataset> getPopular() {
-        Pageable pageable = PageRequest.of(0, 6);
-        return datasetRepository.findOrderByPopular(pageable);
-    }
-
-    public List<Dataset> getNew() {
-        Pageable pageable = PageRequest.of(0, 6);
-        return datasetRepository.findOrderByDateDesc(pageable);
-    }
 }
