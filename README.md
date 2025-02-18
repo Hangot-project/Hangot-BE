@@ -33,6 +33,10 @@
 
 <img src="https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=Hibernate&logoColor=white"> <img src="https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=Swagger&logoColor=white"> 
 
+## 핵심 경험
+데이터포털사이트의 핵심기능인 검색 기능을 향상시키기 위해 검색 쿼리를 분석하고 최적화하였습니다.    
+[검색 쿼리 분석](https://github.com/HY-DATA-project/HY-DATA-BE/wiki/%EA%B2%80%EC%83%89-%EC%BF%BC%EB%A6%AC-%EB%B6%84%EC%84%9D)
+
 ## 발표자료
 ![캡스톤-디자인-전시회-판넬 (2)-1](https://github.com/mintaek22/Algorithm/assets/88085338/86e5fbb0-84da-451b-a624-85992e04a3aa)
 
