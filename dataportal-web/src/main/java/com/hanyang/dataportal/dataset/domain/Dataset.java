@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Formula;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ public class Dataset {
     private Integer view;
     private Integer download;
     private Integer scrap;
+    @Formula(value = "view + 5 * scrap + 7 * download")
+    private Integer popular;
     @OneToOne(mappedBy = "dataset")
     private Resource resource;
     @Builder.Default

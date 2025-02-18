@@ -47,7 +47,7 @@ public class DatasetSearchRepository {
                 query.orderBy(dataset.download.desc());
             }
             case "인기" ->{
-                query.orderBy(Expressions.numberTemplate(Integer.class, "{0} + 5 * {1}", dataset.view, dataset.scrap).desc());
+                query.orderBy(dataset.popular.desc());
             }
             default -> {
                 query.orderBy(dataset.createdDate.desc());

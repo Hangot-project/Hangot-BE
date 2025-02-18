@@ -8,6 +8,7 @@ import com.hanyang.dataportal.dataset.domain.vo.Type;
 import lombok.Data;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -33,6 +34,7 @@ public class ResDatasetListDto {
         private Type type;
         private List<Theme> themeList;
         private Integer scrap;
+        private LocalDate createDate;
 
         public SimpleDataset(Dataset dataset) {
             this.datasetId = dataset.getDatasetId();
@@ -40,6 +42,7 @@ public class ResDatasetListDto {
             this.description = dataset.getDescription();
             this.view = dataset.getView();
             this.organization = dataset.getOrganization();
+            this.createDate = dataset.getCreatedDate();
             if(dataset.getResource()!=null) {
                 this.type = dataset.getResource().getType();
             }
