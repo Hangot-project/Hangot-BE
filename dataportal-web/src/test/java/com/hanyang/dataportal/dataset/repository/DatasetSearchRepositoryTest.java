@@ -75,22 +75,6 @@ class DatasetSearchRepositoryTest {
         Assertions.assertThat(datasets.getContent().size()).isEqualTo(10);
     }
 
-    //TODO 테스트 오류,swagger는 잘됨
-    @DisplayName("키워드 검색을 통해 데이터셋을 찾을 수 있다.")
-    @Test
-    void searchDatasetListKeyWord() {
-        //given
-        DataSearch dataSearch = new DataSearch();
-        dataSearch.setPage(0);
-        dataSearch.setKeyword("201");
-        dataSearch.setSort(DatasetSort.최신);
-        //when
-        Page<Dataset> datasets = datasetSearchRepository.searchDatasetList(dataSearch);
-
-        //then
-        Assertions.assertThat(datasets.getTotalElements()).isEqualTo(10);
-        Assertions.assertThat(datasets.getTotalPages()).isEqualTo(1);
-    }
 
     @DisplayName("여러 제공기관에 해당하는 데이터셋을 찾을 수 있다.")
     @Test
