@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private final JwtSecretKey jwtSecretKey;
-//    private final RedisManager redisManager;
 
     public static final Long SESSION_COOKIE_MAX_AGE = -1L;
     public static final String REFRESH_COOKIE_KEY = "refreshToken";
