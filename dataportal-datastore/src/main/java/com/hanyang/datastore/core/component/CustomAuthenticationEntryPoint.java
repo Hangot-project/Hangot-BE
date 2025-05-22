@@ -1,6 +1,5 @@
 package com.hanyang.datastore.core.component;
 
-import com.hanyang.datastore.core.component.ApiResponseBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
