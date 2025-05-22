@@ -5,6 +5,7 @@ import jakarta.persistence.Embedded;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -20,6 +21,7 @@ public class MetaData {
     private String datasetId;
     private String title;
 
+    @Setter
     @Embedded
     private List<TableData> dataList = new ArrayList<>();
 
@@ -30,10 +32,6 @@ public class MetaData {
 
     public void setDataListClean() {
         this.dataList = new ArrayList<>();
-    }
-
-    public void setDataList(List<TableData> dataList) {
-        this.dataList = dataList;
     }
 
     public void updateDataset(DatasetMetaDataDto datasetMetaDataDto) {

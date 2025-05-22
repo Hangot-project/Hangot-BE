@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.project;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.unwind;
@@ -40,7 +41,7 @@ public class TableService {
     private final MongoTemplate mongoTemplate;
     /**
      * datasetId를 통해서
-     * S3에서 데이터를 가져와서 MongoDB에 저장
+     * S3에서 데이터를 가져와서 MongoDB에 저장보
      * datasetId에 해당하는 리소스가 S3에 없거나 파싱 불가능한 파일형태(pdf,docx)면 예외처리
      */
     public void createDataTable(String datasetId) throws IOException {
@@ -54,25 +55,21 @@ public class TableService {
         Sheet sheet = workbook.getSheetAt(0);
 
         Optional<MetaData> findMeta = metaDataRepository.findById(datasetId);
-        MetaData metaData;
-        if(findMeta.isPresent()){
-            metaData = findMeta.get();
-            metaData.updateDataset(datasetMetaDataDto);
-            metaData.setDataListClean();
-        }
-        else{
-            metaData = new MetaData(datasetMetaDataDto);
-        }
+        MetaData metaData = findMeta
+                .map(existing -> {
+                    existing.updateDataset(datasetMetaDataDto);
+                    existing.setDataListClean();
+                    return existing;
+                })
+                .orElseGet(() -> new MetaData(datasetMetaDataDto));
+
 
         //col명 작성
-        Row row1 = sheet.getRow(0);
-        String[] columns = new String[row1.getPhysicalNumberOfCells()];
-        Iterator<Cell> cellIterator = row1.iterator();
-        for (int i=0;i<row1.getPhysicalNumberOfCells();i++) {
-            Cell cell = cellIterator.next();
-            String cellValue = dataFormatter.formatCellValue(cell);
-            columns[i] = cellValue;
-        }
+        Row headerRow = sheet.getRow(0);
+        String[] columns = StreamSupport.stream(headerRow.spliterator(), false)
+                .map(dataFormatter::formatCellValue)
+                .toArray(String[]::new);
+
         //data 추가
         List<TableData> tableDataList = new ArrayList<>();
         for (int rowNum = 1; rowNum <= sheet.getLastRowNum(); rowNum++) {
@@ -97,6 +94,7 @@ public class TableService {
                 }
         }
         metaData.setDataList(tableDataList);
+
         metaDataRepository.save(metaData);
     }
 
@@ -108,9 +106,8 @@ public class TableService {
 
         List<MetaData> metaData = mongoTemplate.find(query, MetaData.class, "metaData");
         //datasetId랑 일치하는 리소스가 없다
-        if(metaData.size() == 0){
-            throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
-        }
+        if(metaData.isEmpty()) throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
+
         MetaData meta = mongoTemplate.find(query, MetaData.class, "metaData").get(0);
 
         //aggregation 함수
@@ -128,24 +125,17 @@ public class TableService {
         List<String> dataName = new ArrayList<>();
         boolean isAxisExists = false;
         for (Map.Entry<String, Object> map :entries) {
-            if(Objects.equals(map.getKey(), colName)){
-                isAxisExists = true;
-            }
+            if(Objects.equals(map.getKey(), colName)) isAxisExists = true;
             if(!Objects.equals(map.getKey(), colName) && map.getValue() instanceof Double){
-                if(type == 0){
-                    groupOperation = groupOperation.sum("data."+map.getKey()).as(map.getKey());
-                }
-                else{
-                    groupOperation = groupOperation.avg("data."+map.getKey()).as(map.getKey());
-                }
+                if(type == 0) groupOperation = groupOperation.sum("data."+map.getKey()).as(map.getKey());
+                else groupOperation = groupOperation.avg("data."+map.getKey()).as(map.getKey());
+
                 dataList.add(new ArrayList<>());
                 dataName.add(map.getKey());
             }
         }
 
-        if(!isAxisExists){
-            throw new LabelNotFoundException("해당 축은 존재하지 않습니다");
-        }
+        if(!isAxisExists) throw new LabelNotFoundException("해당 축은 존재하지 않습니다");
 
         //pipeLine 생성
         Aggregation aggregation = Aggregation.newAggregation(
@@ -167,9 +157,8 @@ public class TableService {
 
             //xLabel 값 . 있으면 제거
             String id = jsonNode.path("_id").asText();
-            if(!Objects.equals(id, "null")){
-                xLabel.add(id.replaceAll("\\..*", ""));
-            }
+            if(!Objects.equals(id, "null")) xLabel.add(id.replaceAll("\\..*", ""));
+
 
             int index = 0;
             for (Map.Entry<String, Object> map :entries) {
@@ -198,9 +187,8 @@ public class TableService {
 
         List<MetaData> metaData = mongoTemplate.find(query, MetaData.class, "metaData");
         //datasetId랑 일치하는 리소스가 없다
-        if(metaData.size() == 0){
-            throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
-        }
+        if(metaData.isEmpty()) throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
+
         MetaData meta = metaData.get(0);
 
         //순서보장을 위해 LinkedHashSet으로
@@ -209,9 +197,8 @@ public class TableService {
         //dataList의 크기 지정 및 dataName 설정
         //동적으로 groupOperation할 col을 지정해줌
         List<String> dataName = new ArrayList<>();
-        for (Map.Entry<String, Object> map :entries) {
-            dataName.add(map.getKey());
-        }
+        for (Map.Entry<String, Object> map :entries) dataName.add(map.getKey());
+
 
         return dataName;
 
@@ -223,7 +210,7 @@ public class TableService {
 
         List<MetaData> metaData = mongoTemplate.find(query, MetaData.class, "metaData");
         //datasetId랑 일치하는 리소스가 없다
-        if(metaData.size() == 0){
+        if(metaData.isEmpty()){
             throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
         }
         MetaData meta = metaData.get(0);
@@ -251,7 +238,6 @@ public class TableService {
         }
         return str;
     }
-
 
 }
 
