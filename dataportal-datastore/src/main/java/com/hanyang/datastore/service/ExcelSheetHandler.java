@@ -1,5 +1,6 @@
 package com.hanyang.datastore.service;
 
+import com.hanyang.datastore.core.exception.InvalidFileFormatException;
 import lombok.Getter;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.util.CellReference;
@@ -79,8 +80,6 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
         checkedCol = currentCol;
     }
 
-
-
     public static ExcelSheetHandler readExcel(InputStream inputStream) {
         ExcelSheetHandler excelSheetHandler = new ExcelSheetHandler();
 
@@ -102,7 +101,7 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
 
             sheetStream.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new InvalidFileFormatException(e.getMessage());
         }
 
         return excelSheetHandler;
