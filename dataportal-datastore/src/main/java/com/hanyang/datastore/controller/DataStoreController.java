@@ -6,6 +6,7 @@ import com.hanyang.datastore.core.response.ResponseMessage;
 import com.hanyang.datastore.dto.ResAxisDto;
 import com.hanyang.datastore.dto.ResChartDto;
 import com.hanyang.datastore.dto.ResChartTableDto;
+import com.hanyang.datastore.infrastructure.GroupType;
 import com.hanyang.datastore.service.TableService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +26,6 @@ public class DataStoreController {
 
     private final TableService tableService;
 
-    //s3에서 꺼내와서 data->table화 시킴
     @Operation(summary = "파일 데이터 테이블화")
     @PostMapping("/dataset/{datasetId}/resource/table")
     public ResponseEntity<ApiResponse<?>> datastore(@PathVariable String datasetId) throws Exception {
@@ -35,8 +35,9 @@ public class DataStoreController {
 
     @Operation(summary = "파일 데이터 시각화 차트 데이터")
     @GetMapping("/dataset/{datasetId}/chart")
-    public ResponseEntity<ApiResponse<ResChartDto>> chart(@PathVariable String datasetId, @RequestParam String colName) throws JsonProcessingException {
-        return ResponseEntity.ok(ApiResponse.ok(tableService.getAggregationLabel(datasetId,colName,0)));
+    public ResponseEntity<ApiResponse<ResChartDto>> chart(@PathVariable String datasetId, @RequestParam String colName){
+        GroupType groupType = GroupType.fromCode(0);
+        return ResponseEntity.ok(ApiResponse.ok(tableService.getAggregationLabel(datasetId,colName,groupType)));
     }
 
     @Operation(summary = "축 리스트 가져오기")

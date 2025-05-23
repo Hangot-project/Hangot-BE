@@ -1,5 +1,6 @@
 package com.hanyang.datastore.core.advice;
 
+import com.hanyang.datastore.core.exception.InvalidFileFormatException;
 import com.hanyang.datastore.core.exception.LabelNotFoundException;
 import com.hanyang.datastore.core.exception.ResourceNotFoundException;
 import com.hanyang.datastore.core.response.ApiResponse;
@@ -20,10 +21,15 @@ public class ExceptionHandlerController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(e.getMessage()));
     }
 
+    @ExceptionHandler(InvalidFileFormatException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidFileFormat(Exception ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception ex) {
-        ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.fail(ex.getMessage()));
     }
+
 
 }

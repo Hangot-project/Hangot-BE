@@ -1,13 +1,12 @@
 package com.hanyang.datastore.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.List;
-@Data
-public class ResAxisDto {
-    List<String> axis;
+import java.util.Set;
 
-    public ResAxisDto(List<String> axis) {
-        this.axis = axis;
-    }
+@Data
+@AllArgsConstructor
+public class ResAxisDto {
+    Set<String> axis;
 }
