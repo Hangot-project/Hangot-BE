@@ -28,7 +28,7 @@ public class DataStoreController {
     //s3에서 꺼내와서 data->table화 시킴
     @Operation(summary = "파일 데이터 테이블화")
     @PostMapping("/dataset/{datasetId}/resource/table")
-    public ResponseEntity<ApiResponse<?>> datastore(@PathVariable String datasetId) throws IOException {
+    public ResponseEntity<ApiResponse<?>> datastore(@PathVariable String datasetId) throws Exception {
         tableService.createDataTable(datasetId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }

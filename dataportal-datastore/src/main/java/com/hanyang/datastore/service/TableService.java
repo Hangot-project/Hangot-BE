@@ -13,8 +13,6 @@ import com.hanyang.datastore.dto.ResChartTableDto;
 import com.hanyang.datastore.infrastructure.S3StorageManager;
 import com.hanyang.datastore.repository.MetaDataRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
@@ -26,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.stream.StreamSupport;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.project;
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.unwind;
@@ -39,20 +36,18 @@ public class TableService {
     private final DataPortalService dataPortalService;
     private final MetaDataRepository metaDataRepository;
     private final MongoTemplate mongoTemplate;
+
     /**
      * datasetId를 통해서
      * S3에서 데이터를 가져와서 MongoDB에 저장보
      * datasetId에 해당하는 리소스가 S3에 없거나 파싱 불가능한 파일형태(pdf,docx)면 예외처리
      */
-    public void createDataTable(String datasetId) throws IOException {
+    public void createDataTable(String datasetId) {
 
         DatasetMetaDataDto datasetMetaDataDto = dataPortalService.findDataset(datasetId);
 
         InputStream file = s3StorageManager.getFile(datasetId);
 
-        Workbook workbook = new XSSFWorkbook(file);
-        DataFormatter dataFormatter = new DataFormatter();
-        Sheet sheet = workbook.getSheetAt(0);
 
         Optional<MetaData> findMeta = metaDataRepository.findById(datasetId);
         MetaData metaData = findMeta
@@ -63,35 +58,34 @@ public class TableService {
                 })
                 .orElseGet(() -> new MetaData(datasetMetaDataDto));
 
+        ExcelSheetHandler excelSheetHandler = ExcelSheetHandler.readExcel(file);
 
-        //col명 작성
-        Row headerRow = sheet.getRow(0);
-        String[] columns = StreamSupport.stream(headerRow.spliterator(), false)
-                .map(dataFormatter::formatCellValue)
-                .toArray(String[]::new);
+        List<String> headers = excelSheetHandler.getHeader();
+        String[] columns =  headers.toArray(new String[0]);
 
-        //data 추가
         List<TableData> tableDataList = new ArrayList<>();
-        for (int rowNum = 1; rowNum <= sheet.getLastRowNum(); rowNum++) {
-                Row row = sheet.getRow(rowNum);
-                TableData tableData =new TableData();
-                LinkedHashMap<String,Object> map = new LinkedHashMap<>();
-                Iterator<Cell> cellIterator2 = row.iterator();
-                for (int i=0;i<row.getPhysicalNumberOfCells();i++) {
-                    Cell cell = cellIterator2.next();
-                    Double cellValue = null;
-                    try {
-                        cellValue = Double.parseDouble(dataFormatter.formatCellValue(cell));
-                    } catch (NumberFormatException e) {
-                        map.put(columns[i], dataFormatter.formatCellValue(cell));
-                        continue;
-                    }
-                    map.put(columns[i],cellValue);
+        List<List<String>>  rows = excelSheetHandler.getRows();
+        for (List<String> row : rows) {
+            TableData tableData = new TableData();
+            LinkedHashMap<String,Object> map = new LinkedHashMap<>();
+            for (int j = 0; j < row.size(); j++) {
+                String cellValue = row.get(j);
+                Object value;
+                try {
+                    value = Double.parseDouble(cellValue);
                 }
-                if(row.getPhysicalNumberOfCells() != 0){
-                    tableData.setData(map);
-                    tableDataList.add(tableData);
+                //숫자가 아니면
+                catch (NumberFormatException e) {
+                    value = cellValue;
                 }
+                if (j < columns.length) {
+                    map.put(columns[j], value);
+                }
+            }
+            if (!map.isEmpty()) {
+                tableData.setData(map);
+                tableDataList.add(tableData);
+            }
         }
         metaData.setDataList(tableDataList);
 

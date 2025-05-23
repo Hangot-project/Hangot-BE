@@ -26,7 +26,7 @@ public class ResourceController {
     private final ResourceService resourceService;
     @Operation(summary = "파일 데이터 저장 및 수정")
     @PutMapping(value = "/dataset/{datasetId}/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> saveResource(@PathVariable Long datasetId,
+    public ResponseEntity<ApiResponse<?>> saveResource(@PathVariable Long datasetId,
                                           @RequestPart(value = "file") MultipartFile multipartFile) {
         resourceService.save(datasetId, multipartFile);
         return ResponseEntity.ok(ApiResponse.ok(null));
@@ -34,7 +34,7 @@ public class ResourceController {
 
     @Operation(summary = "유저 리소스 다운로드")
     @PostMapping(value = "/download/{datasetId}")
-    public ResponseEntity<?> downloadResource(@AuthenticationPrincipal UserDetails userDetail, @PathVariable Long datasetId) {
+    public ResponseEntity<ApiResponse<?>> downloadResource(@AuthenticationPrincipal UserDetails userDetail, @PathVariable Long datasetId) {
         resourceService.download(userDetail, datasetId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
