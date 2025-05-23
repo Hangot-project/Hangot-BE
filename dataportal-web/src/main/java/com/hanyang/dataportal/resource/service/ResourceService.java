@@ -5,8 +5,10 @@ import com.hanyang.dataportal.core.exception.ResourceNotFoundException;
 import com.hanyang.dataportal.dataset.domain.Dataset;
 import com.hanyang.dataportal.dataset.repository.DatasetRepository;
 import com.hanyang.dataportal.resource.domain.Resource;
+import com.hanyang.dataportal.resource.infrastructure.RabbitMQPublisher;
 import com.hanyang.dataportal.resource.infrastructure.S3StorageManager;
 import com.hanyang.dataportal.resource.infrastructure.dto.FileInfoDto;
+import com.hanyang.dataportal.resource.infrastructure.dto.MessageDto;
 import com.hanyang.dataportal.resource.repository.DownloadRepository;
 import com.hanyang.dataportal.resource.repository.ResourceRepository;
 import com.hanyang.dataportal.user.domain.Download;
@@ -30,12 +32,14 @@ import static com.hanyang.dataportal.dataset.domain.vo.Type.findByType;
 @Transactional
 public class ResourceService {
 
+    private final static String FOLDER_NAME = "Resource";
+
     private final S3StorageManager s3StorageManager;
+    private final RabbitMQPublisher rabbitMQPublisher;
     private final UserService userService;
     private final DownloadRepository downloadRepository;
     private final DatasetRepository datasetRepository;
     private final ResourceRepository resourceRepository;
-    private final static String FOLDER_NAME = "Resource";
 
     public void save(Long datasetId, MultipartFile multipartFile){
         Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
@@ -65,6 +69,8 @@ public class ResourceService {
 
             resourceRepository.save(resource);
         }
+
+        rabbitMQPublisher.sendMessage(new MessageDto(datasetId));
     }
 
     //유저가 다운로드를 하면
