@@ -23,6 +23,20 @@ spring:
   flyway:
     enabled: false
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+rabbitmq:
+  queue:
+    name: sample-queue
+  exchange:
+    name: sample-exchange
+  routing:
+    key: key
+
 jwt:
   secret: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
   expire:
