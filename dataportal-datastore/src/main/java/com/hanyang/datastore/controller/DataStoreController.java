@@ -26,13 +26,6 @@ public class DataStoreController {
 
     private final TableService tableService;
 
-    @Operation(summary = "파일 데이터 테이블화")
-    @PostMapping("/dataset/{datasetId}/resource/table")
-    public ResponseEntity<ApiResponse<?>> datastore(@PathVariable String datasetId) throws Exception {
-        tableService.createDataTable(datasetId);
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
     @Operation(summary = "파일 데이터 시각화 차트 데이터")
     @GetMapping("/dataset/{datasetId}/chart")
     public ResponseEntity<ApiResponse<ResChartDto>> chart(@PathVariable String datasetId, @RequestParam String colName){
@@ -50,11 +43,6 @@ public class DataStoreController {
     @GetMapping("/dataset/{datasetId}/chart/table")
     public ResponseEntity<ApiResponse<ResChartTableDto>> chart(@PathVariable String datasetId) {
         return ResponseEntity.ok(ApiResponse.ok(tableService.getChartTable(datasetId)));
-    }
-
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ApiResponse<?>> handleResourceNotFoundException(EntityNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.fail(ResponseMessage.NOT_EXIST_RESOURCE));
     }
 
 
