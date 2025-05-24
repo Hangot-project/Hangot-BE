@@ -14,6 +14,10 @@ public enum Type {
                 .findFirst()
                 .orElseThrow(() -> new NullException("해당 파일유형은 존재하지 않거나, 지원하지 않습니다."));
     }
+
+    public boolean isExcelType() {
+        return this == csv || this == xls || this == xlsx;
+    }
 }
 
 

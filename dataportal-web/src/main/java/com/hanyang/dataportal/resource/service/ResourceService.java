@@ -3,12 +3,12 @@ package com.hanyang.dataportal.resource.service;
 import com.hanyang.dataportal.core.exception.FileException;
 import com.hanyang.dataportal.core.exception.ResourceNotFoundException;
 import com.hanyang.dataportal.dataset.domain.Dataset;
+import com.hanyang.dataportal.dataset.domain.vo.Type;
 import com.hanyang.dataportal.dataset.repository.DatasetRepository;
 import com.hanyang.dataportal.resource.domain.Resource;
 import com.hanyang.dataportal.resource.infrastructure.RabbitMQPublisher;
 import com.hanyang.dataportal.resource.infrastructure.S3StorageManager;
 import com.hanyang.dataportal.resource.infrastructure.dto.FileInfoDto;
-import com.hanyang.dataportal.resource.infrastructure.dto.MessageDto;
 import com.hanyang.dataportal.resource.repository.DownloadRepository;
 import com.hanyang.dataportal.resource.repository.ResourceRepository;
 import com.hanyang.dataportal.user.domain.Download;
@@ -47,7 +47,8 @@ public class ResourceService {
         Optional<Resource> optionalResource = resourceRepository.findByDataset(dataset);
         String fileName = Objects.requireNonNull(multipartFile.getOriginalFilename()).split("\\.")[0];
         String ext = multipartFile.getOriginalFilename().split("\\.")[1];
-        if(findByType(ext) == null){
+        Type fileType = Type.findByType(ext);
+        if(fileType == null){
             throw new  FileException("지정되지 않은 파일 형식 입니다");
         }
 
@@ -70,7 +71,7 @@ public class ResourceService {
             resourceRepository.save(resource);
         }
 
-        rabbitMQPublisher.sendMessage(new MessageDto(datasetId));
+        if(fileType.isExcelType()) rabbitMQPublisher.sendMessage(datasetId.toString());
     }
 
     //유저가 다운로드를 하면

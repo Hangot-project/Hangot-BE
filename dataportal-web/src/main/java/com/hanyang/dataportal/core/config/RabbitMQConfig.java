@@ -23,6 +23,7 @@ public class RabbitMQConfig {
     @Value("${spring.rabbitmq.username}")
     private String username;
 
+
     @Value("${spring.rabbitmq.password}")
     private String password;
 

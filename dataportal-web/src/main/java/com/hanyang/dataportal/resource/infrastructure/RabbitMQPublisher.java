@@ -1,10 +1,13 @@
 package com.hanyang.dataportal.resource.infrastructure;
 
-import com.hanyang.dataportal.resource.infrastructure.dto.MessageDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
 
 @RequiredArgsConstructor
 @Component
@@ -17,7 +20,12 @@ public class RabbitMQPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    public void sendMessage(MessageDto messageDto) {
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, messageDto);
+    public void sendMessage(String datasetId) {
+        MessageProperties props = new MessageProperties();
+        props.setContentType("application/json");
+        props.setHeader("x-retry-count", 0);
+
+        Message message = new Message(datasetId.getBytes(StandardCharsets.UTF_8), props);
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
     }
 }
