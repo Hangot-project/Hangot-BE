@@ -39,11 +39,6 @@ public class S3StorageManager {
                 .key(key)
                 .build();
 
-        ResponseBytes<GetObjectResponse> objectBytes = s3Client.getObjectAsBytes(getObjectRequest);
-        byte[] data = objectBytes.asByteArray();
-
-        assert key != null;
-
-        return new ByteArrayInputStream(data);
+       return s3Client.getObject(getObjectRequest);
     }
 }
