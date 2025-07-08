@@ -20,13 +20,15 @@ import java.util.List;
 
 public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandler {
 
-    @Getter
-    private List<String> header = new ArrayList<>();
+    private static final int HEADER_ROW_INDEX = 0;
 
     @Getter
-    private List<List<String>> rows = new ArrayList<>();
+    private final List<String> header = new ArrayList<>();
 
-    private List<String> row = new ArrayList<>();
+    @Getter
+    private final List<List<String>> rows = new ArrayList<>();
+
+    private final List<String> row = new ArrayList<>();
 
     private int checkedCol = -1;
 
@@ -37,22 +39,21 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
 
     @Override
     public void endRow(int currentRowNum) {
-        //헤더 보다 이전
-        int START_ROW_NUM = 1;
-        if (currentRowNum < START_ROW_NUM - 1) return;
-        //헤더
-        else if (currentRowNum == START_ROW_NUM - 1) {
-            header = new ArrayList<>(row);
+        if (currentRowNum < HEADER_ROW_INDEX) {
+            return;
         }
-        //비어 있는 셀
-        else {
-            if (row.size() < header.size()) {
-                for (int i = row.size(); i < header.size(); i++) {
-                    row.add("");
-                }
+
+        if (currentRowNum == HEADER_ROW_INDEX) {
+            header.clear();
+            header.addAll(row);
+        } else {
+            // 빈 셀 채우기
+            while (row.size() < header.size()) {
+                row.add("");
             }
             rows.add(new ArrayList<>(row));
         }
+
         row.clear();
     }
 
