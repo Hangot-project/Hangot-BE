@@ -25,7 +25,7 @@ public class MongoManager {
         mongoTemplate.createCollection(collectionName);
     }
 
-    private void dropIfExists(String collectionName) {
+    public void dropIfExists(String collectionName) {
         boolean isExists = mongoTemplate.collectionExists(collectionName);
         if (isExists) mongoTemplate.dropCollection(collectionName);
     }
