@@ -1,10 +1,12 @@
 package com.hanyang.datastore.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 public class ResChartTableDto {
     private List<String> label;
     private List<List<String>> dataList;
