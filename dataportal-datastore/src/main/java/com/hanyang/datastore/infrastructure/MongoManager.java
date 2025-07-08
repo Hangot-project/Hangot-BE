@@ -46,8 +46,10 @@ public class MongoManager {
     }
 
     public List<Document> groupByAxis(String collectionName, String axis, GroupType type) {
-        Optional<Map<String,Object>> row = findById(collectionName,1);
-        if(row.isEmpty()) throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
+        Optional<Map<String,Object>> row = findById(collectionName, 1);
+        if(row.isEmpty()) {
+            throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
+        }
 
         GroupOperation groupOp = Aggregation.group(axis);
         ProjectionOperation projectOp = Aggregation.project()
@@ -55,22 +57,29 @@ public class MongoManager {
                 .andExclude("_id");
 
         for(Map.Entry<String,Object> column: row.get().entrySet()) {
-            if(column.getValue().getClass() == Double.class && !column.getKey().equals(axis)){
+            if(isNumericColumn(column.getValue()) && !column.getKey().equals(axis)){
                 String key = column.getKey();
-                if (type == GroupType.SUM) {
-                    groupOp = groupOp.sum(key).as(key);
-                }
-                else if (type == GroupType.AVG) {
-                    groupOp = groupOp.avg(key).as(key);
-                }
+                groupOp = applyGroupOperation(groupOp, key, type);
                 projectOp = projectOp.and(key).as(key);
             }
         }
-        Aggregation aggregation = Aggregation.newAggregation(
-                groupOp,
-                projectOp
-        );
+        
+        Aggregation aggregation = Aggregation.newAggregation(groupOp, projectOp);
         return mongoTemplate.aggregate(aggregation, collectionName, Document.class).getMappedResults();
+    }
+    
+    private boolean isNumericColumn(Object value) {
+        return value instanceof Number;
+    }
+    
+    private GroupOperation applyGroupOperation(GroupOperation groupOp, String key, GroupType type) {
+        if (type == GroupType.SUM) {
+            return groupOp.sum(key).as(key);
+        } else if (type == GroupType.AVG) {
+            return groupOp.avg(key).as(key);
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 집계 타입: " + type);
+        }
     }
 
 }
