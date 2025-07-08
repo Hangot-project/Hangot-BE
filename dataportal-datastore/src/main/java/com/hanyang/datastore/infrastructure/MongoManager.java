@@ -1,6 +1,7 @@
 package com.hanyang.datastore.infrastructure;
 
 import com.hanyang.datastore.core.exception.ResourceNotFoundException;
+import com.hanyang.datastore.dto.GroupType;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -44,7 +45,7 @@ public class MongoManager {
         return mongoTemplate.find(query, Document.class, collectionName);
     }
 
-    public List<Document> groupByAxis(String collectionName, String axis,GroupType type) {
+    public List<Document> groupByAxis(String collectionName, String axis, GroupType type) {
         Optional<Map<String,Object>> row = findById(collectionName,1);
         if(row.isEmpty()) throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
 

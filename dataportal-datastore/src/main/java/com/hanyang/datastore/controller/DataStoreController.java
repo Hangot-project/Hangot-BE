@@ -4,7 +4,7 @@ import com.hanyang.datastore.core.response.ApiResponse;
 import com.hanyang.datastore.dto.ResAxisDto;
 import com.hanyang.datastore.dto.ResChartDto;
 import com.hanyang.datastore.dto.ResChartTableDto;
-import com.hanyang.datastore.infrastructure.GroupType;
+import com.hanyang.datastore.dto.GroupType;
 import com.hanyang.datastore.service.TableService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

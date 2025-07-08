@@ -3,7 +3,7 @@ package com.hanyang.datastore.controller;
 import com.hanyang.datastore.config.TestSecurityConfig;
 import com.hanyang.datastore.dto.ResChartDto;
 import com.hanyang.datastore.dto.ResChartTableDto;
-import com.hanyang.datastore.infrastructure.GroupType;
+import com.hanyang.datastore.dto.GroupType;
 import com.hanyang.datastore.service.TableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
