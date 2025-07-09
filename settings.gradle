@@ -1,3 +1,4 @@
 rootProject.name = 'dataportal'
-include 'dataportal-web'
-include 'dataportal-datastore'
+include 'data-harvester'
+include 'data-ingestor'
+include 'gateway-api'
