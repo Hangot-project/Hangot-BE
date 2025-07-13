@@ -1,6 +1,5 @@
 package com.hanyang.api.dataset.dto.req;
 
-import com.hanyang.api.dataset.domain.vo.Type;
 import com.hanyang.api.dataset.utill.DatasetSort;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +15,7 @@ public class ReqDataSearchDto {
 
     private List<String> organization;
     private List<String> theme;
-    private List<Type> type;
+    private List<String> type;
     private DatasetSort sort = DatasetSort.최신;
     private int page = 0;
 

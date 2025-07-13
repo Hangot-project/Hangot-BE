@@ -1,7 +1,6 @@
 package com.hanyang.api.dataset.repository;
 
 import com.hanyang.api.dataset.domain.Dataset;
-import com.hanyang.api.dataset.domain.vo.Type;
 import com.hanyang.api.dataset.dto.DataSearch;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -84,7 +83,7 @@ public class DatasetSearchRepository {
         return themeList != null ? dataset.datasetThemeList.any().theme.in(themeList) : null;
     }
 
-    private BooleanExpression typeIn(List<Type> typeList) {
+    private BooleanExpression typeIn(List<String> typeList) {
         return typeList != null ? dataset.type.in(typeList) : null;
     }
 }

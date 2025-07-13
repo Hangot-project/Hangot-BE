@@ -1,6 +1,5 @@
 package com.hanyang.api.user.domain;
 
-import com.hanyang.api.notice.domain.Notice;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,9 +31,6 @@ public class User{
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Scrap> scrapList = new ArrayList<>();
-    @Builder.Default
-    @OneToMany(mappedBy = "admin", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-    private List<Notice> noticeList = new ArrayList<>();
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Download> downloadList = new ArrayList<>();

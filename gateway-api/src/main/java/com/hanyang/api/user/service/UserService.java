@@ -2,7 +2,6 @@ package com.hanyang.api.user.service;
 
 import com.hanyang.api.core.exception.ResourceExistException;
 import com.hanyang.api.core.exception.ResourceNotFoundException;
-import com.hanyang.api.resource.repository.DownloadRepository;
 import com.hanyang.api.user.domain.User;
 import com.hanyang.api.user.dto.req.ReqSignupDto;
 import com.hanyang.api.user.dto.res.ResUserInfoDto;
@@ -23,7 +22,6 @@ import static com.hanyang.api.user.domain.Role.ROLE_USER;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final DownloadRepository downloadRepository;
     private final ScrapRepository scrapRepository;
     public User findByEmail(String email){
         return userRepository.findByEmail(email).orElseThrow(()-> new ResourceNotFoundException(NOT_EXIST_USER));
@@ -47,12 +45,11 @@ public class UserService {
     public ResUserInfoDto findLoginUserInfo(String email){
         User user = findByEmail(email);
         int scrapCount =  scrapRepository.countByUser(user);
-        int downloadCount = downloadRepository.countByUser(user);
         if(user.getEmail().matches("\\d+")){
-            return new ResUserInfoDto(user,scrapCount,downloadCount,true);
+            return new ResUserInfoDto(user,scrapCount,true);
         }
         else{
-            return new ResUserInfoDto(user,scrapCount,downloadCount,false);
+            return new ResUserInfoDto(user,scrapCount,false);
         }
     }
 

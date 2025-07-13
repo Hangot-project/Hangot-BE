@@ -36,7 +36,7 @@ public class ResDatasetDetailDto {
         this.view = dataset.getView();
         this.download = dataset.getDownload();
         this.license = dataset.getLicense();
-        this.resourceName = dataset.getResourceUrl();
+        this.resourceName = dataset.getResourceName();
         this.resourceUrl = dataset.getResourceUrl();
         this.type = dataset.getType();
         this.scrap = scrapCount;

@@ -1,9 +1,7 @@
 package com.hanyang.api.dataset.controller;
 
 import com.hanyang.api.core.response.ApiResponse;
-import com.hanyang.api.dataset.domain.vo.License;
 import com.hanyang.api.dataset.dto.res.ResDatasetTitleDto;
-import com.hanyang.api.dataset.dto.res.ResLicenseListDto;
 import com.hanyang.api.dataset.dto.res.ResThemeListDto;
 import com.hanyang.api.dataset.service.DatasetService;
 import com.hanyang.api.dataset.service.ThemeService;
@@ -16,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.hanyang.api.core.response.ApiResponse.ok;
@@ -42,15 +38,6 @@ public class ListController {
     @GetMapping("/themes")
     public ResponseEntity<ApiResponse<ResThemeListDto>> getTheme(){
         return ResponseEntity.ok(ok(new ResThemeListDto(themeService.getAllTheme())));
-    }
-
-
-    @Operation(summary = "라이센스 리스트 보기")
-    @GetMapping("/licenses")
-    public ResponseEntity<ApiResponse<ResLicenseListDto>> getLicense(){
-        List<License> licenses = new ArrayList<>();
-        Collections.addAll(licenses, License.values());
-        return ResponseEntity.ok(ok(new ResLicenseListDto(licenses)));
     }
 
 }

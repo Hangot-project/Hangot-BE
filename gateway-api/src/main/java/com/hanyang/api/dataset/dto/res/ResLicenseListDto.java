@@ -1,15 +1,14 @@
 package com.hanyang.api.dataset.dto.res;
 
-import com.hanyang.api.dataset.domain.vo.License;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
 public class ResLicenseListDto {
-    private List<License> licensesList;
+    private List<String> licensesList;
 
-    public ResLicenseListDto(List<License> licensesList) {
+    public ResLicenseListDto(List<String> licensesList) {
         this.licensesList = licensesList;
     }
 }
