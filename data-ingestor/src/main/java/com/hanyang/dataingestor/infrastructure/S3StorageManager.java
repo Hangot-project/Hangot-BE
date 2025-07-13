@@ -1,6 +1,6 @@
-package com.hanyang.datastore.infrastructure;
+package com.hanyang.dataingestor.infrastructure;
 
-import com.hanyang.datastore.core.exception.ResourceNotFoundException;
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

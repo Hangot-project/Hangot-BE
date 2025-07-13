@@ -1,7 +1,7 @@
-package com.hanyang.datastore.service;
+package com.hanyang.dataingestor.service;
 
-import com.hanyang.datastore.infrastructure.MongoManager;
-import com.hanyang.datastore.infrastructure.S3StorageManager;
+import com.hanyang.dataingestor.infrastructure.MongoManager;
+import com.hanyang.dataingestor.infrastructure.S3StorageManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

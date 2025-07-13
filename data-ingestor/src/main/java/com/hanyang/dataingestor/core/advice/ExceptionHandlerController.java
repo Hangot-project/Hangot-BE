@@ -1,10 +1,11 @@
-package com.hanyang.datastore.core.advice;
+package com.hanyang.dataingestor.core.advice;
 
-import com.hanyang.datastore.core.exception.InvalidFileFormatException;
-import com.hanyang.datastore.core.exception.LabelNotFoundException;
-import com.hanyang.datastore.core.exception.ResourceNotFoundException;
-import com.hanyang.datastore.core.response.ApiResponse;
-import com.hanyang.datastore.core.response.ResponseMessage;
+
+import com.hanyang.dataingestor.core.exception.InvalidFileFormatException;
+import com.hanyang.dataingestor.core.exception.LabelNotFoundException;
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
+import com.hanyang.dataingestor.core.response.ApiResponse;
+import com.hanyang.dataingestor.core.response.ResponseMessage;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

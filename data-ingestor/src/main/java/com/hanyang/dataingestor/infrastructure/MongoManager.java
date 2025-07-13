@@ -1,7 +1,7 @@
-package com.hanyang.datastore.infrastructure;
+package com.hanyang.dataingestor.infrastructure;
 
-import com.hanyang.datastore.core.exception.ResourceNotFoundException;
-import com.hanyang.datastore.dto.GroupType;
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
+import com.hanyang.dataingestor.dto.GroupType;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;

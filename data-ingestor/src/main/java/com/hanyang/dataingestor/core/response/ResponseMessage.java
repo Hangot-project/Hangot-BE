@@ -1,4 +1,4 @@
-package com.hanyang.datastore.core.response;
+package com.hanyang.dataingestor.core.response;
 
 public class ResponseMessage {
     public static String SUCCESS ="ok";

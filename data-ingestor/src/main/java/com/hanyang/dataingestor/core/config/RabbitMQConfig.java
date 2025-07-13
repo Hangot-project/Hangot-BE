@@ -1,4 +1,4 @@
-package com.hanyang.datastore.core.config;
+package com.hanyang.dataingestor.core.config;
 
 
 import org.springframework.amqp.core.Binding;

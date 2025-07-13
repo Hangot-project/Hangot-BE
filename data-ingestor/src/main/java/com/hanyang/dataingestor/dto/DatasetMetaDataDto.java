@@ -1,4 +1,4 @@
-package com.hanyang.datastore.dto;
+package com.hanyang.dataingestor.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

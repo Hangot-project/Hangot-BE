@@ -1,4 +1,4 @@
-package com.hanyang.datastore.core.config;
+package com.hanyang.dataingestor.core.config;
 
 
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+
 
 @Configuration
 public class S3Config {
@@ -22,7 +23,7 @@ public class S3Config {
         AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
 
         return S3Client.builder()
-                .region(Region.AP_NORTHEAST_2) // 본인의 S3 버킷이 있는 리전으로 변경
+                .region(Region.AP_NORTHEAST_2)
                 .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
                 .build();
     }

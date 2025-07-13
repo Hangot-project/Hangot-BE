@@ -1,4 +1,4 @@
-package com.hanyang.datastore.core.exception;
+package com.hanyang.dataingestor.core.exception;
 
 public class InvalidFileFormatException extends RuntimeException {
     public InvalidFileFormatException(String message) {

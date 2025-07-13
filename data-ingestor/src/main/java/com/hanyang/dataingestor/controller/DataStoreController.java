@@ -1,11 +1,11 @@
-package com.hanyang.datastore.controller;
+package com.hanyang.dataingestor.controller;
 
-import com.hanyang.datastore.core.response.ApiResponse;
-import com.hanyang.datastore.dto.ResAxisDto;
-import com.hanyang.datastore.dto.ResChartDto;
-import com.hanyang.datastore.dto.ResChartTableDto;
-import com.hanyang.datastore.dto.GroupType;
-import com.hanyang.datastore.service.TableService;
+import com.hanyang.dataingestor.core.response.ApiResponse;
+import com.hanyang.dataingestor.dto.GroupType;
+import com.hanyang.dataingestor.dto.ResAxisDto;
+import com.hanyang.dataingestor.dto.ResChartDto;
+import com.hanyang.dataingestor.dto.ResChartTableDto;
+import com.hanyang.dataingestor.service.TableService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

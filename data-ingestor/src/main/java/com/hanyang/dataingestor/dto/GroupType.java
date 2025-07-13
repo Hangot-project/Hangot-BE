@@ -1,4 +1,4 @@
-package com.hanyang.datastore.dto;
+package com.hanyang.dataingestor.dto;
 
 public enum GroupType {
     SUM,

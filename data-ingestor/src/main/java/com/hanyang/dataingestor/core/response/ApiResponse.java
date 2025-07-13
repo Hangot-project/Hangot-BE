@@ -1,10 +1,11 @@
-package com.hanyang.datastore.core.response;
+package com.hanyang.dataingestor.core.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import static com.hanyang.datastore.core.response.ResponseMessage.SUCCESS;
+import static com.hanyang.dataingestor.core.response.ResponseMessage.SUCCESS;
+
 
 @Getter
 @AllArgsConstructor

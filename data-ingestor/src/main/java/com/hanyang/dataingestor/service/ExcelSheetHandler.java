@@ -1,6 +1,6 @@
-package com.hanyang.datastore.service;
+package com.hanyang.dataingestor.service;
 
-import com.hanyang.datastore.core.exception.InvalidFileFormatException;
+import com.hanyang.dataingestor.core.exception.InvalidFileFormatException;
 import lombok.Getter;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.util.CellReference;

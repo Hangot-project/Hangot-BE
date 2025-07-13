@@ -1,6 +1,6 @@
-package com.hanyang.datastore.infrastructure;
+package com.hanyang.dataingestor.infrastructure;
 
-import com.hanyang.datastore.service.DataParsingService;
+import com.hanyang.dataingestor.service.DataParsingService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

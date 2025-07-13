@@ -4,9 +4,12 @@ dependencies {
     implementation 'org.apache.poi:poi:4.1.2'
     implementation 'org.apache.poi:poi-ooxml:5.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // AWS S3 (via BOM)
+    implementation platform('software.amazon.awssdk:bom:2.17.230')
+    implementation 'software.amazon.awssdk:s3'
     
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {
