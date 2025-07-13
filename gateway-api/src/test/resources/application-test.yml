@@ -20,9 +20,6 @@ spring:
       repositories:
         enabled: false
 
-  flyway:
-    enabled: false
-
   rabbitmq:
     host: localhost
     port: 5672
@@ -46,10 +43,10 @@ jwt:
 cloud:
   aws:
     s3:
-      bucket: test
+
     credentials:
-      accessKey: 1234
-      secretKey: 1234
+
+
 
 email:
   setFrom: test@test.com

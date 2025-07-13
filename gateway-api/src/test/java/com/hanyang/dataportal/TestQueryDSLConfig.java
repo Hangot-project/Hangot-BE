@@ -1,6 +1,6 @@
 package com.hanyang.dataportal;
 
-import com.hanyang.dataportal.dataset.repository.DatasetSearchRepository;
+import com.hanyang.api.dataset.repository.DatasetSearchRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
