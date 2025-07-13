@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandler {
+public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandler, FileDataHandler {
 
     private static final int HEADER_ROW_INDEX = 0;
 
@@ -102,7 +102,7 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
 
             sheetStream.close();
         } catch (Exception e) {
-            throw new InvalidFileFormatException(e.getMessage());
+            throw new InvalidFileFormatException("엑셀 파일 읽기 실패", e);
         }
 
         return excelSheetHandler;

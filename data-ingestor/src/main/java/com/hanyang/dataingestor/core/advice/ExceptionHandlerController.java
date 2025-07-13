@@ -26,8 +26,8 @@ public class ExceptionHandlerController {
     }
 
     @ExceptionHandler(InvalidFileFormatException.class)
-    public ResponseEntity<ApiResponse<?>> handleInvalidFileFormat(Exception ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail(ex.getMessage()));
+    public ResponseEntity<ApiResponse<?>> handleInvalidFileFormat(InvalidFileFormatException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.fail("잘못된 파일 형식입니다"));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

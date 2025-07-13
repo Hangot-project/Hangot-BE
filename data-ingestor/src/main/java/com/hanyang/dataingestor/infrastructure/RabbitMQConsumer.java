@@ -33,13 +33,12 @@ public class RabbitMQConsumer {
         String datasetId = new String(message.getBody(), StandardCharsets.UTF_8);
 
         try {
-            log.info("데이터 파싱 시작: datasetId={}", datasetId);
             dataParsingService.createDataTable(datasetId);
             channel.basicAck(tag, false);
-            log.info("데이터 파싱 완료: datasetId={}", datasetId);
+            log.info("데이터 처리 완료: {}", datasetId);
             
         } catch (Exception e) {
-            log.error("데이터 파싱 처리 실패: datasetId={}", datasetId, e);
+            log.error("데이터 처리 실패: {} - {}", datasetId, e.getMessage());
             handleProcessingError(message, channel, e);
         }
     }
@@ -54,13 +53,13 @@ public class RabbitMQConsumer {
             if (retryCount < maxRetryCount) {
                 retryMessage(message, headers, retryCount);
                 channel.basicAck(tag, false);
-                log.warn("메시지 재시도: retryCount={}/{}", retryCount + 1, maxRetryCount);
+                log.warn("메시지 재시도: {}/{}", retryCount + 1, maxRetryCount);
             } else {
                 channel.basicNack(tag, false, false); // DLQ로 전송
-                log.error("데이터 파싱 최대 재시도 초과: retryCount={}", retryCount, e);
+                log.error("최대 재시도 초과: {} ({}회)", new String(message.getBody(), StandardCharsets.UTF_8), retryCount);
             }
         } catch (IOException io) {
-            log.error("메시지 처리 실패", io);
+            log.error("메시지 처리 실패: {}", io.getMessage());
         }
     }
 

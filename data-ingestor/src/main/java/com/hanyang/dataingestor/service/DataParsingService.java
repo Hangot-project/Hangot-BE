@@ -27,48 +27,60 @@ public class DataParsingService {
     private static final String ID_FIELD = "_id";
 
     public void createDataTable(String datasetId) {
-        log.info("데이터 테이블 생성 시작: datasetId={}", datasetId);
-        
         try (InputStream file = s3StorageManager.getFile(datasetId)) {
-            ExcelSheetHandler excelSheetHandler = ExcelSheetHandler.readExcel(file);
+            if (file == null) {
+                log.error("파일을 찾을 수 없습니다: {}", datasetId);
+                return;
+            }
+            
+            String fileName = s3StorageManager.getFirstFileName(datasetId);
+            if (fileName == null) {
+                log.error("파일명을 가져올 수 없습니다: {}", datasetId);
+                return;
+            }
+            
+            FileDataHandler fileHandler = FileHandlerFactory.createHandler(fileName, file);
             
             mongoManager.createCollection(datasetId);
             
-            processExcelData(datasetId, excelSheetHandler);
-            
-            log.info("데이터 테이블 생성 완료: datasetId={}", datasetId);
+            processFileData(datasetId, fileHandler);
             
         } catch (Exception e) {
-            log.error("데이터 테이블 생성 실패: datasetId={}", datasetId, e);
-            // 실패 시 생성된 컬렉션 정리
+            log.error("데이터 파싱 실패: {} - {}", datasetId, e.getMessage());
             cleanupOnFailure(datasetId);
-            throw new RuntimeException("데이터 파싱 중 오류가 발생했습니다", e);
         }
     }
 
-    private void processExcelData(String datasetId, ExcelSheetHandler excelSheetHandler) {
-        List<String> headers = excelSheetHandler.getHeader();
-        validateHeaders(headers);
+    private void processFileData(String datasetId, FileDataHandler fileHandler) {
+        List<String> headers = fileHandler.getHeader();
+        
+        if (!validateHeaders(datasetId, headers)) {
+            return;
+        }
         
         String[] columns = headers.toArray(new String[0]);
-        List<List<String>> rows = excelSheetHandler.getRows();
+        List<List<String>> rows = fileHandler.getRows();
         
         if (rows.isEmpty()) {
-            log.warn("처리할 데이터가 없습니다: datasetId={}", datasetId);
+            log.warn("처리할 데이터가 없습니다: {}", datasetId);
             return;
         }
         
         processBatchData(datasetId, columns, rows);
     }
 
-    private void validateHeaders(List<String> headers) {
+    private boolean validateHeaders(String datasetId, List<String> headers) {
         if (headers.isEmpty()) {
-            throw new IllegalArgumentException("헤더가 없습니다");
+            log.error("헤더가 없습니다: {}", datasetId);
+            return false;
         }
         
         if (headers.contains(ID_FIELD)) {
-            throw new IllegalArgumentException("헤더에 예약어 '_id'가 포함되어 있습니다");
+            log.error("헤더에 예약어 '_id'가 포함되어 있습니다: {}", datasetId);
+            return false;
         }
+        
+        return true;
     }
 
     private void processBatchData(String datasetId, String[] columns, List<List<String>> rows) {
@@ -85,16 +97,15 @@ public class DataParsingService {
                 if (buffer.size() >= batchSize) {
                     mongoManager.insertDocuments(datasetId, buffer);
                     buffer.clear();
-                    log.debug("배치 처리 완료: {} rows", rowCount);
                 }
             }
         }
         
-        // 남은 데이터 처리
         if (!buffer.isEmpty()) {
             mongoManager.insertDocuments(datasetId, buffer);
-            log.debug("최종 배치 처리 완료: {} rows", rowCount);
         }
+        
+        log.info("데이터 저장 완료: {} 건", rowCount);
     }
 
     private Map<String, Object> createDocument(List<String> row, String[] columns, int rowId) {
@@ -130,9 +141,8 @@ public class DataParsingService {
     private void cleanupOnFailure(String datasetId) {
         try {
             mongoManager.dropIfExists(datasetId);
-            log.info("실패한 컬렉션 정리 완료: datasetId={}", datasetId);
         } catch (Exception e) {
-            log.error("컬렉션 정리 실패: datasetId={}", datasetId, e);
+            log.error("컬렉션 정리 실패: {}", datasetId);
         }
     }
 }
