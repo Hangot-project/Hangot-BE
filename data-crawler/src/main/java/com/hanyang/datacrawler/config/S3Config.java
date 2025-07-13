@@ -1,5 +1,4 @@
-package com.hanyang.dataportal.core.config;
-
+package com.hanyang.datacrawler.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +21,7 @@ public class S3Config {
         AwsBasicCredentials awsCredentials = AwsBasicCredentials.create(accessKey, secretKey);
 
         return S3Client.builder()
-                .region(Region.AP_NORTHEAST_2) // 본인의 S3 버킷이 있는 리전으로 변경
+                .region(Region.AP_NORTHEAST_2)
                 .credentialsProvider(StaticCredentialsProvider.create(awsCredentials))
                 .build();
     }
