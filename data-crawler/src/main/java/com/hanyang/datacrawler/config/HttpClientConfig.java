@@ -15,10 +15,11 @@ public class HttpClientConfig {
 
         RestTemplate restTemplate = new RestTemplate(factory);
         
-        // User-Agent 헤더 설정
+        // 필수 헤더 설정
         restTemplate.getInterceptors().add((request, body, execution) -> {
             request.getHeaders().set("User-Agent", 
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            request.getHeaders().set("Accept-Charset", "UTF-8");
             return execution.execute(request, body);
         });
         

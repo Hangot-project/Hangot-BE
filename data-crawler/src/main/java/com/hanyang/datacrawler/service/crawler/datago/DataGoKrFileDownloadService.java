@@ -3,6 +3,9 @@ package com.hanyang.datacrawler.service.crawler.datago;
 import com.hanyang.datacrawler.infrastructure.S3StorageManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -21,7 +24,18 @@ public class DataGoKrFileDownloadService {
     public String downloadAndUploadFile(String downloadUrl, String folderName, String fileName) {
         log.info("파일 다운로드 시작 - {}", downloadUrl);
 
-        ResponseEntity<byte[]> response = restTemplate.getForEntity(downloadUrl, byte[].class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", "*/*");
+        headers.set("Accept-Encoding", "identity");
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+            downloadUrl, 
+            HttpMethod.GET, 
+            entity, 
+            byte[].class
+        );
+        
         byte[] fileContent = response.getBody();
 
         if (fileContent == null || fileContent.length == 0) {

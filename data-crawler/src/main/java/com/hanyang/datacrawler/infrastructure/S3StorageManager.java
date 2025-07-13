@@ -30,11 +30,13 @@ public class S3StorageManager {
         if ("pdf".equalsIgnoreCase(type)) {
             putObjectRequestBuilder.contentType("application/pdf");
         } else if ("csv".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("text/csv");
+            putObjectRequestBuilder.contentType("text/csv; charset=UTF-8");
         } else if ("json".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("application/json");
+            putObjectRequestBuilder.contentType("application/json; charset=UTF-8");
         } else if ("xml".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("application/xml");
+            putObjectRequestBuilder.contentType("application/xml; charset=UTF-8");
+        } else if ("xlsx".equalsIgnoreCase(type) || "xls".equalsIgnoreCase(type)) {
+            putObjectRequestBuilder.contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         }
 
         s3Client.putObject(putObjectRequestBuilder.build(), RequestBody.fromBytes(fileContent));
