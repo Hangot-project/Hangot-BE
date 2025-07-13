@@ -3,6 +3,7 @@ package com.hanyang.datacrawler.service.crawler.datago;
 import com.hanyang.datacrawler.config.CrawlerConfig;
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithThemeDto;
+import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class DataGoKrCrawler implements DataCrawler {
     private final DataGoKrHtmlParser htmlParser;
     private final DataGoKrFileDownloadService dataGoKrFileDownloadService;
     private final DownloadParameterExtractor downloadParameterExtractor;
+    private final RabbitMQPublisher rabbitMQPublisher;
 
     private static final String DATASET_LIST_URL = "https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE";
     private final DatasetService datasetService;
@@ -100,6 +102,8 @@ public class DataGoKrCrawler implements DataCrawler {
             if (resourceUrl != null) {
                 datasetService.updateResourceUrl(dataset,resourceUrl);
                 log.info("파일 다운로드 성공 - 데이터셋 ID: {}, URL: {}", dataset.getDatasetId(), resourceUrl);
+                rabbitMQPublisher.sendMessage(dataset.getDatasetId().toString());
+                log.info("메세지 전송 - 데이터셋 ID: {}", dataset.getDatasetId());
             } else {
                 log.warn("파일 다운로드 실패 - 데이터셋 ID: {}", dataset.getDatasetId());
             }
