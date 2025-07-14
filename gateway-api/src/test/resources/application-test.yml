@@ -1,0 +1,62 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      host: test
+      port: 6379
+      repositories:
+        enabled: false
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+rabbitmq:
+  queue:
+    name: sample-queue
+  exchange:
+    name: sample-exchange
+  routing:
+    key: key
+
+jwt:
+  secret: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
+  expire:
+    refresh: 123
+    access: 123
+
+cloud:
+  aws:
+    s3:
+
+    credentials:
+
+
+
+email:
+  setFrom: test@test.com
+  password: test
+
+kakao:
+  rest_api_key: test
+  redirect_uri: http://localhost:8080/login/oauth2/kakao
+  token_url: https://kauth.kakao.com/oauth/token
+  userInfo_url: https://kapi.kakao.com/v2/user/me
+  client_secret: test
+
+host: http://localhost

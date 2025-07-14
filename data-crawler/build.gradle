@@ -1,0 +1,31 @@
+dependencies {
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework:spring-context-support:5.3.9'
+
+	// AWS S3 (via BOM)
+	implementation platform('software.amazon.awssdk:bom:2.17.230')
+	implementation 'software.amazon.awssdk:s3'
+
+	// Web Crawler
+	implementation 'org.jsoup:jsoup:1.16.1'
+	
+	// HTTP Client for RestTemplate
+	implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testImplementation "org.mockito:mockito-core"
+}
+
+bootJar {
+    enabled = true
+    archiveFileName = 'datacrawler.jar'
+}
+
+jar {
+    enabled = false
+}
