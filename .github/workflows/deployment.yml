@@ -25,23 +25,20 @@ jobs:
 
       - name: gateway-api application.yml 생성
         run: |
-          cd ./gateway-api/src/main/resources
-          touch ./application-prod.yml
-          echo "${{ secrets.APPLICATION_GATEWAY }}" > ./application-prod.yml
+          mkdir -p ./gateway-api/src/main/resources
+          echo "${{ secrets.APPLICATION_GATEWAY }}" > ./gateway-api/src/main/resources/application-prod.yml
         shell: bash
 
       - name: data-crawler application.yml 생성
         run: |
-          cd ./data-crawler/src/main/resources
-          touch ./application-prod.yml
-          echo "${{ secrets.APPLICATION_CRAWLER }}" > ./application-prod.yml
+          mkdir -p ./data-crawler/src/main/resources
+          echo "${{ secrets.APPLICATION_CRAWLER }}" > ./data-crawler/src/main/resources/application-prod.yml
         shell: bash
 
       - name: data-ingestor application.yml 생성
         run: |
-          cd ./data-ingestor/src/main/resources
-          touch ./application-prod.yml
-          echo "${{ secrets.APPLICATION_INGESTOR }}" > ./application-prod.yml
+          mkdir -p ./data-ingestor/src/main/resources
+          echo "${{ secrets.APPLICATION_INGESTOR }}" > ./data-ingestor/src/main/resources/application-prod.yml
         shell: bash
 
       - name: 빌드 확인
