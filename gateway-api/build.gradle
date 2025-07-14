@@ -16,6 +16,10 @@ dependencies {
     implementation 'javax.mail:mail:1.4.7'
     implementation 'org.springframework:spring-context-support:5.3.9'
 
+    // Flyway
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+
     implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
@@ -47,4 +51,13 @@ if (querydslTask && initQuerydslSourcesDir) {
 
 compileQuerydsl{
     options.annotationProcessorPath = configurations.querydsl
+}
+
+bootJar {
+    enabled = true
+    archiveFileName = 'web.jar'
+}
+
+jar {
+    enabled = false
 }

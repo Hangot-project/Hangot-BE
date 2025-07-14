@@ -31,9 +31,6 @@ public class User{
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Scrap> scrapList = new ArrayList<>();
-    @Builder.Default
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-    private List<Download> downloadList = new ArrayList<>();
 
     public void updatePassword(String password) {
         this.password = password;

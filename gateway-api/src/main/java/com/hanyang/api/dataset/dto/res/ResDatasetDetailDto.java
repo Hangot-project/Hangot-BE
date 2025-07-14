@@ -19,7 +19,6 @@ public class ResDatasetDetailDto {
     private LocalDate updateDate;
     private Integer view;
     private Integer scrap;
-    private Integer download;
     private String resourceName;
     private String resourceUrl;
     private String type;
@@ -34,7 +33,6 @@ public class ResDatasetDetailDto {
         this.createdDate = dataset.getCreatedDate();
         this.updateDate = dataset.getUpdatedDate();
         this.view = dataset.getView();
-        this.download = dataset.getDownload();
         this.license = dataset.getLicense();
         this.resourceName = dataset.getResourceName();
         this.resourceUrl = dataset.getResourceUrl();

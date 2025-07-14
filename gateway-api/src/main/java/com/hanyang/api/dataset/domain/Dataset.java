@@ -1,6 +1,5 @@
 package com.hanyang.api.dataset.domain;
 
-import com.hanyang.api.user.domain.Download;
 import com.hanyang.api.user.domain.Scrap;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,7 +28,6 @@ public class Dataset {
     private LocalDate createdDate;
     private LocalDate updatedDate;
     private Integer view;
-    private Integer download;
     private Integer scrap;
     private String resourceName;
     @Lob
@@ -39,14 +37,12 @@ public class Dataset {
     private String sourceURL;
     private String source;
 
-    @Formula(value = "view + 5 * scrap + 7 * download")
+    @Formula(value = "view + 5 * scrap")
     private Integer popular;
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<DatasetTheme> datasetThemeList = new ArrayList<>();
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Scrap> scrapList = new ArrayList<>();
-    @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-    private List<Download> downloadList = new ArrayList<>();
 
     public void updateView() {
         if(this.view == null) this.view = 1;

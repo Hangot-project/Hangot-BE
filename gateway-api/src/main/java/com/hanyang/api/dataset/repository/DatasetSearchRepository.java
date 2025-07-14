@@ -40,9 +40,6 @@ public class DatasetSearchRepository {
             case "조회" -> {
                 query.orderBy(dataset.view.desc());
             }
-            case "다운로드" -> {
-                query.orderBy(dataset.download.desc());
-            }
             case "인기" ->{
                 query.orderBy(dataset.popular.desc());
             }

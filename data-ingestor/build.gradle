@@ -15,3 +15,12 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+bootJar {
+    enabled = true
+    archiveFileName = 'datastore.jar'
+}
+
+jar {
+    enabled = false
+}

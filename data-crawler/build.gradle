@@ -20,3 +20,12 @@ dependencies {
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testImplementation "org.mockito:mockito-core"
 }
+
+bootJar {
+    enabled = true
+    archiveFileName = 'datacrawler.jar'
+}
+
+jar {
+    enabled = false
+}

@@ -1,47 +1,97 @@
-version: '3'
+version: '3.8'
 
 services:
-  ## 서비스 이름
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: mintaek
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - hy-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - hy-network
+
   redis:
-    image: redis
+    image: redis:7.0-alpine
     container_name: redis
-    hostname: root
     ports:
       - "6379:6379"
     networks:
-      - my_network
+      - hy-network
 
-  dataportal_web:
-    container_name: dataportal-web
-    image: choco22/web
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - hy-network
+
+  gateway-api:
+    image: ${DOCKER_USERNAME}/gateway-api:latest
+    container_name: gateway-api
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8080:8080"
     depends_on:
+      - mysql
       - redis
     networks:
-      - my_network
-    logging:
-      driver: awslogs
-      options:
-        awslogs-group: "dataportal"
-        awslogs-region: "ap-northeast-2"
-        awslogs-stream: "web"
+      - hy-network
+    restart: unless-stopped
 
-  dataportal_datastore:
-    container_name: dataportal-datastore
-    image: choco22/datastore
+  data-crawler:
+    image: ${DOCKER_USERNAME}/data-crawler:latest
+    container_name: data-crawler
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - hy-network
+    restart: unless-stopped
+
+  data-ingestor:
+    image: ${DOCKER_USERNAME}/data-ingestor:latest
+    container_name: data-ingestor
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8081:8081"
     depends_on:
-      - redis
+      - mongodb
+      - rabbitmq
     networks:
-      - my_network
-    logging:
-      driver: awslogs
-      options:
-        awslogs-group: "dataportal"
-        awslogs-region: "ap-northeast-2"
-        awslogs-stream: "datastore"
+      - hy-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mongodb_data:
 
 networks:
-  my_network:
+  hy-network:
+    driver: bridge
