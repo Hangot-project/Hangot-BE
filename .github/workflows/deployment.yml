@@ -29,19 +29,19 @@ jobs:
       - name: gateway-api application.yml 생성
         run: |
           mkdir -p ./gateway-api/src/main/resources
-          echo "${{ secrets.APPLICATION_GATEWAY }}" > ./gateway-api/src/main/resources/application-prod.yml
+          echo "${{ secrets.APPLICATION_GATEWAY }}" | base64 -d > ./gateway-api/src/main/resources/application-prod.yml
         shell: bash
 
       - name: data-crawler application.yml 생성
         run: |
           mkdir -p ./data-crawler/src/main/resources
-          echo "${{ secrets.APPLICATION_CRAWLER }}" > ./data-crawler/src/main/resources/application-prod.yml
+          echo "${{ secrets.APPLICATION_CRAWLER }}" | base64 -d > ./data-crawler/src/main/resources/application-prod.yml
         shell: bash
 
       - name: data-ingestor application.yml 생성
         run: |
           mkdir -p ./data-ingestor/src/main/resources
-          echo "${{ secrets.APPLICATION_INGESTOR }}" > ./data-ingestor/src/main/resources/application-prod.yml
+          echo "${{ secrets.APPLICATION_INGESTOR }}" | base64 -d > ./data-ingestor/src/main/resources/application-prod.yml
         shell: bash
 
       - name: 빌드 확인
