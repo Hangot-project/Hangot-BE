@@ -67,7 +67,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.AWS_HOST }}
-          username: ec2-user
+          username: ubuntu
           key: ${{ secrets.AWS_KEY }}
           port: 22
           script: |
