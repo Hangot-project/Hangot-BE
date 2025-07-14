@@ -4,6 +4,9 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -63,25 +66,24 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest ./data-ingestor 
           docker push ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest
 
-      - name: EC2 배포
-        uses: appleboy/ssh-action@v0.1.8
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.AWS_HOST }}
-          username: ubuntu
-          key: ${{ secrets.AWS_KEY }}
-          port: 22
-          script: |
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            
-            # 기존 컨테이너 중지 및 제거
-            docker-compose down || true
-            
-            # 이미지 업데이트
-            docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-api:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/data-crawler:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest
-            
-            # 새 컨테이너 실행
-            docker-compose up -d
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
 
-
+      - name: EC2 배포
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ secrets.INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}",
+              "cd /home/ubuntu && export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}",
+              "docker-compose down || true",
+              "docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-api:latest",
+              "docker pull ${{ secrets.DOCKER_USERNAME }}/data-crawler:latest", 
+              "docker pull ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest",
+              "docker-compose up -d"
+            ]' \
+            --comment "Deploy from GitHub Actions"
