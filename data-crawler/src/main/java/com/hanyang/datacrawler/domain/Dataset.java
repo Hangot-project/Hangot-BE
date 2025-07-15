@@ -35,7 +35,7 @@ public class Dataset {
     @Column(columnDefinition = "LONGTEXT")
     private String resourceUrl;
     private String type;
-    private String sourceURL;
+    private String sourceUrl;
     private String source = "공공데이터포털";
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<DatasetTheme> datasetThemeList = new ArrayList<>();
