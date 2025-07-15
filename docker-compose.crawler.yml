@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - hy-network
+
+  data-crawler:
+    image: ${DOCKER_USERNAME}/data-crawler:latest
+    container_name: data-crawler
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8082:8082"
+    depends_on:
+      - rabbitmq
+    networks:
+      - hy-network
+    restart: unless-stopped
+
+networks:
+  hy-network:
+    driver: bridge

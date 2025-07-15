@@ -72,18 +72,29 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-northeast-2
 
-      - name: EC2 배포
+      - name: api 서버 배포
         run: |
           aws ssm send-command \
-            --instance-ids ${{ secrets.INSTANCE_ID }} \
+            --instance-ids ${{ secrets.API_INSTANCE_ID }} \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}",
               "cd /home/ubuntu && export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}",
               "docker-compose down || true",
               "docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-api:latest",
-              "docker pull ${{ secrets.DOCKER_USERNAME }}/data-crawler:latest", 
               "docker pull ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest",
               "docker-compose up -d"
-            ]' \
-            --comment "Deploy from GitHub Actions"
+            ]' 
+
+      - name: crawler 서버 배포
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ secrets.CRALWER_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}",
+              "cd /home/ubuntu && export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}",
+              "docker-compose down || true",
+              "docker pull ${{ secrets.DOCKER_USERNAME }}/data-crawler:latest", 
+              "docker-compose up -d"
+            ]'
