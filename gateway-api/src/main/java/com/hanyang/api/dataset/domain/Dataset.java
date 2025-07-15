@@ -34,7 +34,7 @@ public class Dataset {
     @Column(columnDefinition = "LONGTEXT")
     private String resourceUrl;
     private String type;
-    private String sourceURL;
+    private String sourceUrl;
     private String source;
 
     @Formula(value = "view + 5 * scrap")

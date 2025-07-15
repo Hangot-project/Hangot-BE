@@ -59,7 +59,7 @@ public class DataGoKrHtmlParser {
         }
     }
 
-    public DatasetWithThemeDto parseDatasetDetailPage(String html, String sourceURL) {
+    public DatasetWithThemeDto parseDatasetDetailPage(String html, String sourceUrl) {
         try {
             Document doc = Jsoup.parse(html);
 
@@ -84,7 +84,7 @@ public class DataGoKrHtmlParser {
                     .license(licenseStr)
                     .type(type)
                     .resourceName(resourceName)
-                    .sourceURL(sourceURL)
+                    .sourceUrl(sourceUrl)
                     .build();
 
             return new DatasetWithThemeDto(dataset, themeList);

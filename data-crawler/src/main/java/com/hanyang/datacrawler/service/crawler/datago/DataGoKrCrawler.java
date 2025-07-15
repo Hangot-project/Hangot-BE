@@ -83,7 +83,7 @@ public class DataGoKrCrawler implements DataCrawler {
 
     @Override
     public void downloadFile(Dataset dataset) {
-        String sourceUrl = dataset.getSourceURL();
+        String sourceUrl = dataset.getSourceUrl();
         log.info("파일 다운로드 시작 - 데이터셋 ID: {}", dataset.getDatasetId());
         downloadParameterExtractor.extractDownloadParams(sourceUrl).ifPresent(params -> processDownload(dataset, params));
     }
