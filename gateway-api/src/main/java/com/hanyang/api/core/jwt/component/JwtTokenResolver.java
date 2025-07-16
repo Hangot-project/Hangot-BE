@@ -80,11 +80,6 @@ public class JwtTokenResolver {
         }
     }
 
-    /**
-     * 액세스 토큰에서 자동로그인 여부를 추출하는 메서드
-     * @param accessToken
-     * @return
-     */
     public boolean getAutoLogin(final String accessToken) {
         try {
             final Claims claims = parseToken(accessToken);

@@ -31,8 +31,8 @@ CREATE TABLE dataset_theme (
 -- User 테이블
 CREATE TABLE users (
     user_id BIGINT NOT NULL AUTO_INCREMENT,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    name VARCHAR(100) UNIQUE,
+    provider_id VARCHAR(255) UNIQUE NOT NULL,
+    provider VARCHAR(255),
     role VARCHAR(50) DEFAULT 'USER',
     is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id)

@@ -22,16 +22,10 @@ public class ScrapService {
     private final DatasetRepository datasetRepository;
     private final UserService userService;
 
-    /**
-     * 새로운 Scrap 객체를 생성하는 메서드
-     * @param email
-     * @param datasetId
-     * @return
-     */
-    public Scrap create(String email, Long datasetId) {
+    public Scrap scrap(String providerId, Long datasetId) {
         Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
         dataset.updateScrap();
-        User user = userService.findByEmail(email);
+        User user = userService.findByProviderId(providerId);
         checkDuplicateByDatasetAndUser(dataset, user);
 
         Scrap scrap = Scrap.builder()
@@ -42,61 +36,35 @@ public class ScrapService {
         return scrapRepository.save(scrap);
     }
 
-    /**
-     * 유저가 스크랩한 특정 내역을 삭제하는 메서드
-     * @param email
-     * @param datasetId
-     * @return
-     */
-    public void delete(String email, Long datasetId) {
+    public void delete(String providerId, Long datasetId) {
         Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
-        User user = userService.findByEmail(email);
+        User user = userService.findByProviderId(providerId);
         Scrap scrap = findByDatasetAndUser(dataset, user);
 
         scrapRepository.delete(scrap);
     }
 
-    /**
-     * 유저가 스크랩한 모든 Scrap 객체를 가져오는 메서드
-     * @param email
-     * @return
-     */
-    public List<Scrap> findAllByEmail(String email) {
-        return scrapRepository.findAllByUserEmail(email);
+    public List<Scrap> findAllByProviderId(String providerId) {
+        return scrapRepository.findAllByProviderId(providerId);
     }
 
-    /**
-     * 하나의 Scrap 객체를 가져오는 메서드
-     * @param scrapId
-     * @return
-     */
+
     public Scrap findByScrapId(Long scrapId) {
         return scrapRepository.findById(scrapId)
                 .orElseThrow(() -> new ResourceNotFoundException(ResponseMessage.NOT_EXIST_SCRAP));
     }
 
-    public boolean isUserScrap(String email,Long datasetId) {
+    public boolean isUserScrap(String providerId,Long datasetId) {
         Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
-        User user = userService.findByEmail(email);
+        User user = userService.findByProviderId(providerId);
         return scrapRepository.findByDatasetAndUser(dataset, user).isPresent();
     }
 
-    /**
-     * dataset과 user로 스크랩 객체를 찾는 메서드
-     * @param dataset
-     * @param user
-     * @return
-     */
     private Scrap findByDatasetAndUser(Dataset dataset, User user) {
         return scrapRepository.findByDatasetAndUser(dataset, user)
                 .orElseThrow(() -> new ResourceNotFoundException(ResponseMessage.NOT_EXIST_SCRAP));
     }
 
-    /**
-     * dataset과 user로 중복된 스크랩 객체가 있는지 확인하는 메서드
-     * @param dataset
-     * @param user
-     */
     private void checkDuplicateByDatasetAndUser(Dataset dataset, User user) {
         scrapRepository.findByDatasetAndUser(dataset, user)
                 .ifPresent(scrap -> {

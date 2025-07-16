@@ -1,10 +1,10 @@
 package com.hanyang.api.user.repository;
 
-import com.hanyang.api.user.dto.OauthUserDto;
+import com.hanyang.api.user.provider.Provider;
 import org.springframework.stereotype.Component;
 
 @Component
 public interface OauthProvider {
-    OauthUserDto getUserInfo(String code);
-    String getProvider();
+    String getProviderId(String code);
+    Provider getProvider();
 }

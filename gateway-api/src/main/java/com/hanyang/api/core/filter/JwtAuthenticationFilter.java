@@ -12,12 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-import static com.hanyang.api.core.response.ResponseMessage.*;
+import static com.hanyang.api.core.response.ResponseMessage.ACCESS_EXPIRED;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Component
@@ -29,22 +30,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ApiResponseBuilder apiResponseBuilder;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request){
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         final String[] excludes = {
-                "/api/user/login",
-                "/api/user/signup",
+                "/api/user/login/*",
                 "/api/user/token",
                 "/api/dataset",
                 "/api/datasets",
-                "/api/notices/list",
         };
+
         final String path = request.getRequestURI();
-        return Arrays.stream(excludes).anyMatch(path::startsWith);
+        AntPathMatcher pathMatcher = new AntPathMatcher();
+
+        return Arrays.stream(excludes)
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
-    // 이 필터는 "로그인 유저만" 접근 가능한 리소스 요청시 적용되는 필터임 (로그인 해야할 때만 사용 가능한 api에 적용)
-    // -> login, token api의 경우 이 필터를 적용하면 안됨 (= 액세스 토큰이 만료된 경우 요청하는 api기 때문)
-    // -> 마찬가지로 dataset list api와 같이 로그인 여부에 상관없는 api도 이 필터를 적용하면 안됨
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // 1. Request Header에서 JWT 토큰 추출

@@ -20,12 +20,6 @@ public class UserLoginService {
     private final JwtTokenValidator jwtTokenValidator;
     private final JwtTokenResolver jwtTokenResolver;
 
-    /**
-     * 액세스 토큰(+ 리프레시 토큰)을 재발급하는 메서드
-     * @param refreshToken
-     * @return
-     * @throws TokenExpiredException
-     */
     public TokenDto reissueToken(final String refreshToken) throws TokenExpiredException {
         final Authentication authentication = jwtTokenResolver.getAuthentication(refreshToken);
         final boolean autoLogin = jwtTokenResolver.getAutoLogin(refreshToken);
@@ -35,11 +29,6 @@ public class UserLoginService {
         throw new TokenExpiredException(ResponseMessage.REFRESH_EXPIRED);
     }
 
-    /**
-     * refresh token 쿠키를 리턴하는 메서드
-     * @param tokenDto
-     * @return
-     */
     public ResponseCookie generateRefreshCookie(final TokenDto tokenDto) {
         return jwtTokenProvider.generateRefreshCookie(
                 tokenDto.getRefreshToken(),

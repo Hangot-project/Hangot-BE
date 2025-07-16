@@ -5,8 +5,7 @@ import com.hanyang.api.core.jwt.component.JwtTokenProvider;
 import com.hanyang.api.core.jwt.component.JwtTokenResolver;
 import com.hanyang.api.core.jwt.dto.TokenDto;
 import com.hanyang.api.core.response.ApiResponse;
-import com.hanyang.api.user.dto.res.ResLoginDto;
-import com.hanyang.api.user.dto.res.ResUserInfoDto;
+import com.hanyang.api.user.dto.ResLoginDto;
 import com.hanyang.api.user.service.UserLoginService;
 import com.hanyang.api.user.service.UserLogoutService;
 import com.hanyang.api.user.service.UserService;
@@ -62,16 +61,16 @@ public class UserAuthController {
                 .body(ApiResponse.ok(new ResLoginDto(AuthorizationExtractor.AUTH_TYPE, tokenDto.getAccessToken(),role)));
     }
 
-    @Operation(summary = "유저 내정보 확인")
-    @GetMapping
-    public ResponseEntity<ApiResponse<ResUserInfoDto>> myInfo(@AuthenticationPrincipal UserDetails userDetail){
-        return ResponseEntity.ok(ApiResponse.ok(userService.findLoginUserInfo(userDetail.getUsername())));
-    }
-
-    @Operation(summary = "유저 탈퇴")
-    @DeleteMapping
-    public ResponseEntity<ApiResponse<?>> delete(@AuthenticationPrincipal UserDetails userDetail) {
-        userService.delete(userDetail.getUsername());
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
+//    @Operation(summary = "유저 내정보 확인")
+//    @GetMapping
+//    public ResponseEntity<ApiResponse<ResUserInfoDto>> myInfo(@AuthenticationPrincipal UserDetails userDetail){
+//        return ResponseEntity.ok(ApiResponse.ok(userService.findLoginUserInfo(userDetail.getUsername())));
+//    }
+//
+//    @Operation(summary = "유저 탈퇴")
+//    @DeleteMapping
+//    public ResponseEntity<ApiResponse<?>> delete(@AuthenticationPrincipal UserDetails userDetail) {
+//        userService.delete(userDetail.getUsername());
+//        return ResponseEntity.ok(ApiResponse.ok(null));
+//    }
 }

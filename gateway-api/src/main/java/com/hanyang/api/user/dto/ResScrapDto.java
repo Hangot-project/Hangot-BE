@@ -1,4 +1,4 @@
-package com.hanyang.api.user.dto.res;
+package com.hanyang.api.user.dto;
 
 
 import com.hanyang.api.user.domain.Scrap;

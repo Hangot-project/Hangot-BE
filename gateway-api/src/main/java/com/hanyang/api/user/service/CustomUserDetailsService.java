@@ -16,11 +16,10 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserService userService;
     @Override
-    public UserDetails loadUserByUsername(String email) {
-        User user = userService.findByEmail(email);
+    public UserDetails loadUserByUsername(String providerId) {
+        User user = userService.findByProviderId(providerId);
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
-        // OAuth 사용자는 패스워드 인증을 사용하지 않으므로 빈 문자열 사용
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), "",authorities);
+        return new org.springframework.security.core.userdetails.User(user.getProviderId(), "",authorities);
     }
 }
