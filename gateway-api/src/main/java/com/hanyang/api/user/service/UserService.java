@@ -3,12 +3,11 @@ package com.hanyang.api.user.service;
 import com.hanyang.api.core.exception.ResourceExistException;
 import com.hanyang.api.core.exception.ResourceNotFoundException;
 import com.hanyang.api.user.domain.User;
-import com.hanyang.api.user.dto.req.ReqSignupDto;
+import com.hanyang.api.user.dto.OauthUserDto;
 import com.hanyang.api.user.dto.res.ResUserInfoDto;
 import com.hanyang.api.user.repository.ScrapRepository;
 import com.hanyang.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,19 +20,16 @@ import static com.hanyang.api.user.domain.Role.ROLE_USER;
 @Transactional
 public class UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final ScrapRepository scrapRepository;
     public User findByEmail(String email){
         return userRepository.findByEmail(email).orElseThrow(()-> new ResourceNotFoundException(NOT_EXIST_USER));
     }
 
-    public User signUp(ReqSignupDto reqSignupDto){
-
-        if(!isExistByEmail(reqSignupDto.getEmail()) && !isExistByName(reqSignupDto.getName())) {
+    public User signUpOauth(OauthUserDto oauthUserDto){
+        if(!isExistByEmail(oauthUserDto.getEmail()) && !isExistByName(oauthUserDto.getName())) {
             User user = User.builder()
-                    .email(reqSignupDto.getEmail())
-                    .password(passwordEncoder.encode(reqSignupDto.getPassword()))
-                    .name(reqSignupDto.getName())
+                    .email(oauthUserDto.getEmail())
+                    .name(oauthUserDto.getName())
                     .role(ROLE_USER)
                     .build();
             return userRepository.save(user);

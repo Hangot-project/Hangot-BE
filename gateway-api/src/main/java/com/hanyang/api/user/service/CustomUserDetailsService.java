@@ -20,6 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userService.findByEmail(email);
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),authorities);
+        // OAuth 사용자는 패스워드 인증을 사용하지 않으므로 빈 문자열 사용
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), "",authorities);
     }
 }

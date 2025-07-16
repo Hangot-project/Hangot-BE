@@ -61,7 +61,6 @@ public class KakaoProvider implements OauthProvider {
 
             return OauthUserDto.builder()
                     .email(userId)
-                    .password(userId)
                     .name(name)
                     .build();
         } catch (ParseException e) {

@@ -7,6 +7,5 @@ import lombok.Data;
 @Builder
 public class OauthUserDto {
     private String email;
-    private String password;
     private String name;
 }

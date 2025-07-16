@@ -5,16 +5,8 @@ import com.hanyang.api.core.jwt.component.JwtTokenProvider;
 import com.hanyang.api.core.jwt.component.JwtTokenResolver;
 import com.hanyang.api.core.jwt.dto.TokenDto;
 import com.hanyang.api.core.response.ApiResponse;
-import com.hanyang.api.user.domain.User;
-import com.hanyang.api.user.dto.req.ReqCodeDto;
-import com.hanyang.api.user.dto.req.ReqEmailDto;
-import com.hanyang.api.user.dto.req.ReqPasswordDto;
-import com.hanyang.api.user.dto.req.ReqSignupDto;
-import com.hanyang.api.user.dto.res.ResCodeDto;
 import com.hanyang.api.user.dto.res.ResLoginDto;
-import com.hanyang.api.user.dto.res.ResUserDto;
 import com.hanyang.api.user.dto.res.ResUserInfoDto;
-import com.hanyang.api.user.infrastructure.EmailManager;
 import com.hanyang.api.user.service.UserLoginService;
 import com.hanyang.api.user.service.UserLogoutService;
 import com.hanyang.api.user.service.UserService;
@@ -39,27 +31,7 @@ public class UserAuthController {
     private final UserService userService;
     private final UserLoginService userLoginService;
     private final UserLogoutService userLogoutService;
-    private final EmailManager emailManager;
     private final JwtTokenResolver jwtTokenResolver;
-
-    @Operation(summary = "이메일로 인증 번호 받기")
-    @PostMapping("/email")
-    public ResponseEntity<ApiResponse<?>> email(@RequestBody ReqEmailDto reqSignupDto){
-        return ResponseEntity.ok(ApiResponse.ok(new ResCodeDto(emailManager.joinEmail(reqSignupDto.getEmail()))));
-    }
-
-    @Operation(summary = "인증 번호 인증")
-    @PostMapping("/code")
-    public ResponseEntity<ApiResponse<?>> codeCheck(@RequestBody ReqCodeDto reqCodeDto){
-        emailManager.checkCode(reqCodeDto);
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    @Operation(summary = "유저 회원가입")
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<ResUserDto>> signup(@RequestBody ReqSignupDto reqSignupDto){
-        return ResponseEntity.ok(ApiResponse.ok(new ResUserDto(userService.signUp(reqSignupDto))));
-    }
 
     @Operation(summary = "유저 로그아웃")
     @PostMapping("/logout")
@@ -72,27 +44,6 @@ public class UserAuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseCookie.toString())
                 .body(ApiResponse.ok(null));
-    }
-
-    @Operation(summary = "유저 기존 비밀번호 확인")
-    @GetMapping("/password/check")
-    public ResponseEntity<ApiResponse<?>> passwordCheck(@AuthenticationPrincipal UserDetails userDetail, @RequestBody ReqPasswordDto reqPasswordDto){
-        userLoginService.passwordCheck(userDetail,reqPasswordDto);
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    @Operation(summary = "유저 비밀번호 변경")
-    @PutMapping("/password")
-    public ResponseEntity<ApiResponse<?>> passwordChange(@AuthenticationPrincipal UserDetails userDetail,@RequestBody ReqPasswordDto reqPasswordDto){
-        userLoginService.changePassword(userDetail,reqPasswordDto.getPassword());
-        return ResponseEntity.ok(ApiResponse.ok(null));
-    }
-
-    @Operation(summary = "유저 비밀번호 분실시 임시 비밀번호 발급")
-    @GetMapping("/password")
-    public ResponseEntity<ApiResponse<?>> passwordChange(@AuthenticationPrincipal UserDetails userDetail){
-        userLoginService.findPassword(userDetail);
-        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @Operation(summary = "유저의 액세스 토큰 재발급")
@@ -115,13 +66,6 @@ public class UserAuthController {
     @GetMapping
     public ResponseEntity<ApiResponse<ResUserInfoDto>> myInfo(@AuthenticationPrincipal UserDetails userDetail){
         return ResponseEntity.ok(ApiResponse.ok(userService.findLoginUserInfo(userDetail.getUsername())));
-    }
-
-    @Operation(summary = "유저 이름 변경")
-    @PutMapping("/name")
-    public ResponseEntity<ApiResponse<ResUserDto>> nameUpdate(@AuthenticationPrincipal UserDetails userDetail,@RequestBody String userName) {
-        User user = userService.updateName(userDetail.getUsername(), userName);
-        return ResponseEntity.ok(ApiResponse.ok(new ResUserDto(user)));
     }
 
     @Operation(summary = "유저 탈퇴")
