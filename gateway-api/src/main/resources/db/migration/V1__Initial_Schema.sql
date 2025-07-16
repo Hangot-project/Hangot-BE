@@ -29,12 +29,12 @@ CREATE TABLE dataset_theme (
 );
 
 -- User 테이블
-CREATE TABLE user (
+CREATE TABLE users (
     user_id BIGINT NOT NULL AUTO_INCREMENT,
     email VARCHAR(255) UNIQUE NOT NULL,
-    nickname VARCHAR(100),
-    provider VARCHAR(50),
+    name VARCHAR(100) UNIQUE,
     role VARCHAR(50) DEFAULT 'USER',
+    is_active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id)
 );
 
@@ -44,21 +44,9 @@ CREATE TABLE scrap (
     user_id BIGINT,
     dataset_id BIGINT,
     PRIMARY KEY (scrap_id),
-    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (dataset_id) REFERENCES dataset(dataset_id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_dataset (user_id, dataset_id)
-);
-
--- DataOffer 테이블
-CREATE TABLE data_offer (
-    data_offer_id BIGINT NOT NULL AUTO_INCREMENT,
-    title VARCHAR(255),
-    content LONGTEXT,
-    organization VARCHAR(255),
-    email VARCHAR(255),
-    phone VARCHAR(50),
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (data_offer_id)
 );
 
 -- MySQL Full-text search function

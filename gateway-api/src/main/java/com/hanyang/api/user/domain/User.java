@@ -21,7 +21,6 @@ public class User{
     private Long userId;
     @Column(unique = true)
     private String email;
-    private String password;
     @Column(unique = true)
     private String name;
     @Enumerated(EnumType.STRING)
@@ -31,10 +30,6 @@ public class User{
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Scrap> scrapList = new ArrayList<>();
-
-    public void updatePassword(String password) {
-        this.password = password;
-    }
 
     public void updateName(String name) {
         this.name = name;
