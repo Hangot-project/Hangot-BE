@@ -16,10 +16,10 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserService userService;
     @Override
-    public UserDetails loadUserByUsername(String email) {
-        User user = userService.findByEmail(email);
+    public UserDetails loadUserByUsername(String providerId) {
+        User user = userService.findByProviderId(providerId);
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),authorities);
+        return new org.springframework.security.core.userdetails.User(user.getProviderId(), "",authorities);
     }
 }

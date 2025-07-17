@@ -1,4 +1,4 @@
-package com.hanyang.api.core.jwt.component;
+package com.hanyang.api.core.jwt;
 
 import com.hanyang.api.core.exception.JwtTokenException;
 import io.jsonwebtoken.*;
@@ -77,21 +77,6 @@ public class JwtTokenResolver {
             return new UsernamePasswordAuthenticationToken(principal, "", authorities);
         } catch (MalformedJwtException e) {
             throw new JwtTokenException("토큰 형식이 올바르지 않습니다.");
-        }
-    }
-
-    /**
-     * 액세스 토큰에서 자동로그인 여부를 추출하는 메서드
-     * @param accessToken
-     * @return
-     */
-    public boolean getAutoLogin(final String accessToken) {
-        try {
-            final Claims claims = parseToken(accessToken);
-            validateClaims(claims);
-            return (Boolean) claims.get(JwtTokenProvider.AUTO_LOGIN_CLAIM_KEY);
-        } catch (ExpiredJwtException e) {
-            return (Boolean) e.getClaims().get(JwtTokenProvider.AUTO_LOGIN_CLAIM_KEY);
         }
     }
 }

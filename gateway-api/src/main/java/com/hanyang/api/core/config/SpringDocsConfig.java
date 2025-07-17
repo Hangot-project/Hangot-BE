@@ -24,7 +24,7 @@ public class SpringDocsConfig {
 
         Info info = new Info()
                 .title("캡스톤 API") // 타이틀
-                .description("한양대학교 ERICA 데이터 포털 사이트 API 명세서"); // 문서 설명
+                .description("하이 데이터 API 명세서");
 
 
         // Security 스키마 설정

@@ -1,4 +1,4 @@
-package com.hanyang.api.core.jwt.component;
+package com.hanyang.api.core.jwt;
 
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

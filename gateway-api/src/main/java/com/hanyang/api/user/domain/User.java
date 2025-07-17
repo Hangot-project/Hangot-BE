@@ -19,11 +19,8 @@ public class User{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
-    @Column(unique = true)
-    private String email;
-    private String password;
-    @Column(unique = true)
-    private String name;
+    private String provider;
+    private String providerId;
     @Enumerated(EnumType.STRING)
     private Role role;
     @Builder.Default
@@ -31,15 +28,4 @@ public class User{
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Scrap> scrapList = new ArrayList<>();
-
-    public void updatePassword(String password) {
-        this.password = password;
-    }
-
-    public void updateName(String name) {
-        this.name = name;
-    }
-    public void withdraw() {
-        this.isActive = false;
-    }
 }

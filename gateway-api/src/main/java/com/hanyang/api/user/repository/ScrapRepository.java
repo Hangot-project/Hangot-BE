@@ -14,8 +14,8 @@ import java.util.Optional;
 public interface ScrapRepository extends JpaRepository<Scrap, Long> {
     @Query("select s from Scrap s join fetch s.user u join fetch s.dataset d where s.dataset=:dataset and s.user=:user")
     Optional<Scrap> findByDatasetAndUser(Dataset dataset, User user);
-    @Query("select s from Scrap s join fetch s.user u join fetch s.dataset d  where u.email=:email")
-    List<Scrap> findAllByUserEmail(String email);
+    @Query("select s from Scrap s join fetch s.user u join fetch s.dataset d  where u.providerId=:providerId")
+    List<Scrap> findAllByProviderId(String providerId);
     Long countByDataset(Dataset dataset);
     int countByUser(User user);
 }

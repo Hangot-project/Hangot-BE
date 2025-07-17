@@ -47,9 +47,6 @@ public class DatasetService {
         return new ResDatasetDetailDto(dataset, scrapCount.intValue());
     }
 
-    public Dataset findById(Long id) {
-        return datasetRepository.findByIdWithTheme(id).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
-    }
 
     @Transactional(readOnly = true)
     public List<String> getByKeyword(String keyword) {

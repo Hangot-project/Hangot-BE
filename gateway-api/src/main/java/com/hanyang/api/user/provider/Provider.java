@@ -1,7 +1,7 @@
 package com.hanyang.api.user.provider;
 
 public enum Provider {
-    KAKAO("kakao");
+    KAKAO("KAKAO");
 
     private final String value;
 

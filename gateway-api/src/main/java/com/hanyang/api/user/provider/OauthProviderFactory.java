@@ -14,8 +14,9 @@ public class OauthProviderFactory {
     private final List<OauthProvider> providers;
 
     public OauthProvider getProvider(String provider) {
+        Provider providerEnum = Provider.valueOf(provider.toUpperCase());
         return providers.stream()
-                .filter(p -> p.getProvider().equals(provider))
+                .filter(p -> p.getProvider().equals(providerEnum))
                 .findFirst()
                 .orElseThrow(() -> new IllegalProviderException(ResponseMessage.ILLEGAL_PROVIDER));
     }
