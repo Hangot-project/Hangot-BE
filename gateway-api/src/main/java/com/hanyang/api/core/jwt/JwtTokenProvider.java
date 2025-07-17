@@ -17,12 +17,10 @@ public class JwtTokenProvider {
 
     private final JwtSecretKey jwtSecretKey;
 
-    public static final String AUTO_LOGIN_CLAIM_KEY = "auto";
-
     @Value("${jwt.expire.access}")
     private Long accessExpire;
 
-    public String generateAccessToken(final Authentication authentication, final boolean isAutoLogin) {
+    public String generateAccessToken(final Authentication authentication) {
         final String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -33,7 +31,6 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
-                .claim(AUTO_LOGIN_CLAIM_KEY, isAutoLogin)
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(jwtSecretKey.getKey(), SignatureAlgorithm.HS256)
                 .compact();

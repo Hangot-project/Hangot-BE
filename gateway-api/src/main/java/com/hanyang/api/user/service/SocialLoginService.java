@@ -31,7 +31,7 @@ public class SocialLoginService {
                 Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
         );
 
-         String accessToken = jwtTokenProvider.generateAccessToken(authentication, false);
+         String accessToken = jwtTokenProvider.generateAccessToken(authentication);
 
         return ResLoginDto.builder()
                 .grantType("Bearer")
