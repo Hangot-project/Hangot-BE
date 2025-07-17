@@ -79,14 +79,4 @@ public class JwtTokenResolver {
             throw new JwtTokenException("토큰 형식이 올바르지 않습니다.");
         }
     }
-
-    public boolean getAutoLogin(final String accessToken) {
-        try {
-            final Claims claims = parseToken(accessToken);
-            validateClaims(claims);
-            return (Boolean) claims.get(JwtTokenProvider.AUTO_LOGIN_CLAIM_KEY);
-        } catch (ExpiredJwtException e) {
-            return (Boolean) e.getClaims().get(JwtTokenProvider.AUTO_LOGIN_CLAIM_KEY);
-        }
-    }
 }
