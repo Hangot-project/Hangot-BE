@@ -1,10 +1,8 @@
 package com.hanyang.api.user.service;
 
-import com.hanyang.api.core.jwt.component.JwtTokenProvider;
-import com.hanyang.api.core.jwt.dto.TokenDto;
+import com.hanyang.api.core.jwt.JwtTokenProvider;
 import com.hanyang.api.user.domain.User;
 import com.hanyang.api.user.dto.ResLoginDto;
-import com.hanyang.api.user.infrastructure.RedisManager;
 import com.hanyang.api.user.provider.OauthProviderFactory;
 import com.hanyang.api.user.repository.OauthProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +19,10 @@ public class SocialLoginService {
     private final OauthProviderFactory oauthProviderFactory;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final RedisManager redisManager;
 
-    public ResLoginDto socialLogin(String provider, String code) {
+    public ResLoginDto socialLogin(java.lang.String provider, java.lang.String code) {
         OauthProvider oauthProvider = oauthProviderFactory.getProvider(provider);
-        String providerId = oauthProvider.getProviderId(code);
+        java.lang.String providerId = oauthProvider.getProviderId(code);
         User user = userService.signUp(oauthProvider.getProvider(), providerId);
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(
@@ -34,14 +31,11 @@ public class SocialLoginService {
                 Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()))
         );
 
-        TokenDto tokenDto = jwtTokenProvider.generateLoginToken(authentication, false);
-        
-        redisManager.setCode(user.getProviderId(), tokenDto.getRefreshToken(),
-                86400000L);
+         String accessToken = jwtTokenProvider.generateAccessToken(authentication, false);
 
         return ResLoginDto.builder()
                 .grantType("Bearer")
-                .accessToken(tokenDto.getAccessToken())
+                .accessToken(accessToken)
                 .role(user.getRole().name())
                 .build();
     }

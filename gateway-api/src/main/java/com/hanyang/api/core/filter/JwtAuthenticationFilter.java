@@ -1,9 +1,9 @@
 package com.hanyang.api.core.filter;
 
 import com.hanyang.api.core.component.ApiResponseBuilder;
-import com.hanyang.api.core.jwt.component.AuthorizationExtractor;
-import com.hanyang.api.core.jwt.component.JwtTokenResolver;
-import com.hanyang.api.core.jwt.component.JwtTokenValidator;
+import com.hanyang.api.core.jwt.AuthorizationExtractor;
+import com.hanyang.api.core.jwt.JwtTokenResolver;
+import com.hanyang.api.core.jwt.JwtTokenValidator;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

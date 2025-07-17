@@ -1,4 +1,4 @@
-package com.hanyang.api.core.jwt.component;
+package com.hanyang.api.core.jwt;
 
 import com.hanyang.api.core.exception.JwtTokenException;
 import io.jsonwebtoken.*;
