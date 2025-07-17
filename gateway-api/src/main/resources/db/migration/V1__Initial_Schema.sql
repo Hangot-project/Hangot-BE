@@ -49,16 +49,5 @@ CREATE TABLE scrap (
     UNIQUE KEY unique_user_dataset (user_id, dataset_id)
 );
 
--- MySQL Full-text search function
-DELIMITER //
-CREATE FUNCTION match_against(title TEXT, search_word TEXT)
-RETURNS DOUBLE
-READS SQL DATA
-DETERMINISTIC
-BEGIN
-    RETURN MATCH(title) AGAINST(search_word IN BOOLEAN MODE);
-END//
-DELIMITER ;
-
 -- Full-text index 추가
 ALTER TABLE dataset ADD FULLTEXT(title);

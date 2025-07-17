@@ -61,15 +61,12 @@ public class DatasetSearchRepository {
 
     }
 
-    private BooleanExpression titleLike(String searchWord) {
-        if (searchWord == null || searchWord.trim().isEmpty()) {
-            return null;
-        }
+    private BooleanExpression titleLike(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) return null;
 
-        final String formattedSearchWord = "\"" + searchWord + "\"";
-        return numberTemplate(Double.class, "function('match_against', {0}, {1})",
-                dataset.title, formattedSearchWord)
-                .gt(0);
+        return numberTemplate(Double.class,
+                "MATCH({0}) AGAINST ({1} IN BOOLEAN MODE)",
+                dataset.title, keyword).gt(0);
     }
 
     private BooleanExpression organizationIn(List<String> organizationList) {
