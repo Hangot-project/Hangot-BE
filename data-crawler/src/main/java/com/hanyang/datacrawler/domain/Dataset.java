@@ -36,7 +36,7 @@ public class Dataset {
     private String resourceUrl;
     private String type;
     private String sourceUrl;
-    private String source = "공공데이터포털";
+    private String source;
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<DatasetTheme> datasetThemeList = new ArrayList<>();
 }

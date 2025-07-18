@@ -85,6 +85,7 @@ public class DataGoKrHtmlParser {
                     .type(type)
                     .resourceName(resourceName)
                     .sourceUrl(sourceUrl)
+                    .source("공공 데이터 포털")
                     .build();
 
             return new DatasetWithThemeDto(dataset, themeList);

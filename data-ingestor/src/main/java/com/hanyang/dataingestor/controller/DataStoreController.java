@@ -21,7 +21,7 @@ public class DataStoreController {
     private final TableService tableService;
 
     @Operation(summary = "파일 데이터 시각화 차트 데이터")
-    @GetMapping("/dataset/{datasetId}/chart")
+    @GetMapping("/datastore/{datasetId}/chart")
     public ResponseEntity<ApiResponse<ResChartDto>> chart(
             @PathVariable String datasetId, 
             @RequestParam String colName,
@@ -31,13 +31,13 @@ public class DataStoreController {
     }
 
     @Operation(summary = "축 리스트 가져오기")
-    @GetMapping("/dataset/{datasetId}/axis")
+    @GetMapping("/datastore/{datasetId}/axis")
     public ResponseEntity<ApiResponse<ResAxisDto>> chartAxis(@PathVariable String datasetId) {
         return ResponseEntity.ok(ApiResponse.ok(new ResAxisDto(tableService.getAxis(datasetId))));
     }
 
     @Operation(summary = "파일 데이터 시각화 차트 데이터(테이블)")
-    @GetMapping("/dataset/{datasetId}/chart/table")
+    @GetMapping("/datastore/{datasetId}/chart/table")
     public ResponseEntity<ApiResponse<ResChartTableDto>> chart(@PathVariable String datasetId) {
         return ResponseEntity.ok(ApiResponse.ok(tableService.getChartTable(datasetId)));
     }

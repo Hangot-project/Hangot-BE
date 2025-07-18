@@ -32,7 +32,7 @@ public class TableService {
         List<Document> resultList = mongoManager.groupByAxis(datasetId, axis, type);
 
         List<String> dataNames = resultList.get(0).keySet().stream()
-                .filter(key -> !key.equals(axis))
+                .filter(key -> !key.equals(axis) && !key.equals(MONGO_ID_FIELD))
                 .collect(Collectors.toList());
 
         List<String> xLabels = resultList.stream()
@@ -60,7 +60,9 @@ public class TableService {
     public Set<String> getAxis(String datasetId) {
         Optional<Map<String, Object>> row = mongoManager.findById(datasetId, FIRST_ROW_ID);
         validateDatasetExists(row);
-        return row.get().keySet();
+        return row.get().keySet().stream()
+                .filter(key -> !key.equals(MONGO_ID_FIELD))
+                .collect(Collectors.toSet());
     }
 
     public ResChartTableDto getChartTable(String datasetId) {
