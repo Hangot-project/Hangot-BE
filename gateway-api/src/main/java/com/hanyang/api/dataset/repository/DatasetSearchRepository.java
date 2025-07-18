@@ -65,7 +65,7 @@ public class DatasetSearchRepository {
         if (keyword == null || keyword.trim().isEmpty()) return null;
 
         return numberTemplate(Double.class,
-                "MATCH({0}) AGAINST ({1} IN BOOLEAN MODE)",
+                "function('match_against', {0}, {1})",
                 dataset.title, keyword).gt(0);
     }
 
