@@ -21,6 +21,8 @@ public class ResDatasetDetailDto {
     private Integer scrap;
     private String resourceName;
     private String resourceUrl;
+    private String source;
+    private String sourceUrl;
     private String type;
     private String license;
 
@@ -38,5 +40,7 @@ public class ResDatasetDetailDto {
         this.resourceUrl = dataset.getResourceUrl();
         this.type = dataset.getType();
         this.scrap = scrapCount;
+        this.source = dataset.getSource();
+        this.sourceUrl = dataset.getSourceUrl();
     }
 }

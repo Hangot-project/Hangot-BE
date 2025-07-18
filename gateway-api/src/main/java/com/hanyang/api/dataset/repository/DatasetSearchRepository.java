@@ -64,9 +64,11 @@ public class DatasetSearchRepository {
     private BooleanExpression titleLike(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return null;
 
+        String booleanModeKeyword = "+" + keyword + "*";
+
         return numberTemplate(Double.class,
                 "function('match_against', {0}, {1})",
-                dataset.title, keyword).gt(0);
+                dataset.title, booleanModeKeyword).gt(0);
     }
 
     private BooleanExpression organizationIn(List<String> organizationList) {
