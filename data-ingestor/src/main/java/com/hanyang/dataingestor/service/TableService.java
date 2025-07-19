@@ -36,7 +36,7 @@ public class TableService {
                 .collect(Collectors.toList());
 
         List<String> xLabels = resultList.stream()
-                .map(doc -> String.valueOf(doc.get(axis)))
+                .map(doc -> String.valueOf(doc.get(MONGO_ID_FIELD)))
                 .toList();
 
         List<List<Double>> dataList = dataNames.stream()
