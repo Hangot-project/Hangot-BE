@@ -23,7 +23,7 @@ public class ScrapService {
     private final UserService userService;
 
     public Scrap scrap(String providerId, Long datasetId) {
-        Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
+        Dataset dataset = datasetRepository.findById(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
         dataset.updateScrap();
         User user = userService.findByProviderId(providerId);
         checkDuplicateByDatasetAndUser(dataset, user);
@@ -37,7 +37,7 @@ public class ScrapService {
     }
 
     public void delete(String providerId, Long datasetId) {
-        Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
+        Dataset dataset = datasetRepository.findById(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
         User user = userService.findByProviderId(providerId);
         Scrap scrap = findByDatasetAndUser(dataset, user);
 
@@ -55,7 +55,7 @@ public class ScrapService {
     }
 
     public boolean isUserScrap(String providerId,Long datasetId) {
-        Dataset dataset = datasetRepository.findByIdWithTheme(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
+        Dataset dataset = datasetRepository.findById(datasetId).orElseThrow(() -> new ResourceNotFoundException("해당 데이터셋은 존재하지 않습니다"));
         User user = userService.findByProviderId(providerId);
         return scrapRepository.findByDatasetAndUser(dataset, user).isPresent();
     }

@@ -15,7 +15,7 @@ public class DataCrawlerScheduler {
 
     private final DataCrawlerService dataCrawlerService;
 
-    @Scheduled(cron = "0 54 16 * * ?")
+    @Scheduled(cron = "0 00 2 * * ?")
     public void scheduledDailyCrawl() {
         log.info("데이터 크롤링 시작...");
         dataCrawlerService.crawlDatasetsForPreviousDay("data.go.kr", 10);

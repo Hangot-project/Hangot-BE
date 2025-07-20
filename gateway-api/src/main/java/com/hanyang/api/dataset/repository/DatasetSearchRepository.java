@@ -29,7 +29,7 @@ public class DatasetSearchRepository {
                 .where(titleLike(dataSearch.getKeyword()),
                         organizationIn(dataSearch.getOrganization()),
                         typeIn(dataSearch.getType()),
-                        themeIn(dataSearch.getTheme()));
+                        tagIn(dataSearch.getTag()));
 
         switch (dataSearch.getSort().name()) {
             case "스크랩" -> query.orderBy(dataset.scrap.desc());
@@ -43,7 +43,7 @@ public class DatasetSearchRepository {
                 .where(titleLike(dataSearch.getKeyword()),
                         organizationIn(dataSearch.getOrganization()),
                         typeIn(dataSearch.getType()),
-                        themeIn(dataSearch.getTheme()))
+                        tagIn(dataSearch.getTag()))
                 .fetchOne();
         long totalCount = totalCountResult != null ? totalCountResult : 0L;
 
@@ -70,8 +70,8 @@ public class DatasetSearchRepository {
         return organizationList !=null  ? dataset.organization.in(organizationList) : null;
     }
 
-    private BooleanExpression themeIn(List<String> themeList){
-        return themeList != null ? dataset.datasetThemeList.any().theme.in(themeList) : null;
+    private BooleanExpression tagIn(List<String> tagList){
+        return tagList != null ? dataset.tagList.any().tag.in(tagList) : null;
     }
 
     private BooleanExpression typeIn(List<String> typeList) {

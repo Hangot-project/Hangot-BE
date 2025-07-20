@@ -19,12 +19,12 @@ CREATE TABLE dataset (
     PRIMARY KEY (dataset_id)
 );
 
--- DatasetTheme 테이블
-CREATE TABLE dataset_theme (
-    dataset_theme_id BIGINT NOT NULL AUTO_INCREMENT,
-    theme VARCHAR(255),
+-- Tag 테이블
+CREATE TABLE tag (
+    tag_id BIGINT NOT NULL AUTO_INCREMENT,
+    tag VARCHAR(255),
     dataset_id BIGINT,
-    PRIMARY KEY (dataset_theme_id),
+    PRIMARY KEY (tag_id),
     FOREIGN KEY (dataset_id) REFERENCES dataset(dataset_id) ON DELETE CASCADE
 );
 

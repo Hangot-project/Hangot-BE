@@ -5,7 +5,6 @@ import com.hanyang.api.dataset.domain.Dataset;
 import com.hanyang.api.dataset.dto.req.ReqDataSearchDto;
 import com.hanyang.api.dataset.dto.res.ResDatasetDetailDto;
 import com.hanyang.api.dataset.dto.res.ResDatasetListDto;
-import com.hanyang.api.dataset.dto.res.ResDatasetMainDto;
 import com.hanyang.api.dataset.service.DatasetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,17 +35,5 @@ public class DatasetController {
     public ResponseEntity<ApiResponse<ResDatasetDetailDto>> getDataset(@PathVariable Long datasetId){
         return ResponseEntity.ok(ApiResponse.ok(datasetService.getDatasetDetail(datasetId)));
     }
-    @Operation(summary = "인기 데이터 리스트가져오기")
-    @GetMapping(value = "/dataset/popular")
-    public ResponseEntity<ApiResponse<ResDatasetMainDto>> popularData() {
-        return ResponseEntity.ok(ApiResponse.ok(new ResDatasetMainDto(datasetService.getPopular())));
-    }
-
-    @Operation(summary = "신규 데이터 리스트가져오기")
-    @GetMapping(value = "/dataset/new")
-    public ResponseEntity<ApiResponse<ResDatasetMainDto>> newData() {
-        return ResponseEntity.ok(ApiResponse.ok(new ResDatasetMainDto(datasetService.getNew())));
-    }
-
 
 }

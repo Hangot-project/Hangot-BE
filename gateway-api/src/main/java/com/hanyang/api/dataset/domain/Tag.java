@@ -7,15 +7,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
-public class DatasetTheme {
+public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long datasetThemeId;
+    private Long tagId;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dataset_id")
     private Dataset dataset;
     
-    private String theme;
+    private String tag;
 
 }

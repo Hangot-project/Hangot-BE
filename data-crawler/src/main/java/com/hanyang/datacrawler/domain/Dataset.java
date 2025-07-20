@@ -38,5 +38,5 @@ public class Dataset {
     private String sourceUrl;
     private String source;
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-    private List<DatasetTheme> datasetThemeList = new ArrayList<>();
+    private List<Tag> tagList = new ArrayList<>();
 }

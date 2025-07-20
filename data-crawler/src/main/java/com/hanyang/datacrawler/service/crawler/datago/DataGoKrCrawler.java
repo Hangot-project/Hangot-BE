@@ -2,7 +2,7 @@ package com.hanyang.datacrawler.service.crawler.datago;
 
 import com.hanyang.datacrawler.config.CrawlerConfig;
 import com.hanyang.datacrawler.domain.Dataset;
-import com.hanyang.datacrawler.dto.DatasetWithThemeDto;
+import com.hanyang.datacrawler.dto.DatasetWithTag;
 import com.hanyang.datacrawler.exception.CrawlStopException;
 import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
@@ -77,9 +77,9 @@ public class DataGoKrCrawler implements DataCrawler {
         try {
             String html = restTemplate.getForObject(datasetUrl, String.class);
             
-            DatasetWithThemeDto dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
+            DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
             
-            Dataset savedDataset =  datasetService.saveDatasetWithTheme(dataset.getDataset(),dataset.getThemes());
+            Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
             log.info("단일 데이터셋 크롤링 완료: {}", dataset.getDataset().getTitle());
             return Optional.of(savedDataset);
 
