@@ -15,15 +15,10 @@ public class DataCrawlerScheduler {
 
     private final DataCrawlerService dataCrawlerService;
 
-    @Scheduled(cron = "0 0 2 * * ?") // 매일 새벽 2시
-    public void scheduledCrawl() {
-        log.info("예약된 전체 데이터 크롤링 시작...");
-        dataCrawlerService.crawlDatasets("data.go.kr",10,50);
-        log.info("예약된 데이터 크롤링 완료");
-    }
-
-    @Scheduled(fixedDelay = 3600000)
-    public void healthCheck() {
-        log.debug("Data crawler scheduler is running");
+    @Scheduled(cron = "0 54 16 * * ?")
+    public void scheduledDailyCrawl() {
+        log.info("데이터 크롤링 시작...");
+        dataCrawlerService.crawlDatasetsForPreviousDay("data.go.kr", 10);
+        log.info("데이터 크롤링 완료");
     }
 }

@@ -2,6 +2,8 @@ package com.hanyang.datacrawler.service.crawler.datago;
 
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithThemeDto;
+import com.hanyang.datacrawler.exception.CrawlStopException;
+import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -60,6 +62,10 @@ public class DataGoKrHtmlParser {
     }
 
     public DatasetWithThemeDto parseDatasetDetailPage(String html, String sourceUrl) {
+        return parseDatasetDetailPage(html, sourceUrl, LocalDate.now().minusDays(1));
+    }
+
+    public DatasetWithThemeDto parseDatasetDetailPage(String html, String sourceUrl, LocalDate cutoffDate) {
         try {
             Document doc = Jsoup.parse(html);
 
@@ -75,12 +81,24 @@ public class DataGoKrHtmlParser {
             String type = extractFromMetaTable(metaTable, "확장자");
             List<String> themeList = Arrays.asList(extractFromMetaTable(metaTable, "키워드").split(","));
 
+            LocalDate parsedUpdatedDate = parseDate(updatedDate);
+            
+            // 수정일이 기준일(cutoffDate)보다 늦은 경우 예외 발생
+            if (parsedUpdatedDate.isAfter(cutoffDate)) {
+                throw new NoCrawlNextDayException(title, parsedUpdatedDate, cutoffDate);
+            }
+            
+            // 수정일이 기준일보다 이전인 경우 크롤링 중단 예외 발생
+            if (parsedUpdatedDate.isBefore(cutoffDate)) {
+                throw new CrawlStopException(title, parsedUpdatedDate, cutoffDate);
+            }
+
             Dataset dataset = Dataset.builder()
                     .title(title)
                     .description(description)
                     .organization(organization)
                     .createdDate(parseDate(createdDate))
-                    .updatedDate(parseDate(updatedDate))
+                    .updatedDate(parsedUpdatedDate)
                     .license(licenseStr)
                     .type(type)
                     .resourceName(resourceName)

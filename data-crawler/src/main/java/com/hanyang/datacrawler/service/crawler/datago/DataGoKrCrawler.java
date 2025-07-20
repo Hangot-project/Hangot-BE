@@ -3,6 +3,8 @@ package com.hanyang.datacrawler.service.crawler.datago;
 import com.hanyang.datacrawler.config.CrawlerConfig;
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithThemeDto;
+import com.hanyang.datacrawler.exception.CrawlStopException;
+import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
@@ -51,13 +53,18 @@ public class DataGoKrCrawler implements DataCrawler {
         List<Dataset> result = new ArrayList<>();
 
         for (String datasetUrl : datasetUrls) {
-            crawlSingleDataset(datasetUrl).ifPresentOrElse(
-                    dataset -> {
-                        result.add(dataset);
-                        downloadFile(dataset);
-                    },
-                    () -> log.warn("크롤링 실패 - {}", datasetUrl)
-            );
+            try {
+                crawlSingleDataset(datasetUrl).ifPresentOrElse(
+                        dataset -> {
+                            result.add(dataset);
+                            downloadFile(dataset);
+                        },
+                        () -> log.warn("크롤링 실패 - {}", datasetUrl)
+                );
+            } catch (CrawlStopException e) {
+                log.info("크롤링 끝");
+                throw e;
+            }
         }
         log.debug("{}개 데이터셋 크롤링 완료", result.size());
         return result;
@@ -71,10 +78,14 @@ public class DataGoKrCrawler implements DataCrawler {
             String html = restTemplate.getForObject(datasetUrl, String.class);
             
             DatasetWithThemeDto dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
+            
             Dataset savedDataset =  datasetService.saveDatasetWithTheme(dataset.getDataset(),dataset.getThemes());
             log.info("단일 데이터셋 크롤링 완료: {}", dataset.getDataset().getTitle());
             return Optional.of(savedDataset);
 
+        } catch (NoCrawlNextDayException e) {
+            log.debug("날짜 필터링으로 인해 크롤링 제외: {}", e.getMessage());
+            return Optional.empty();
         } catch (Exception throwable) {
             log.error("단일 데이터셋 크롤링 실패: {}", throwable.getMessage());
             return Optional.empty();
