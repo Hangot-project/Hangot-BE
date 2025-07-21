@@ -22,7 +22,6 @@ public class DatasetService {
 
     @Transactional
     public Dataset saveDatasetWithTag(Dataset dataset, List<String> tags) {
-        log.debug("데이터셋 저장/수정 시도 - 제목: {}, 기관: {}", dataset.getTitle(), dataset.getOrganization());
         Optional<Dataset> existingDataset = datasetRepository.findBySourceUrl(dataset.getSourceUrl());
         
         Dataset savedDataset;
@@ -40,12 +39,12 @@ public class DatasetService {
             existing.setSource(dataset.getSource());
             
             savedDataset = datasetRepository.save(existing);
-            log.info("기존 데이터셋 수정 완료 - ID: {}, 제목: {}, 출처: {}", savedDataset.getDatasetId(), savedDataset.getTitle(), savedDataset.getSourceUrl());
+            log.debug("데이터셋 수정: {}", savedDataset.getTitle());
             
             tagRepository.deleteByDataset(savedDataset);
         } else {
             savedDataset = datasetRepository.save(dataset);
-            log.info("새 데이터셋 저장 완료 - ID: {}, 제목: {}, 출처: {}", savedDataset.getDatasetId(), savedDataset.getTitle(), savedDataset.getSourceUrl());
+            log.debug("데이터셋 새로 저장: {}", savedDataset.getTitle());
         }
 
         if (tags != null && !tags.isEmpty()) {
@@ -56,9 +55,8 @@ public class DatasetService {
                         .tag(tag.trim())
                         .build());
                 savedCount++;
-                log.debug("테마 저장 완료 - 데이터셋 ID: {}, 테마: {}", savedDataset.getDatasetId(), tag);
             }
-            log.info("데이터셋 테마 리스트 저장 완료 - 데이터셋 ID: {}, 저장된 테마 수: {}", savedDataset.getDatasetId(), savedCount);
+            log.debug("테마 저장 완료: {}개", savedCount);
         }
 
         return savedDataset;
@@ -67,7 +65,7 @@ public class DatasetService {
 
     @Transactional
     public Dataset updateResourceUrl(Dataset dataset, String resourceUrl) {
-        log.info("데이터셋 리소스 URL 업데이트 - ID: {}, URL: {}", dataset.getDatasetId(), resourceUrl);
+        log.debug("리소스 URL 업데이트: {}", dataset.getTitle());
         dataset.setResourceUrl(resourceUrl);
         return datasetRepository.save(dataset);
     }

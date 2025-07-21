@@ -1,6 +1,5 @@
 package com.hanyang.datacrawler.service.crawler.datago;
 
-import com.hanyang.datacrawler.config.CrawlerConfig;
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithTag;
 import com.hanyang.datacrawler.exception.CrawlStopException;
@@ -37,18 +36,11 @@ public class DataGoKrCrawler implements DataCrawler {
     }
 
     @Override
-    public int getMaxPages() {
-        return CrawlerConfig.MAX_PAGES;
-    }
-
-    @Override
     public List<Dataset> crawlDatasetsPage(int pageNo, int pageSize) {
         String url = buildPageUrl(pageNo, pageSize);
         String html = restTemplate.getForObject(url, String.class);
-        log.debug("{}페이지 HTML 파싱 시작", pageNo);
 
         List<String> datasetUrls = htmlParser.parseDatasetUrls(html);
-        log.debug("{}페이지에서 {}개 데이터셋 URL 추출", pageNo, datasetUrls.size());
 
         List<Dataset> result = new ArrayList<>();
 
@@ -62,17 +54,14 @@ public class DataGoKrCrawler implements DataCrawler {
                         () -> log.warn("크롤링 실패 - {}", datasetUrl)
                 );
             } catch (CrawlStopException e) {
-                log.info("크롤링 끝");
                 throw e;
             }
         }
-        log.debug("{}개 데이터셋 크롤링 완료", result.size());
         return result;
     }
 
     @Override
     public Optional<Dataset> crawlSingleDataset(String datasetUrl) {
-        log.info("단일 데이터셋 크롤링 시작: {}", datasetUrl);
 
         try {
             String html = restTemplate.getForObject(datasetUrl, String.class);
@@ -80,11 +69,9 @@ public class DataGoKrCrawler implements DataCrawler {
             DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
             
             Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
-            log.info("단일 데이터셋 크롤링 완료: {}", dataset.getDataset().getTitle());
             return Optional.of(savedDataset);
 
         } catch (NoCrawlNextDayException e) {
-            log.debug("날짜 필터링으로 인해 크롤링 제외: {}", e.getMessage());
             return Optional.empty();
         } catch (Exception throwable) {
             log.error("단일 데이터셋 크롤링 실패: {}", throwable.getMessage());
@@ -95,7 +82,6 @@ public class DataGoKrCrawler implements DataCrawler {
     @Override
     public void downloadFile(Dataset dataset) {
         String sourceUrl = dataset.getSourceUrl();
-        log.info("파일 다운로드 시작 - 데이터셋 ID: {}", dataset.getDatasetId());
         downloadParameterExtractor.extractDownloadParams(sourceUrl).ifPresent(params -> processDownload(dataset, params));
     }
     
@@ -112,9 +98,8 @@ public class DataGoKrCrawler implements DataCrawler {
             
             if (resourceUrl != null) {
                 datasetService.updateResourceUrl(dataset,resourceUrl);
-                log.info("파일 다운로드 성공 - 데이터셋 ID: {}, URL: {}", dataset.getDatasetId(), resourceUrl);
+                log.debug("파일 다운로드 성공: {}", dataset.getTitle());
                 rabbitMQPublisher.sendMessage(dataset.getDatasetId().toString());
-                log.info("메세지 전송 - 데이터셋 ID: {}", dataset.getDatasetId());
             } else {
                 log.warn("파일 다운로드 실패 - 데이터셋 ID: {}", dataset.getDatasetId());
             }
