@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -45,23 +44,19 @@ public class DataGoKrFileDownloadService {
                     
                     InputStream inputStream = clientHttpResponse.getBody();
 
+
                     // 콜백 내에서 임시 파일에 저장
                     Path tempFile = Files.createTempFile("download-", fileName);
-                    try {
-                        Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                        
-                        // 임시 파일에서 읽어서 S3 업로드
-                        try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile())) {
-                            return uploadToS3(fileInputStream, folderName, fileName);
-                        }
-                    } finally {
-                        // 임시 파일 삭제
-                        try {
-                            Files.deleteIfExists(tempFile);
-                        } catch (IOException e) {
-                            log.warn("임시 파일 삭제 실패: {}", tempFile, e);
-                        }
+                    Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+                    // 임시 파일에서 읽어서 S3 업로드
+                    try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile())) {
+                        return uploadToS3(fileInputStream, folderName, fileName);
                     }
+                    finally {
+                        Files.deleteIfExists(tempFile);
+                    }
+
                 }
             );
             
@@ -71,7 +66,7 @@ public class DataGoKrFileDownloadService {
             throw new RuntimeException("파일 다운로드 실패: " + downloadUrl, e);
         } catch (Exception e) {
             // 예상치 못한 시스템 오류 - 스택트레이스 포함
-            log.error("파일 다운로드 중 예상치 못한 오류 - downloadURL: {}, sourceURL: {}, 에러: {}", downloadUrl, sourceUrl, e.getMessage(), e);
+            log.error("파일 다운로드 중 예상치 못한 오류 - fileName: {} downloadURL: {}, sourceURL: {}, 에러: {}",fileName,downloadUrl, sourceUrl, e.getMessage(), e);
             throw new RuntimeException("파일 다운로드 실패: " + downloadUrl, e);
         }
     }

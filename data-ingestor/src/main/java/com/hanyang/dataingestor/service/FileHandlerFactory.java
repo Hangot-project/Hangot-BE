@@ -14,7 +14,7 @@ public class FileHandlerFactory {
             case "csv":
                 return CsvHandler.readCsv(inputStream);
             default:
-                throw new IllegalArgumentException("지원하지 않는 파일 형식입니다: " + extension);
+                throw new IllegalArgumentException();
         }
     }
     

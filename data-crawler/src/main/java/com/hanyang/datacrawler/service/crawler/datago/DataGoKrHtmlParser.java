@@ -61,56 +61,48 @@ public class DataGoKrHtmlParser {
         }
     }
 
-    public DatasetWithTag parseDatasetDetailPage(String html, String sourceUrl) {
-        return parseDatasetDetailPage(html, sourceUrl, LocalDate.now().minusDays(1));
-    }
 
-    public DatasetWithTag parseDatasetDetailPage(String html, String sourceUrl, LocalDate cutoffDate) {
-        try {
-            Document doc = Jsoup.parse(html);
+    public DatasetWithTag parseDatasetDetailPage(String html, String sourceUrl, LocalDate targetDate) {
+        Document doc = Jsoup.parse(html);
 
-            String title = extractTitle(doc);
-            Elements metaTable = doc.select(".file-meta-table-pc");
+        String title = extractTitle(doc);
+        Elements metaTable = doc.select(".file-meta-table-pc");
 
-            String description = extractFromMetaTable(metaTable, "설명");
-            String organization = extractFromMetaTable(metaTable, "제공기관");
-            String createdDate = extractFromMetaTable(metaTable, "등록일");
-            String updatedDate = extractFromMetaTable(metaTable, "수정일");
-            String licenseStr = extractFromMetaTable(metaTable,"이용허락범위");
-            String resourceName = extractFromMetaTable(metaTable, "파일데이터명");
-            String type = extractFromMetaTable(metaTable, "확장자");
-            List<String> tagList = Arrays.asList(extractFromMetaTable(metaTable, "키워드").split(","));
+        String description = extractFromMetaTable(metaTable, "설명");
+        String organization = extractFromMetaTable(metaTable, "제공기관");
+        String createdDate = extractFromMetaTable(metaTable, "등록일");
+        String updatedDate = extractFromMetaTable(metaTable, "수정일");
+        String licenseStr = extractFromMetaTable(metaTable,"이용허락범위");
+        String resourceName = extractFromMetaTable(metaTable, "파일데이터명");
+        String type = extractFromMetaTable(metaTable, "확장자");
+        List<String> tagList = Arrays.asList(extractFromMetaTable(metaTable, "키워드").split(","));
 
-            LocalDate parsedUpdatedDate = parseDate(updatedDate);
-            
-            // 수정일이 기준일(cutoffDate)보다 늦은 경우 예외 발생
-            if (parsedUpdatedDate.isAfter(cutoffDate)) {
-                throw new NoCrawlNextDayException(title, parsedUpdatedDate, cutoffDate);
-            }
-            
-            // 수정일이 기준일보다 이전인 경우 크롤링 중단 예외 발생
-            if (parsedUpdatedDate.isBefore(cutoffDate)) {
-                throw new CrawlStopException(title, parsedUpdatedDate, cutoffDate);
-            }
+        LocalDate parsedUpdatedDate = parseDate(updatedDate);
 
-            Dataset dataset = Dataset.builder()
-                    .title(title)
-                    .description(description)
-                    .organization(organization)
-                    .createdDate(parseDate(createdDate))
-                    .updatedDate(parsedUpdatedDate)
-                    .license(licenseStr)
-                    .type(type)
-                    .resourceName(resourceName)
-                    .sourceUrl(sourceUrl)
-                    .source("공공 데이터 포털")
-                    .build();
-
-            return new DatasetWithTag(dataset, tagList);
-        } catch (Exception e) {
-            log.error("상세 페이지 파싱 중 오류: {}", e.getMessage(), e);
-            throw new RuntimeException("데이터셋 상세 페이지 파싱 실패", e);
+        // 수정일이 기준일(cutoffDate)보다 최신인 경우 예외 발생
+        if (parsedUpdatedDate.isAfter(targetDate)) {
+            throw new NoCrawlNextDayException(title, parsedUpdatedDate, targetDate);
         }
+
+        // 수정일이 기준일보다 이전인 경우 크롤링 중단 예외 발생
+        if (parsedUpdatedDate.isBefore(targetDate)) {
+            throw new CrawlStopException(title, parsedUpdatedDate, targetDate);
+        }
+
+        Dataset dataset = Dataset.builder()
+                .title(title)
+                .description(description)
+                .organization(organization)
+                .createdDate(parseDate(createdDate))
+                .updatedDate(parsedUpdatedDate)
+                .license(licenseStr)
+                .type(type)
+                .resourceName(resourceName)
+                .sourceUrl(sourceUrl)
+                .source("공공 데이터 포털")
+                .build();
+
+        return new DatasetWithTag(dataset, tagList);
     }
 
 
@@ -156,7 +148,7 @@ public class DataGoKrHtmlParser {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             return LocalDate.parse(dateStr.trim(), formatter);
         } catch (Exception e) {
-            log.warn("날짜 파싱 실패: {}", dateStr);
+            log.info("날짜 파싱 실패: {}", dateStr);
             return LocalDate.now();
         }
     }
