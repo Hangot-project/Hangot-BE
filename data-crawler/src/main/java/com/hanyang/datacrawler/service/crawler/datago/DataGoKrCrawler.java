@@ -45,19 +45,25 @@ public class DataGoKrCrawler implements DataCrawler {
         List<Dataset> result = new ArrayList<>();
 
         for (String datasetUrl : datasetUrls) {
-            crawlSingleDataset(datasetUrl).ifPresentOrElse(
-                    dataset -> {
-                        result.add(dataset);
-                        downloadFile(dataset);
-                    },
-                    () -> log.debug("데이터셋 크롤링 스킵됨 - {}", datasetUrl)
-            );
+            try {
+                crawlSingleDataset(datasetUrl).ifPresentOrElse(
+                        dataset -> {
+                            result.add(dataset);
+                            downloadFile(dataset);
+                        },
+                        () -> log.debug("데이터셋 크롤링 스킵됨 - {}", datasetUrl)
+                );
+            } catch (CrawlStopException e) {
+                log.info("페이지 크롤링 중단: 목표 날짜 이전 데이터 도달 - {}", datasetUrl);
+                throw e;
+            }
         }
         return result;
     }
 
     @Override
     public Optional<Dataset> crawlSingleDataset(String datasetUrl) {
+        log.info("단일 데이터셋 크롤링 시작 - URL: {}", datasetUrl);
 
         try {
             String html = restTemplate.getForObject(datasetUrl, String.class);
@@ -65,7 +71,7 @@ public class DataGoKrCrawler implements DataCrawler {
             DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
             
             Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
-            log.debug("데이터셋 크롤링 성공: {} - {}", savedDataset.getTitle(), datasetUrl);
+            log.info("단일 데이터셋 크롤링 완료 - 제목: {}, URL: {}", savedDataset.getTitle(), datasetUrl);
             return Optional.of(savedDataset);
 
         } catch (NoCrawlNextDayException e) {
@@ -75,7 +81,7 @@ public class DataGoKrCrawler implements DataCrawler {
             log.info("비즈니스 로직: 크롤링 중단 조건 도달 - {}", datasetUrl);
             throw e;
         } catch (Exception throwable) {
-            log.error("크롤링 실패 (시스템 오류): {} - URL: {}", throwable.getMessage(), datasetUrl, throwable);
+            log.error("단일 데이터셋 크롤링 실패 - URL: {}, 에러: {}", datasetUrl, throwable.getMessage(), throwable);
             return Optional.empty();
         }
     }
@@ -90,15 +96,15 @@ public class DataGoKrCrawler implements DataCrawler {
         try {
             FileDownloadParams downloadParams = (FileDownloadParams) params;
             String folderName = String.valueOf(dataset.getDatasetId());
-            String fileName = dataset.getResourceName() + "." + dataset.getType();
+            String fileName = dataset.getResourceName();
             
             String downloadUrl = dataGoKrFileDownloadService.buildDataGoDownloadUrl(
                     downloadParams.atchFileId(), downloadParams.fileDetailSn(), fileName);
             
-            String resourceUrl = dataGoKrFileDownloadService.downloadAndUploadFile(downloadUrl, folderName, fileName);
+            String s3Url = dataGoKrFileDownloadService.downloadAndUploadFile(downloadUrl, folderName, fileName, dataset.getSourceUrl());
             
-            if (resourceUrl != null) {
-                datasetService.updateResourceUrl(dataset,resourceUrl);
+            if (s3Url != null) {
+                datasetService.updateResourceUrl(dataset, downloadUrl);
                 log.debug("파일 다운로드 성공: {}", dataset.getTitle());
                 rabbitMQPublisher.sendMessage(dataset.getDatasetId().toString());
             } else {

@@ -56,6 +56,32 @@ public class S3StorageManager {
         }
     }
 
+    public void deleteDatasetFiles(String datasetId) {
+        try {
+            ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(datasetId + "/")
+                    .build();
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(listObjectsRequest);
+            List<S3Object> s3ObjectsList = response.contents();
+
+            if (!s3ObjectsList.isEmpty()) {
+                for (S3Object s3Object : s3ObjectsList) {
+                    DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(s3Object.key())
+                            .build();
+                    s3Client.deleteObject(deleteRequest);
+                    log.debug("S3 파일 삭제 완료: {}", s3Object.key());
+                }
+                log.info("데이터셋 파일 삭제 완료: {}", datasetId);
+            }
+        } catch (S3Exception e) {
+            log.error("S3 파일 삭제 실패: {} - {}", datasetId, e.getMessage());
+        }
+    }
+
     private String findFirstFileKey(String datasetId) {
         try {
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()

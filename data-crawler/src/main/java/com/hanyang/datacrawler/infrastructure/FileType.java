@@ -1,5 +1,8 @@
 package com.hanyang.datacrawler.infrastructure;
 
+import lombok.Getter;
+
+@Getter
 public enum FileType {
     PDF("pdf", "application/pdf"),
     CSV("csv", "text/csv; charset=UTF-8"),
@@ -45,14 +48,6 @@ public enum FileType {
     FileType(String extension, String contentType) {
         this.extension = extension;
         this.contentType = contentType;
-    }
-
-    public String getExtension() {
-        return extension;
-    }
-
-    public String getContentType() {
-        return contentType;
     }
 
     public static FileType fromExtension(String extension) {

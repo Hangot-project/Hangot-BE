@@ -21,6 +21,7 @@ public class RabbitMQConsumer {
 
     private final DataParsingService dataParsingService;
     private final RabbitTemplate rabbitTemplate;
+    private final S3StorageManager s3StorageManager;
     
     @Value("${rabbitmq.retry.max-count:3}")
     private int maxRetryCount;
@@ -34,8 +35,9 @@ public class RabbitMQConsumer {
 
         try {
             dataParsingService.createDataTable(datasetId);
+            s3StorageManager.deleteDatasetFiles(datasetId);
             channel.basicAck(tag, false);
-            log.info("데이터 처리 완료: {}", datasetId);
+            log.info("데이터 처리 및 S3 파일 삭제 완료: {}", datasetId);
             
         } catch (Exception e) {
             log.error("데이터 처리 실패: {} - {}", datasetId, e.getMessage());
