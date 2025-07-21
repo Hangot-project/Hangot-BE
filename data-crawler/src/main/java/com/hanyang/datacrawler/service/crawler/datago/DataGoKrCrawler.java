@@ -1,8 +1,9 @@
 package com.hanyang.datacrawler.service.crawler.datago;
 
-import com.hanyang.datacrawler.config.CrawlerConfig;
 import com.hanyang.datacrawler.domain.Dataset;
-import com.hanyang.datacrawler.dto.DatasetWithThemeDto;
+import com.hanyang.datacrawler.dto.DatasetWithTag;
+import com.hanyang.datacrawler.exception.CrawlStopException;
+import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
@@ -35,46 +36,43 @@ public class DataGoKrCrawler implements DataCrawler {
     }
 
     @Override
-    public int getMaxPages() {
-        return CrawlerConfig.MAX_PAGES;
-    }
-
-    @Override
     public List<Dataset> crawlDatasetsPage(int pageNo, int pageSize) {
         String url = buildPageUrl(pageNo, pageSize);
         String html = restTemplate.getForObject(url, String.class);
-        log.debug("{}페이지 HTML 파싱 시작", pageNo);
 
         List<String> datasetUrls = htmlParser.parseDatasetUrls(html);
-        log.debug("{}페이지에서 {}개 데이터셋 URL 추출", pageNo, datasetUrls.size());
 
         List<Dataset> result = new ArrayList<>();
 
         for (String datasetUrl : datasetUrls) {
-            crawlSingleDataset(datasetUrl).ifPresentOrElse(
-                    dataset -> {
-                        result.add(dataset);
-                        downloadFile(dataset);
-                    },
-                    () -> log.warn("크롤링 실패 - {}", datasetUrl)
-            );
+            try {
+                crawlSingleDataset(datasetUrl).ifPresentOrElse(
+                        dataset -> {
+                            result.add(dataset);
+                            downloadFile(dataset);
+                        },
+                        () -> log.warn("크롤링 실패 - {}", datasetUrl)
+                );
+            } catch (CrawlStopException e) {
+                throw e;
+            }
         }
-        log.debug("{}개 데이터셋 크롤링 완료", result.size());
         return result;
     }
 
     @Override
     public Optional<Dataset> crawlSingleDataset(String datasetUrl) {
-        log.info("단일 데이터셋 크롤링 시작: {}", datasetUrl);
 
         try {
             String html = restTemplate.getForObject(datasetUrl, String.class);
             
-            DatasetWithThemeDto dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
-            Dataset savedDataset =  datasetService.saveDatasetWithTheme(dataset.getDataset(),dataset.getThemes());
-            log.info("단일 데이터셋 크롤링 완료: {}", dataset.getDataset().getTitle());
+            DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
+            
+            Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
             return Optional.of(savedDataset);
 
+        } catch (NoCrawlNextDayException e) {
+            return Optional.empty();
         } catch (Exception throwable) {
             log.error("단일 데이터셋 크롤링 실패: {}", throwable.getMessage());
             return Optional.empty();
@@ -84,7 +82,6 @@ public class DataGoKrCrawler implements DataCrawler {
     @Override
     public void downloadFile(Dataset dataset) {
         String sourceUrl = dataset.getSourceUrl();
-        log.info("파일 다운로드 시작 - 데이터셋 ID: {}", dataset.getDatasetId());
         downloadParameterExtractor.extractDownloadParams(sourceUrl).ifPresent(params -> processDownload(dataset, params));
     }
     
@@ -101,9 +98,8 @@ public class DataGoKrCrawler implements DataCrawler {
             
             if (resourceUrl != null) {
                 datasetService.updateResourceUrl(dataset,resourceUrl);
-                log.info("파일 다운로드 성공 - 데이터셋 ID: {}, URL: {}", dataset.getDatasetId(), resourceUrl);
+                log.debug("파일 다운로드 성공: {}", dataset.getTitle());
                 rabbitMQPublisher.sendMessage(dataset.getDatasetId().toString());
-                log.info("메세지 전송 - 데이터셋 ID: {}", dataset.getDatasetId());
             } else {
                 log.warn("파일 다운로드 실패 - 데이터셋 ID: {}", dataset.getDatasetId());
             }

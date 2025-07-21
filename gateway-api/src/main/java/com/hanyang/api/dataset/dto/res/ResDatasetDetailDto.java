@@ -1,7 +1,7 @@
 package com.hanyang.api.dataset.dto.res;
 
 import com.hanyang.api.dataset.domain.Dataset;
-import com.hanyang.api.dataset.domain.DatasetTheme;
+import com.hanyang.api.dataset.domain.Tag;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -14,13 +14,15 @@ public class ResDatasetDetailDto {
     private String title;
     private String description;
     private String organization;
-    private List<String> theme;
+    private List<String> tag;
     private LocalDate createdDate;
     private LocalDate updateDate;
     private Integer view;
     private Integer scrap;
     private String resourceName;
     private String resourceUrl;
+    private String source;
+    private String sourceUrl;
     private String type;
     private String license;
 
@@ -29,7 +31,7 @@ public class ResDatasetDetailDto {
         this.title = dataset.getTitle();
         this.description = dataset.getDescription();
         this.organization = dataset.getOrganization();
-        this.theme = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
+        this.tag = dataset.getTagList().stream().map(Tag::getTag).toList();
         this.createdDate = dataset.getCreatedDate();
         this.updateDate = dataset.getUpdatedDate();
         this.view = dataset.getView();
@@ -38,5 +40,7 @@ public class ResDatasetDetailDto {
         this.resourceUrl = dataset.getResourceUrl();
         this.type = dataset.getType();
         this.scrap = scrapCount;
+        this.source = dataset.getSource();
+        this.sourceUrl = dataset.getSourceUrl();
     }
 }

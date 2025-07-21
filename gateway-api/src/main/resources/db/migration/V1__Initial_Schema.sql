@@ -19,12 +19,12 @@ CREATE TABLE dataset (
     PRIMARY KEY (dataset_id)
 );
 
--- DatasetTheme 테이블
-CREATE TABLE dataset_theme (
-    dataset_theme_id BIGINT NOT NULL AUTO_INCREMENT,
-    theme VARCHAR(255),
+-- Tag 테이블
+CREATE TABLE tag (
+    tag_id BIGINT NOT NULL AUTO_INCREMENT,
+    tag VARCHAR(255),
     dataset_id BIGINT,
-    PRIMARY KEY (dataset_theme_id),
+    PRIMARY KEY (tag_id),
     FOREIGN KEY (dataset_id) REFERENCES dataset(dataset_id) ON DELETE CASCADE
 );
 
@@ -51,3 +51,11 @@ CREATE TABLE scrap (
 
 -- Full-text index 추가
 ALTER TABLE dataset ADD FULLTEXT(title);
+
+CREATE INDEX idx_dataset_source_url ON dataset(source_url);
+CREATE INDEX idx_dataset_organization ON dataset(organization);
+CREATE INDEX idx_dataset_view ON dataset(view);
+CREATE INDEX idx_dataset_scrap ON dataset(scrap);
+CREATE INDEX idx_dataset_source ON dataset(source);
+CREATE INDEX idx_dataset_type ON dataset(type);
+CREATE INDEX idx_tag_tag ON tag(tag);

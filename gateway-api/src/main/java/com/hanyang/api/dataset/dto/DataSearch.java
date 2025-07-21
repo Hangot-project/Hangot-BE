@@ -15,7 +15,7 @@ import java.util.List;
 public class DataSearch {
     private String keyword;
     private List<String> organization;
-    private List<String> theme;
+    private List<String> tag;
     private List<String> type;
     private DatasetSort sort;
     private int page;

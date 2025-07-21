@@ -22,7 +22,6 @@ public class DataGoKrFileDownloadService {
     private final S3StorageManager s3StorageManager;
 
     public String downloadAndUploadFile(String downloadUrl, String folderName, String fileName) {
-        log.info("파일 다운로드 시작 - {}", downloadUrl);
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", "*/*");
@@ -42,10 +41,7 @@ public class DataGoKrFileDownloadService {
             throw new IllegalStateException("다운로드된 파일이 비어 있습니다");
         }
 
-        String resourceUrl = uploadToS3(fileContent, folderName, fileName);
-        log.info("업로드 완료 - {}", resourceUrl);
-
-        return resourceUrl;
+        return uploadToS3(fileContent, folderName, fileName);
     }
 
     public String buildDataGoDownloadUrl(String atchFileId,

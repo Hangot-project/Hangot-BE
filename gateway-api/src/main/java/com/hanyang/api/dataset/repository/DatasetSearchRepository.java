@@ -12,7 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collections;
 import java.util.List;
 
 import static com.hanyang.api.dataset.domain.QDataset.dataset;
@@ -23,7 +22,6 @@ import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 @RequiredArgsConstructor
 public class DatasetSearchRepository {
     private final JPAQueryFactory queryFactory;
-    private static final int MAX_TOTAL_ELEMENT = 50;
     private static final int PAGE_SIZE = 10;
 
     public Page<Dataset> searchDatasetList(DataSearch dataSearch){
@@ -31,50 +29,49 @@ public class DatasetSearchRepository {
                 .where(titleLike(dataSearch.getKeyword()),
                         organizationIn(dataSearch.getOrganization()),
                         typeIn(dataSearch.getType()),
-                        themeIn(dataSearch.getTheme()));
+                        tagIn(dataSearch.getTag()));
 
         switch (dataSearch.getSort().name()) {
-            case "스크랩" -> {
-                query.orderBy(dataset.scrap.desc());
-            }
-            case "조회" -> {
-                query.orderBy(dataset.view.desc());
-            }
-            case "인기" ->{
-                query.orderBy(dataset.popular.desc());
-            }
-            default -> {
-                query.orderBy(dataset.createdDate.desc());
-            }
+            case "스크랩" -> query.orderBy(dataset.scrap.desc());
+            case "조회" -> query.orderBy(dataset.view.desc());
+            case "인기" -> query.orderBy(dataset.popular.desc());
+            default -> query.orderBy(dataset.createdDate.desc());
         }
 
-        List<Dataset> content = query.limit(MAX_TOTAL_ELEMENT).fetch();
+        Long totalCountResult = queryFactory.select(dataset.count())
+                .from(dataset)
+                .where(titleLike(dataSearch.getKeyword()),
+                        organizationIn(dataSearch.getOrganization()),
+                        typeIn(dataSearch.getType()),
+                        tagIn(dataSearch.getTag()))
+                .fetchOne();
+        long totalCount = totalCountResult != null ? totalCountResult : 0L;
 
         Pageable pageable = PageRequest.of(dataSearch.getPage(), PAGE_SIZE);
-        int startIndex = dataSearch.getPage() * PAGE_SIZE;
-        int endIndex = Math.min(startIndex + PAGE_SIZE, content.size());
+        List<Dataset> content = query
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
-
-        List<Dataset> pageContent =  startIndex < content.size() ? content.subList(startIndex, endIndex) : Collections.emptyList();
-
-        return new PageImpl<>(pageContent, pageable, content.size());
-
+        return new PageImpl<>(content, pageable, totalCount);
     }
 
     private BooleanExpression titleLike(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return null;
 
+        String booleanModeKeyword = "+" + keyword + "*";
+
         return numberTemplate(Double.class,
-                "MATCH({0}) AGAINST ({1} IN BOOLEAN MODE)",
-                dataset.title, keyword).gt(0);
+                "function('match_against', {0}, {1})",
+                dataset.title, booleanModeKeyword).gt(0);
     }
 
     private BooleanExpression organizationIn(List<String> organizationList) {
         return organizationList !=null  ? dataset.organization.in(organizationList) : null;
     }
 
-    private BooleanExpression themeIn(List<String> themeList){
-        return themeList != null ? dataset.datasetThemeList.any().theme.in(themeList) : null;
+    private BooleanExpression tagIn(List<String> tagList){
+        return tagList != null ? dataset.tagList.any().tag.in(tagList) : null;
     }
 
     private BooleanExpression typeIn(List<String> typeList) {

@@ -20,13 +20,10 @@ public class DataCrawlerController {
     @PostMapping("/crawl")
     public ResponseEntity<String> crawlData(
             @RequestParam(defaultValue = "data.go.kr") String siteName,
-            @RequestParam(defaultValue = "5") int pageSize,
-            @RequestParam(defaultValue = "10") int maxPages) {
-        
-        log.info("{} 사이트 데이터 크롤링 시작 - 페이지 크기: {}, 최대 페이지: {}", siteName, pageSize, maxPages);
-        
+            @RequestParam(defaultValue = "10") int pageSize) {
+
         try {
-            dataCrawlerService.crawlDatasets(siteName, pageSize, maxPages);
+            dataCrawlerService.crawlDatasets(siteName, pageSize);
             return ResponseEntity.ok(null);
         } catch (Exception error) {
             log.error("{} 크롤링 중 오류 발생: {}", siteName, error.getMessage(), error);

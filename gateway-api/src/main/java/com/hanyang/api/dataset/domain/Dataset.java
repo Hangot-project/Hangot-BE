@@ -40,7 +40,7 @@ public class Dataset {
     @Formula(value = "view + 5 * scrap")
     private Integer popular;
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
-    private List<DatasetTheme> datasetThemeList = new ArrayList<>();
+    private List<Tag> tagList = new ArrayList<>();
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Scrap> scrapList = new ArrayList<>();
 

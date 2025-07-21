@@ -1,7 +1,7 @@
 package com.hanyang.api.dataset.dto.res;
 
 import com.hanyang.api.dataset.domain.Dataset;
-import com.hanyang.api.dataset.domain.DatasetTheme;
+import com.hanyang.api.dataset.domain.Tag;
 import lombok.Data;
 import org.springframework.data.domain.Page;
 
@@ -29,7 +29,7 @@ public class ResDatasetListDto {
         private String organization;
         private Integer view;
         private String type;
-        private List<String> themeList;
+        private List<String> tagList;
         private Integer scrap;
         private LocalDate createDate;
 
@@ -41,8 +41,8 @@ public class ResDatasetListDto {
             this.organization = dataset.getOrganization();
             this.createDate = dataset.getCreatedDate();
             this.type = dataset.getType();
-            if(dataset.getDatasetThemeList()!=null) {
-                this.themeList = dataset.getDatasetThemeList().stream().map(DatasetTheme::getTheme).toList();
+            if(dataset.getTagList()!=null) {
+                this.tagList = dataset.getTagList().stream().map(Tag::getTag).toList();
             }
             this.scrap = dataset.getScrap();
         }

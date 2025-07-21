@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class DatasetWithThemeDto {
+public class DatasetWithTag {
     private Dataset dataset;
-    private List<String> themes;
+    private List<String> tags;
 }
