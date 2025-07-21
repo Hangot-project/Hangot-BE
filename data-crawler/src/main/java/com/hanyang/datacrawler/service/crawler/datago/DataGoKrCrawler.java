@@ -36,34 +36,33 @@ public class DataGoKrCrawler implements DataCrawler {
     }
 
     @Override
-    public void crawlDatasetsPage(int pageNo, int pageSize,LocalDate targetDate) {
+    public void crawlDatasetsPage(int pageNo, int pageSize, LocalDate startDate, LocalDate endDate) {
         String url = buildPageUrl(pageNo, pageSize);
         String html = restTemplate.getForObject(url, String.class);
 
         List<String> datasetUrls = htmlParser.parseDatasetUrls(html);
 
-
         for (String datasetUrl : datasetUrls) {
             try {
-                crawlSingleDataset(datasetUrl,targetDate).ifPresentOrElse(
+                crawlSingleDataset(datasetUrl, startDate, endDate).ifPresentOrElse(
                         this::downloadFile,
                         () -> log.debug("데이터셋 크롤링 스킵됨 - {}", datasetUrl)
                 );
             } catch (CrawlStopException e) {
-                log.info("페이지 크롤링 중단: 목표 날짜 이전 데이터 도달 - {}", datasetUrl);
+                log.info("페이지 크롤링 중단: 날짜 범위 밖 데이터 도달 - {}", datasetUrl);
                 throw e;
             }
         }
     }
 
     @Override
-    public Optional<Dataset> crawlSingleDataset(String datasetUrl, LocalDate targetDate) {
+    public Optional<Dataset> crawlSingleDataset(String datasetUrl, LocalDate startDate, LocalDate endDate) {
         log.info("단일 데이터셋 크롤링 시작 - URL: {}", datasetUrl);
 
         try {
             String html = restTemplate.getForObject(datasetUrl, String.class);
             
-            DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl,targetDate);
+            DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl, startDate, endDate);
             
             Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
             log.info("단일 데이터셋 크롤링 완료 - 제목: {}, URL: {}", savedDataset.getTitle(), datasetUrl);

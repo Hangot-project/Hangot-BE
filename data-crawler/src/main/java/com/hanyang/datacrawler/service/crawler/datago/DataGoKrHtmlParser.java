@@ -62,7 +62,7 @@ public class DataGoKrHtmlParser {
     }
 
 
-    public DatasetWithTag parseDatasetDetailPage(String html, String sourceUrl, LocalDate targetDate) {
+    public DatasetWithTag parseDatasetDetailPage(String html, String sourceUrl, LocalDate startDate, LocalDate endDate) {
         Document doc = Jsoup.parse(html);
 
         String title = extractTitle(doc);
@@ -79,14 +79,14 @@ public class DataGoKrHtmlParser {
 
         LocalDate parsedUpdatedDate = parseDate(updatedDate);
 
-        // 수정일이 기준일(cutoffDate)보다 최신인 경우 예외 발생
-        if (parsedUpdatedDate.isAfter(targetDate)) {
-            throw new NoCrawlNextDayException(title, parsedUpdatedDate, targetDate);
+        // endDate보다 최신 데이터는 스킵
+        if (endDate != null && parsedUpdatedDate.isAfter(endDate)) {
+            throw new NoCrawlNextDayException(title, parsedUpdatedDate, endDate);
         }
 
-        // 수정일이 기준일보다 이전인 경우 크롤링 중단 예외 발생
-        if (parsedUpdatedDate.isBefore(targetDate)) {
-            throw new CrawlStopException(title, parsedUpdatedDate, targetDate);
+        // startDate보다 이전 데이터 만나면 크롤링 종료
+        if (startDate != null && parsedUpdatedDate.isBefore(startDate)) {
+            throw new CrawlStopException(title, parsedUpdatedDate, startDate);
         }
 
         Dataset dataset = Dataset.builder()

@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface DataCrawler {
 
     String getSiteName();
-    void crawlDatasetsPage(int pageNo, int pageSize,LocalDate targetDate);
-    Optional<Dataset> crawlSingleDataset(String datasetUrl, LocalDate targetDate);
+    void crawlDatasetsPage(int pageNo, int pageSize, LocalDate startDate, LocalDate endDate);
+    Optional<Dataset> crawlSingleDataset(String datasetUrl, LocalDate startDate, LocalDate endDate);
     void downloadFile(Dataset dataset);
 }

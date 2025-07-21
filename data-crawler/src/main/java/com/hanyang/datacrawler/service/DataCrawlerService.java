@@ -14,8 +14,8 @@ public class DataCrawlerService {
 
     private final CrawlerFactory crawlerFactory;
 
-    public void crawlDatasets(String siteName, int pageSize, LocalDate targetDate) {
-        String dateInfo = targetDate != null ? targetDate + " 날짜" : "사이트";
+    public void crawlDatasets(String siteName, int pageSize, LocalDate startDate, LocalDate endDate) {
+        String dateInfo = startDate + " ~ " + endDate + " 기간";
         
         log.info("{} {} 크롤링 시작", siteName, dateInfo);
 
@@ -24,7 +24,7 @@ public class DataCrawlerService {
             
             for (int pageNo = 1; ; pageNo++) {
                 try {
-                    crawler.crawlDatasetsPage(pageNo, pageSize,targetDate);
+                    crawler.crawlDatasetsPage(pageNo, pageSize, startDate, endDate);
                 } catch (CrawlStopException e) {
                     log.info("{} 크롤링 중단: 목표 날짜 이전 데이터 도달", siteName);
                     break;

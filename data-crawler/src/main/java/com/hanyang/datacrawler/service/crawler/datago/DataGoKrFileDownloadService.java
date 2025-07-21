@@ -45,8 +45,9 @@ public class DataGoKrFileDownloadService {
                     InputStream inputStream = clientHttpResponse.getBody();
 
 
-                    // 콜백 내에서 임시 파일에 저장
-                    Path tempFile = Files.createTempFile("download-", fileName);
+                    // fileName / -> _로 대체
+                    String safeFileName = fileName.replaceAll("[/\\\\]", "_");
+                    Path tempFile = Files.createTempFile("download-", safeFileName);
                     Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
                     // 임시 파일에서 읽어서 S3 업로드
