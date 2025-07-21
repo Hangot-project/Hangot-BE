@@ -62,7 +62,6 @@ public class DownloadParameterExtractor {
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);
 
         try {
-            log.info("파일 요청 publicDataDetailPk: {} publicDataPk: {}", publicDataDetailPk, publicDataPK);
             ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
 
             String responseBody = response.getBody();

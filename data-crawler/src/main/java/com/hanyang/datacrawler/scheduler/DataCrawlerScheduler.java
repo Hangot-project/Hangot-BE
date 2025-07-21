@@ -7,6 +7,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -17,8 +19,9 @@ public class DataCrawlerScheduler {
 
     @Scheduled(cron = "0 00 2 * * ?")
     public void scheduledDailyCrawl() {
-        log.info("데이터 크롤링 시작...");
-        dataCrawlerService.crawlDatasetsForPreviousDay("data.go.kr", 10);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        log.info("데이터 크롤링 시작 - 목표 날짜: {}", yesterday);
+        dataCrawlerService.crawlDatasets("data.go.kr", 10, yesterday);
         log.info("데이터 크롤링 완료");
     }
 }
