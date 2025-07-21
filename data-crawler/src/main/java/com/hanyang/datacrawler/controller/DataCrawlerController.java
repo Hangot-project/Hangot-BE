@@ -2,12 +2,14 @@ package com.hanyang.datacrawler.controller;
 
 import com.hanyang.datacrawler.service.DataCrawlerService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j;import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/crawler")
@@ -20,10 +22,11 @@ public class DataCrawlerController {
     @PostMapping("/crawl")
     public ResponseEntity<String> crawlData(
             @RequestParam(defaultValue = "data.go.kr") String siteName,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
 
         try {
-            dataCrawlerService.crawlDatasets(siteName, pageSize);
+            dataCrawlerService.crawlDatasets(siteName, pageSize, targetDate);
             return ResponseEntity.ok(null);
         } catch (Exception error) {
             log.error("{} 크롤링 중 오류 발생: {}", siteName, error.getMessage(), error);

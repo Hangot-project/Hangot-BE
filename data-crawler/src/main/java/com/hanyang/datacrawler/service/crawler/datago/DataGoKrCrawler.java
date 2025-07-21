@@ -45,17 +45,13 @@ public class DataGoKrCrawler implements DataCrawler {
         List<Dataset> result = new ArrayList<>();
 
         for (String datasetUrl : datasetUrls) {
-            try {
-                crawlSingleDataset(datasetUrl).ifPresentOrElse(
-                        dataset -> {
-                            result.add(dataset);
-                            downloadFile(dataset);
-                        },
-                        () -> log.warn("크롤링 실패 - {}", datasetUrl)
-                );
-            } catch (CrawlStopException e) {
-                throw e;
-            }
+            crawlSingleDataset(datasetUrl).ifPresentOrElse(
+                    dataset -> {
+                        result.add(dataset);
+                        downloadFile(dataset);
+                    },
+                    () -> log.debug("데이터셋 크롤링 스킵됨 - {}", datasetUrl)
+            );
         }
         return result;
     }
@@ -69,12 +65,17 @@ public class DataGoKrCrawler implements DataCrawler {
             DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
             
             Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
+            log.debug("데이터셋 크롤링 성공: {} - {}", savedDataset.getTitle(), datasetUrl);
             return Optional.of(savedDataset);
 
         } catch (NoCrawlNextDayException e) {
+            log.debug("비즈니스 로직: 다음날 크롤링 대상 아님 - {}", datasetUrl);
             return Optional.empty();
+        } catch (CrawlStopException e) {
+            log.info("비즈니스 로직: 크롤링 중단 조건 도달 - {}", datasetUrl);
+            throw e;
         } catch (Exception throwable) {
-            log.error("단일 데이터셋 크롤링 실패: {}", throwable.getMessage());
+            log.error("크롤링 실패 (시스템 오류): {} - URL: {}", throwable.getMessage(), datasetUrl, throwable);
             return Optional.empty();
         }
     }
