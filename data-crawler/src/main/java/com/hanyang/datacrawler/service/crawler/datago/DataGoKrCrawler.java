@@ -51,6 +51,7 @@ public class DataGoKrCrawler implements DataCrawler {
                 );
             } catch (CrawlStopException e) {
                 log.info("페이지 크롤링 중단: 목표 날짜 이전 데이터 도달 - {}", datasetUrl);
+                throw e;
             }
         }
     }
