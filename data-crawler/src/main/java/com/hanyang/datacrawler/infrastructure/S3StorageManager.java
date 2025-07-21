@@ -21,25 +21,33 @@ public class S3StorageManager {
 
     public String uploadAndGetUrl(String folderName, String fileName, byte[] fileContent) {
         String s3ObjectPath = folderName + "/" + fileName;
-        String type = getFileExtension(fileName);
+        String extension = getFileExtension(fileName);
+        FileType fileType = FileType.fromExtension(extension);
 
-        PutObjectRequest.Builder putObjectRequestBuilder = PutObjectRequest.builder()
-                .bucket(bucket)
-                .key(s3ObjectPath);
-
-        if ("pdf".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("application/pdf");
-        } else if ("csv".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("text/csv; charset=UTF-8");
-        } else if ("json".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("application/json; charset=UTF-8");
-        } else if ("xml".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("application/xml; charset=UTF-8");
-        } else if ("xlsx".equalsIgnoreCase(type) || "xls".equalsIgnoreCase(type)) {
-            putObjectRequestBuilder.contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        try {
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(s3ObjectPath)
+                    .build();
+            
+            s3Client.headObject(headObjectRequest);
+            
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(s3ObjectPath)
+                    .build();
+            s3Client.deleteObject(deleteRequest);
+        } catch (Exception e) {
+            // 파일이 존재하지 않는 경우 무시
         }
 
-        s3Client.putObject(putObjectRequestBuilder.build(), RequestBody.fromBytes(fileContent));
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(s3ObjectPath)
+                .contentType(fileType.getContentType())
+                .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(fileContent));
 
         GetUrlRequest getUrlRequest = GetUrlRequest.builder()
                 .bucket(bucket)

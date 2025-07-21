@@ -22,16 +22,31 @@ public class DatasetService {
 
     @Transactional
     public Dataset saveDatasetWithTag(Dataset dataset, List<String> tags) {
-        log.debug("데이터셋 저장 시도 - 제목: {}, 기관: {}", dataset.getTitle(), dataset.getOrganization());
-        Optional<Dataset> existingDataset = datasetRepository.findByTitleAndOrganization(
-                dataset.getTitle(), dataset.getOrganization());
-
-        Dataset savedDataset = existingDataset.orElseGet(() -> {
-            Dataset d = datasetRepository.save(dataset);
-            log.info("새 데이터셋 저장 완료 - ID: {}, 제목: {}, 기관: {}",
-                    d.getDatasetId(), d.getTitle(), d.getOrganization());
-            return d;
-        });
+        log.debug("데이터셋 저장/수정 시도 - 제목: {}, 기관: {}", dataset.getTitle(), dataset.getOrganization());
+        Optional<Dataset> existingDataset = datasetRepository.findBySourceUrl(dataset.getSourceUrl());
+        
+        Dataset savedDataset;
+        if (existingDataset.isPresent()) {
+            Dataset existing = existingDataset.get();
+            existing.setTitle(dataset.getTitle());
+            existing.setDescription(dataset.getDescription());
+            existing.setOrganization(dataset.getOrganization());
+            existing.setLicense(dataset.getLicense());
+            existing.setCreatedDate(dataset.getCreatedDate());
+            existing.setUpdatedDate(dataset.getUpdatedDate());
+            existing.setResourceName(dataset.getResourceName());
+            existing.setResourceUrl(dataset.getResourceUrl());
+            existing.setType(dataset.getType());
+            existing.setSource(dataset.getSource());
+            
+            savedDataset = datasetRepository.save(existing);
+            log.info("기존 데이터셋 수정 완료 - ID: {}, 제목: {}, 출처: {}", savedDataset.getDatasetId(), savedDataset.getTitle(), savedDataset.getSourceUrl());
+            
+            tagRepository.deleteByDataset(savedDataset);
+        } else {
+            savedDataset = datasetRepository.save(dataset);
+            log.info("새 데이터셋 저장 완료 - ID: {}, 제목: {}, 출처: {}", savedDataset.getDatasetId(), savedDataset.getTitle(), savedDataset.getSourceUrl());
+        }
 
         if (tags != null && !tags.isEmpty()) {
             int savedCount = 0;

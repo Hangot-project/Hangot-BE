@@ -8,6 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface DatasetRepository extends JpaRepository<Dataset, Long> {
-    
-    Optional<Dataset> findByTitleAndOrganization(String title, String organization);
+    Optional<Dataset> findBySourceUrl(String sourceUrl);
 }

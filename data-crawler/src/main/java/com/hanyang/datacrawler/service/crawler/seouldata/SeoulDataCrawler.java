@@ -36,9 +36,4 @@ public class SeoulDataCrawler implements DataCrawler {
     @Override
     public void downloadFile(Dataset dataset) {}
 
-    @Override
-    public int getMaxPages() {
-        return 5;
-    }
-
 }
