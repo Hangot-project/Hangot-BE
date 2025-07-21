@@ -1,13 +1,11 @@
 package com.hanyang.datacrawler.service;
 
-import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.exception.CrawlStopException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,15 +23,8 @@ public class DataCrawlerService {
             DataCrawler crawler = crawlerFactory.getCrawler(siteName);
             
             for (int pageNo = 1; ; pageNo++) {
-                
                 try {
-                    List<Dataset> datasets = crawler.crawlDatasetsPage(pageNo, pageSize);
-                    
-                    if (datasets == null || datasets.isEmpty()) {
-                        log.debug("{} {}페이지에서 데이터 없음 - 크롤링 종료", siteName, pageNo);
-                        break;
-                    }
-                    log.debug("{} 페이지 {}: {}개 데이터셋 파싱", siteName, pageNo, datasets.size());
+                    crawler.crawlDatasetsPage(pageNo, pageSize,targetDate);
                 } catch (CrawlStopException e) {
                     log.info("{} 크롤링 중단: 목표 날짜 이전 데이터 도달", siteName);
                     break;

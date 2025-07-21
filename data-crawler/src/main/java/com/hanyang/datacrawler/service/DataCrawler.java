@@ -2,13 +2,13 @@ package com.hanyang.datacrawler.service;
 
 import com.hanyang.datacrawler.domain.Dataset;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
 
 public interface DataCrawler {
 
     String getSiteName();
-    List<Dataset> crawlDatasetsPage(int pageNo, int pageSize);
-    Optional<Dataset> crawlSingleDataset(String datasetUrl);
+    void crawlDatasetsPage(int pageNo, int pageSize,LocalDate targetDate);
+    Optional<Dataset> crawlSingleDataset(String datasetUrl, LocalDate targetDate);
     void downloadFile(Dataset dataset);
 }

@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,49 +36,43 @@ public class DataGoKrCrawler implements DataCrawler {
     }
 
     @Override
-    public List<Dataset> crawlDatasetsPage(int pageNo, int pageSize) {
+    public void crawlDatasetsPage(int pageNo, int pageSize,LocalDate targetDate) {
         String url = buildPageUrl(pageNo, pageSize);
         String html = restTemplate.getForObject(url, String.class);
 
         List<String> datasetUrls = htmlParser.parseDatasetUrls(html);
 
-        List<Dataset> result = new ArrayList<>();
 
         for (String datasetUrl : datasetUrls) {
             try {
-                crawlSingleDataset(datasetUrl).ifPresentOrElse(
-                        dataset -> {
-                            result.add(dataset);
-                            downloadFile(dataset);
-                        },
+                crawlSingleDataset(datasetUrl,targetDate).ifPresentOrElse(
+                        this::downloadFile,
                         () -> log.debug("데이터셋 크롤링 스킵됨 - {}", datasetUrl)
                 );
             } catch (CrawlStopException e) {
                 log.info("페이지 크롤링 중단: 목표 날짜 이전 데이터 도달 - {}", datasetUrl);
-                throw e;
             }
         }
-        return result;
     }
 
     @Override
-    public Optional<Dataset> crawlSingleDataset(String datasetUrl) {
+    public Optional<Dataset> crawlSingleDataset(String datasetUrl, LocalDate targetDate) {
         log.info("단일 데이터셋 크롤링 시작 - URL: {}", datasetUrl);
 
         try {
             String html = restTemplate.getForObject(datasetUrl, String.class);
             
-            DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl);
+            DatasetWithTag dataset = htmlParser.parseDatasetDetailPage(html, datasetUrl,targetDate);
             
             Dataset savedDataset =  datasetService.saveDatasetWithTag(dataset.getDataset(),dataset.getTags());
             log.info("단일 데이터셋 크롤링 완료 - 제목: {}, URL: {}", savedDataset.getTitle(), datasetUrl);
             return Optional.of(savedDataset);
 
         } catch (NoCrawlNextDayException e) {
-            log.debug("비즈니스 로직: 다음날 크롤링 대상 아님 - {}", datasetUrl);
+            log.info("지정일 보다 최신 데이터 : 크롤링 대상 아님 - {}", datasetUrl);
             return Optional.empty();
         } catch (CrawlStopException e) {
-            log.info("비즈니스 로직: 크롤링 중단 조건 도달 - {}", datasetUrl);
+            log.info("지정일 보다 이전 데이터: 크롤링 중단 조건 도달 - {}", datasetUrl);
             throw e;
         } catch (Exception throwable) {
             log.error("단일 데이터셋 크롤링 실패 - URL: {}, 에러: {}", datasetUrl, throwable.getMessage(), throwable);

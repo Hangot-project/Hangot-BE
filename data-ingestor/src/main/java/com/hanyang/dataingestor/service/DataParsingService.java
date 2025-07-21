@@ -45,7 +45,10 @@ public class DataParsingService {
             
             processFileData(datasetId, fileHandler);
             
-        } catch (Exception e) {
+        }catch (IllegalArgumentException e){
+            log.info("지원 하지 않는 파일 형식: {}", datasetId);
+        }
+        catch (Exception e) {
             log.error("데이터 파싱 실패: {} - {}", datasetId, e.getMessage());
             cleanupOnFailure(datasetId);
         }
