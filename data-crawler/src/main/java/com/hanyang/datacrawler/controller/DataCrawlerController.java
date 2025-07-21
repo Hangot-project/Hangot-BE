@@ -20,11 +20,9 @@ public class DataCrawlerController {
     @PostMapping("/crawl")
     public ResponseEntity<String> crawlData(
             @RequestParam(defaultValue = "data.go.kr") String siteName,
-            @RequestParam(defaultValue = "5") int pageSize,
+            @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "10") int maxPages) {
-        
-        log.info("{} 사이트 데이터 크롤링 시작 - 페이지 크기: {}, 최대 페이지: {}", siteName, pageSize, maxPages);
-        
+
         try {
             dataCrawlerService.crawlDatasets(siteName, pageSize, maxPages);
             return ResponseEntity.ok(null);

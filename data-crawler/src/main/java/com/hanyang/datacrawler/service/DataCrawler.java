@@ -11,8 +11,4 @@ public interface DataCrawler {
     List<Dataset> crawlDatasetsPage(int pageNo, int pageSize);
     Optional<Dataset> crawlSingleDataset(String datasetUrl);
     void downloadFile(Dataset dataset);
-
-    default int getMaxPages() {
-        return 10;
-    }
 }
