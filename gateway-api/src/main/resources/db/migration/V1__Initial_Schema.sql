@@ -51,3 +51,11 @@ CREATE TABLE scrap (
 
 -- Full-text index 추가
 ALTER TABLE dataset ADD FULLTEXT(title);
+
+CREATE INDEX idx_dataset_source_url ON dataset(source_url);
+CREATE INDEX idx_dataset_organization ON dataset(organization);
+CREATE INDEX idx_dataset_view ON dataset(view);
+CREATE INDEX idx_dataset_scrap ON dataset(scrap);
+CREATE INDEX idx_dataset_source ON dataset(source);
+CREATE INDEX idx_dataset_type ON dataset(type);
+CREATE INDEX idx_tag_tag ON tag(tag);
