@@ -19,22 +19,17 @@ public class DataCrawlerService {
         
         log.info("{} {} 크롤링 시작", siteName, dateInfo);
 
-        try {
-            DataCrawler crawler = crawlerFactory.getCrawler(siteName);
+        DataCrawler crawler = crawlerFactory.getCrawler(siteName);
             
-            for (int pageNo = 1; ; pageNo++) {
-                try {
-                    crawler.crawlDatasetsPage(pageNo, pageSize, startDate, endDate);
-                } catch (CrawlStopException e) {
-                    log.info("{} 크롤링 중단: 목표 날짜 이전 데이터 도달", siteName);
-                    break;
-                }
+        for (int pageNo = 1; ; pageNo++) {
+            try {
+                crawler.crawlDatasetsPage(pageNo, pageSize, startDate, endDate);
+            } catch (CrawlStopException e) {
+                log.info("{} 크롤링 중단: 목표 날짜 이전 데이터 도달", siteName);
+                break;
             }
-        } catch (Exception e) {
-            log.error("{} 크롤링 실패: {}", siteName, e.getMessage());
-            throw new RuntimeException("크롤링 실패: " + e.getMessage(), e);
         }
-        
+
         log.info("{} {} 크롤링 완료", siteName, dateInfo);
     }
 
