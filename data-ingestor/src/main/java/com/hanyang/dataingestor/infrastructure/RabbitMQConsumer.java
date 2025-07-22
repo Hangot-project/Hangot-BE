@@ -30,6 +30,7 @@ public class RabbitMQConsumer {
 
     @RabbitListener(queues = "${rabbitmq.queue.name}")
     public void handleMessage(Message message, Channel channel) {
+        log.info("메세지 수령: {}", message.getBody());
         long tag = message.getMessageProperties().getDeliveryTag();
         String datasetId = new String(message.getBody(), StandardCharsets.UTF_8);
 
