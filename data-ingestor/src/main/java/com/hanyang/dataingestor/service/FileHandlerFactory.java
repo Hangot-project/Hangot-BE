@@ -5,19 +5,15 @@ import java.io.InputStream;
 public class FileHandlerFactory {
 
     public static FileDataHandler createHandler(String fileName, InputStream inputStream) {
-        String extension = getFileExtension(fileName);
-        
-        switch (extension.toLowerCase()) {
-            case "xlsx":
-            case "xls":
-                return ExcelSheetHandler.readExcel(inputStream);
-            case "csv":
-                return CsvHandler.readCsv(inputStream);
-            default:
-                throw new IllegalArgumentException();
-        }
+        String extension = getFileExtension(fileName).toLowerCase();
+
+        return switch (extension) {
+            case "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm" -> ExcelSheetHandler.readExcel(inputStream);
+            case "csv" -> CsvHandler.readCsv(inputStream);
+            default -> throw new IllegalArgumentException(extension + " 지원하지 않는 파일 형식입니다.");
+        };
     }
-    
+
     private static String getFileExtension(String fileName) {
         if (fileName == null || fileName.isEmpty()) {
             return "";
