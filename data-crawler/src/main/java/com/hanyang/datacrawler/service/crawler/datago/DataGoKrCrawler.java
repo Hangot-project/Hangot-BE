@@ -133,7 +133,7 @@ public class DataGoKrCrawler implements DataCrawler {
     
     private void downloadFileToS3(Dataset dataset, String downloadUrl) {
         String folderName = String.valueOf(dataset.getDatasetId());
-        String fileName = dataset.getResourceName();
+        String fileName = dataset.getResourceName()+"."+dataset.getType().toLowerCase();
         
         String s3Url = fileDownloadService.downloadAndUploadFile(
                 downloadUrl, folderName, fileName, dataset.getSourceUrl());

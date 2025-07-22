@@ -52,7 +52,7 @@ public class DataGoKrFileDownloadService {
 
                     // 임시 파일에서 읽어서 S3 업로드
                     try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile())) {
-                        return uploadToS3(fileInputStream, folderName, fileName);
+                        return s3StorageManager.uploadAndGetUrl(folderName, fileName, fileInputStream);
                     }
                     finally {
                         Files.deleteIfExists(tempFile);
@@ -76,12 +76,5 @@ public class DataGoKrFileDownloadService {
                 + "?atchFileId=" + atchFileId
                 + "&fileDetailSn=" + fileDetailSn
                 + "&dataNm=" + encoded;
-    }
-
-    private String uploadToS3(InputStream inputStream,
-                              String folderName,
-                              String fileName) {
-
-        return s3StorageManager.uploadAndGetUrl(folderName, fileName, inputStream);
     }
 }
