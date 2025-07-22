@@ -23,7 +23,6 @@ public class DatasetService {
 
     @Transactional
     public Dataset updateResourceUrl(Dataset dataset, String resourceUrl) {
-        log.debug("리소스 URL 업데이트: {}", dataset.getTitle());
         dataset.setResourceUrl(resourceUrl);
         return datasetRepository.save(dataset);
     }

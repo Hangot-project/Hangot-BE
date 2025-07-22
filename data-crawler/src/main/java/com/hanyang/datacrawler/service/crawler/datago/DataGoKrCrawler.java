@@ -139,9 +139,9 @@ public class DataGoKrCrawler implements DataCrawler {
                 downloadUrl, folderName, fileName, dataset.getSourceUrl());
         
         if (s3Url != null) {
-            datasetService.updateResourceUrl(dataset, downloadUrl);
-            log.debug("파일 다운로드 성공: {}", dataset.getTitle());
-            rabbitMQPublisher.sendMessage(dataset.getDatasetId().toString());
+            Dataset updatedDataset = datasetService.updateResourceUrl(dataset, downloadUrl);
+            rabbitMQPublisher.sendMessage(updatedDataset.getDatasetId().toString());
+            log.info("메세지 큐 요청: 데이터셋 제목 - {}", updatedDataset.getResourceUrl());
         }
     }
     
