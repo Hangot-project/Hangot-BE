@@ -2,6 +2,7 @@ package com.hanyang.datacrawler.service.crawler.datago;
 
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithTag;
+import com.hanyang.datacrawler.dto.MessageDto;
 import com.hanyang.datacrawler.exception.CrawlStopException;
 import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
@@ -31,8 +32,7 @@ public class DataGoKrCrawler implements DataCrawler {
 
     private static final String DATASET_LIST_URL = "https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE";
     private static final Set<String> SUPPORTED_FILE_TYPES = Set.of(
-            "csv", "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm", 
-            "ods", "tsv", "txt");
+            "csv", "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm");
     private final DatasetService datasetService;
 
     @Override
@@ -140,7 +140,11 @@ public class DataGoKrCrawler implements DataCrawler {
         
         if (s3Url != null) {
             Dataset updatedDataset = datasetService.updateResourceUrl(dataset, downloadUrl);
-            rabbitMQPublisher.sendMessage(updatedDataset.getDatasetId().toString());
+            rabbitMQPublisher.sendMessage(MessageDto.builder().
+                    datasetId(String.valueOf(updatedDataset.getDatasetId())).
+                    resourceUrl(updatedDataset.getResourceUrl()).
+                    sourceUrl(updatedDataset.getSourceUrl()).
+                    build());
             log.info("메세지 큐 요청: 데이터셋 제목 - {}", updatedDataset.getResourceUrl());
         }
     }
