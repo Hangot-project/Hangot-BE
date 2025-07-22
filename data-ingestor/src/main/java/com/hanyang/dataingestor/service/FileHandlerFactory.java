@@ -10,7 +10,7 @@ public class FileHandlerFactory {
         return switch (extension) {
             case "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm" -> ExcelSheetHandler.readExcel(inputStream);
             case "csv" -> CsvHandler.readCsv(inputStream);
-            default -> throw new IllegalArgumentException(extension + " 지원하지 않는 파일 형식입니다.");
+            default -> throw new IllegalArgumentException(fileName + "은 지원하지 않는 파일 형식입니다.");
         };
     }
 

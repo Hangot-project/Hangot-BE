@@ -36,8 +36,7 @@ public class RabbitMQPublisher {
             Message message = new Message(jsonMessage.getBytes(StandardCharsets.UTF_8), props);
             rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
             
-            log.info("메시지 전송 완료: datasetId={}, resourceUrl={}, sourceUrl={}",
-                    messageDto.getDatasetId(), messageDto.getResourceUrl(), messageDto.getSourceUrl());
+            log.info("메시지 전송 완료: datasetId={}, resourceUrl={}, sourceUrl={}", messageDto.getDatasetId(), messageDto.getResourceUrl(), messageDto.getSourceUrl());
         } catch (JsonProcessingException e) {
             log.error("JSON 직렬화 실패로 메세지 전송 실패: {}", messageDto, e);
         }

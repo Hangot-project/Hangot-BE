@@ -117,7 +117,7 @@ public class DataGoKrCrawler implements DataCrawler {
                 saveDownloadUrlOnly(dataset, downloadUrl);
             }
         } catch (Exception e) {
-            log.error("파일 다운로드 처리 중 오류 발생: {}", e.getMessage());
+            log.error("파일 다운로드 처리 중 오류 발생 - URL: {} - {}", dataset.getSourceUrl(), e.getMessage());
         }
     }
     
@@ -127,7 +127,7 @@ public class DataGoKrCrawler implements DataCrawler {
     }
     
     private void saveDownloadUrlOnly(Dataset dataset, String downloadUrl) {
-        log.info("지원하지 않는 파일 형식({}): {} - S3 업로드 스킵", dataset.getType(), dataset.getTitle());
+        log.info("지원하지 않는 파일 형식({}) - URL: {} : {} - S3 업로드 스킵", dataset.getType(), dataset.getSourceUrl(), dataset.getTitle());
         datasetService.updateResourceUrl(dataset, downloadUrl);
     }
     
@@ -145,7 +145,7 @@ public class DataGoKrCrawler implements DataCrawler {
                     resourceUrl(updatedDataset.getResourceUrl()).
                     sourceUrl(updatedDataset.getSourceUrl()).
                     build());
-            log.info("메세지 큐 요청: 데이터셋 제목 - {}", updatedDataset.getResourceUrl());
+            log.info("메세지 큐 요청 - URL: {} - 리소스 URL: {}", updatedDataset.getSourceUrl(), updatedDataset.getResourceUrl());
         }
     }
     
