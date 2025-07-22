@@ -9,18 +9,6 @@ services:
     networks:
       - hy-network
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - hy-network
-
   gateway-api:
     image: ${DOCKER_USERNAME}/gateway-api:latest
     container_name: gateway-api
