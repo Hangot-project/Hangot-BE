@@ -22,11 +22,12 @@ public class DataCrawlerController {
     @PostMapping("/crawl")
     public ResponseEntity<String> crawlData(
             @RequestParam(defaultValue = "data.go.kr") String siteName,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate) {
+            @RequestParam(defaultValue = "40") int pageSize,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         try {
-            dataCrawlerService.crawlDatasets(siteName, pageSize, targetDate);
+            dataCrawlerService.crawlDatasets(siteName, pageSize, startDate, endDate);
             return ResponseEntity.ok(null);
         } catch (Exception error) {
             log.error("{} 크롤링 중 오류 발생: {}", siteName, error.getMessage(), error);

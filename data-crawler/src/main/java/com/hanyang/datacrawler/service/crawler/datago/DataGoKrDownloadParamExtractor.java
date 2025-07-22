@@ -21,7 +21,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DownloadParameterExtractor {
+public class DataGoKrDownloadParamExtractor {
 
     private final RestTemplate restTemplate;
 

@@ -15,7 +15,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -47,6 +49,31 @@ public class DataGoKrHtmlParser {
         return datasetUrls;
     }
 
+    public Optional<LocalDate> getLastDatasetDateFromPage(String html) {
+        try {
+            Document doc = Jsoup.parse(html);
+            Elements titles = doc.select(".tit:contains(수정일)");
+            if (titles.isEmpty()) {
+                return Optional.empty();
+            }
+            Element lastTitle = titles.last();
+
+            Element next = lastTitle.nextElementSibling();
+            if (next == null) {
+                return Optional.empty();
+            }
+
+            String dateText = next.text().trim();
+            return Optional.of(parseDate(dateText));
+        } catch (Exception e) {
+            log.error("페이지에서 마지막 데이터셋 날짜 추출 실패", e);
+        }
+
+        return Optional.empty();
+    }
+
+
+
     private Optional<String> parseDatasetUrl(Element element) {
         try {
             Element linkElement = element.selectFirst("a[href*='/data/']");
@@ -62,31 +89,34 @@ public class DataGoKrHtmlParser {
     }
 
 
-    public DatasetWithTag parseDatasetDetailPage(String html, String sourceUrl, LocalDate targetDate) {
+    public DatasetWithTag parseMetaData(String html, String sourceUrl, LocalDate startDate, LocalDate endDate) {
         Document doc = Jsoup.parse(html);
 
         String title = extractTitle(doc);
         Elements metaTable = doc.select(".file-meta-table-pc");
 
-        String description = extractFromMetaTable(metaTable, "설명");
-        String organization = extractFromMetaTable(metaTable, "제공기관");
-        String createdDate = extractFromMetaTable(metaTable, "등록일");
-        String updatedDate = extractFromMetaTable(metaTable, "수정일");
-        String licenseStr = extractFromMetaTable(metaTable,"이용허락범위");
-        String resourceName = extractFromMetaTable(metaTable, "파일데이터명");
-        String type = extractFromMetaTable(metaTable, "확장자");
-        List<String> tagList = Arrays.asList(extractFromMetaTable(metaTable, "키워드").split(","));
+        Map<String, String> metaData = extractAllMetaData(metaTable);
+        
+        String description = metaData.getOrDefault("설명", "");
+        String organization = metaData.getOrDefault("제공기관", "");
+        String createdDate = metaData.getOrDefault("등록일", "");
+        String updatedDate = metaData.getOrDefault("수정일", "");
+        String licenseStr = metaData.getOrDefault("이용허락범위", "");
+        String resourceName = metaData.getOrDefault("파일데이터명", "");
+        String type = metaData.getOrDefault("확장자", "");
+        String keywords = metaData.getOrDefault("키워드", "");
+        List<String> tagList = keywords.isEmpty() ? new ArrayList<>() : Arrays.asList(keywords.split(","));
 
         LocalDate parsedUpdatedDate = parseDate(updatedDate);
 
-        // 수정일이 기준일(cutoffDate)보다 최신인 경우 예외 발생
-        if (parsedUpdatedDate.isAfter(targetDate)) {
-            throw new NoCrawlNextDayException(title, parsedUpdatedDate, targetDate);
+        // endDate보다 최신 데이터는 스킵
+        if (endDate != null && parsedUpdatedDate.isAfter(endDate)) {
+            throw new NoCrawlNextDayException(title, parsedUpdatedDate, endDate);
         }
 
-        // 수정일이 기준일보다 이전인 경우 크롤링 중단 예외 발생
-        if (parsedUpdatedDate.isBefore(targetDate)) {
-            throw new CrawlStopException(title, parsedUpdatedDate, targetDate);
+        // startDate보다 이전 데이터 만나면 크롤링 종료
+        if (startDate != null && parsedUpdatedDate.isBefore(startDate)) {
+            throw new CrawlStopException(title, parsedUpdatedDate, startDate);
         }
 
         Dataset dataset = Dataset.builder()
@@ -112,23 +142,26 @@ public class DataGoKrHtmlParser {
         return titleElement != null ? titleElement.text() : "";
     }
 
-    private String extractFromMetaTable(Elements tables, String rowTitle) {
+
+    private Map<String, String> extractAllMetaData(Elements tables) {
+        Map<String, String> metaData = new HashMap<>();
+        
         for (Element table : tables) {
             Elements rows = table.select("tr");
             for (Element row : rows) {
-                String rowText = row.text();
-                if (rowText.contains(rowTitle)) {
-                    Elements cells = row.select("th, td");
-                    for (int i = 0; i < cells.size() - 1; i++) {
-                        String cellText = cells.get(i).text().trim();
-                        if (cellText.contains(rowTitle)) {
-                            return cleanExtractedValue(cells.get(i + 1).text().trim());
-                        }
+                Elements cells = row.select("th, td");
+                for (int i = 0; i < cells.size() - 1; i++) {
+                    String cellText = cells.get(i).text().trim();
+                    String nextCellText = cells.get(i + 1).text().trim();
+                    
+                    if (!cellText.isEmpty() && !nextCellText.isEmpty()) {
+                        metaData.put(cellText, cleanExtractedValue(nextCellText));
                     }
                 }
             }
         }
-        return "";
+        
+        return metaData;
     }
 
     private String cleanExtractedValue(String value) {
@@ -143,13 +176,7 @@ public class DataGoKrHtmlParser {
     }
 
     private LocalDate parseDate(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) return LocalDate.now();
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            return LocalDate.parse(dateStr.trim(), formatter);
-        } catch (Exception e) {
-            log.info("날짜 파싱 실패: {}", dateStr);
-            return LocalDate.now();
-        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return LocalDate.parse(dateStr.trim(), formatter);
     }
 }

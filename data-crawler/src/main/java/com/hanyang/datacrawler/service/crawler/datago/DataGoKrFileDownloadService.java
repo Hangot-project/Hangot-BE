@@ -45,8 +45,9 @@ public class DataGoKrFileDownloadService {
                     InputStream inputStream = clientHttpResponse.getBody();
 
 
-                    // 콜백 내에서 임시 파일에 저장
-                    Path tempFile = Files.createTempFile("download-", fileName);
+                    // fileName / -> _로 대체
+                    String safeFileName = fileName.replaceAll("[/\\\\]", "_");
+                    Path tempFile = Files.createTempFile("download-", safeFileName);
                     Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
                     // 임시 파일에서 읽어서 S3 업로드
@@ -60,15 +61,10 @@ public class DataGoKrFileDownloadService {
                 }
             );
             
-        } catch (IllegalStateException e) {
-            // 의도한 예외 - 스택트레이스 없이 로깅
-            log.error("파일 다운로드 실패 - downloadURL: {}, sourceURL: {}, 에러: {}", downloadUrl, sourceUrl, e.getMessage());
-            throw new RuntimeException("파일 다운로드 실패: " + downloadUrl, e);
         } catch (Exception e) {
-            // 예상치 못한 시스템 오류 - 스택트레이스 포함
-            log.error("파일 다운로드 중 예상치 못한 오류 - fileName: {} downloadURL: {}, sourceURL: {}, 에러: {}",fileName,downloadUrl, sourceUrl, e.getMessage(), e);
-            throw new RuntimeException("파일 다운로드 실패: " + downloadUrl, e);
+            log.error("파일 다운로드 중 예상치 못한 오류 - downloadURL: {}, sourceURL: {}, 에러: {}",downloadUrl, sourceUrl, e.getMessage(), e);
         }
+        return null;
     }
 
     public String buildDataGoDownloadUrl(String atchFileId,
