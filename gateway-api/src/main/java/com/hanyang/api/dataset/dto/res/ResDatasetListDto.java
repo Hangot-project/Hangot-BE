@@ -32,6 +32,7 @@ public class ResDatasetListDto {
         private List<String> tagList;
         private Integer scrap;
         private LocalDate createDate;
+        private LocalDate updateDate;
 
         public SimpleDataset(Dataset dataset) {
             this.datasetId = dataset.getDatasetId();
@@ -40,6 +41,7 @@ public class ResDatasetListDto {
             this.view = dataset.getView();
             this.organization = dataset.getOrganization();
             this.createDate = dataset.getCreatedDate();
+            this.updateDate = dataset.getUpdatedDate();
             this.type = dataset.getType();
             if(dataset.getTagList()!=null) {
                 this.tagList = dataset.getTagList().stream().map(Tag::getTag).toList();
