@@ -47,7 +47,7 @@ public class DatasetSearchRepository {
                 .fetchOne();
         long totalCount = totalCountResult != null ? totalCountResult : 0L;
 
-        Pageable pageable = PageRequest.of(dataSearch.getPage(), PAGE_SIZE);
+        Pageable pageable = PageRequest.of(dataSearch.getPage() - 1, PAGE_SIZE);
         List<Dataset> content = query
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

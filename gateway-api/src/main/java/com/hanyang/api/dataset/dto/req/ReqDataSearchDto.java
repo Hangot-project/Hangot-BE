@@ -16,7 +16,5 @@ public class ReqDataSearchDto {
     private List<String> tag;
     private List<String> type;
     private DatasetSort sort = DatasetSort.최신;
-    private int page = 0;
-
-
+    private int page = 1;
 }
