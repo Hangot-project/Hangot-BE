@@ -34,14 +34,11 @@ public class DeadLetterQueueConsumer {
             MessageDto messageDto = objectMapper.readValue(messageBody, MessageDto.class);
             
             log.warn("=== DLQ 처리 시작 ===");
-            log.warn("처리 시간: {}", startTime);
             log.warn("데이터셋 ID: {}", messageDto.getDatasetId());
-            log.warn("실패 유형: {}", headers.getOrDefault("x-failure-type", "알 수 없음"));
-            log.warn("실패 시간: {}", headers.getOrDefault("x-failure-time", "알 수 없음"));
-            log.warn("에러 메시지: {}", headers.getOrDefault("x-error-message", "없음"));
-            log.warn("에러 클래스: {}", headers.getOrDefault("x-error-class", "없음"));
-            
-            dataParsingService.createDataTable(messageDto.getDatasetId());
+            log.warn("실패 시간: {}", headers.get("x-failure-time"));
+            log.warn("에러 메시지: {}", headers.get("x-error-message"));
+
+            dataParsingService.createDataTable(messageDto.getDatasetId(),messageDto.getResourceUrl());
             s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
             channel.basicAck(tag, false);
             

@@ -26,16 +26,16 @@ public class DataParsingService {
     
     private static final String ID_FIELD = "_id";
 
-    public void createDataTable(String datasetId) {
+    public void createDataTable(String datasetId,String resourceUrl) {
         try (InputStream file = s3StorageManager.getFile(datasetId)) {
             if (file == null) {
-                log.error("파일을 찾을 수 없습니다: {}", datasetId);
+                log.error("파일을 찾을 수 없습니다: datasetId - {}", datasetId);
                 return;
             }
             
             String fileName = s3StorageManager.getFirstFileName(datasetId);
             if (fileName == null) {
-                log.error("파일명을 가져올 수 없습니다: {}", datasetId);
+                log.error("파일명을 가져올 수 없습니다: datasetId - {}", datasetId);
                 return;
             }
             
@@ -46,10 +46,10 @@ public class DataParsingService {
             processFileData(datasetId, fileHandler);
             
         }catch (IllegalArgumentException e){
-            log.info("지원 하지 않는 파일 형식: {}", datasetId);
+            log.info("지원 하지 않는 파일 형식: resourceUrl - {} errorMessage - {}", resourceUrl,e.getMessage());
         }
         catch (Exception e) {
-            log.error("데이터 파싱 실패: {} - {}", datasetId, e.getMessage());
+            log.error("데이터 파싱 실패: resourceUrl - {} errorMessage - {}", resourceUrl, e.getMessage());
             cleanupOnFailure(datasetId);
         }
     }
@@ -77,12 +77,6 @@ public class DataParsingService {
             log.error("헤더가 없습니다: {}", datasetId);
             return false;
         }
-        
-        if (headers.contains(ID_FIELD)) {
-            log.error("헤더에 예약어 '_id'가 포함되어 있습니다: {}", datasetId);
-            return false;
-        }
-        
         return true;
     }
 

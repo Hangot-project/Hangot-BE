@@ -29,8 +29,6 @@ services:
       SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8081:8081"
-    depends_on:
-      - rabbitmq
     networks:
       - hy-network
     restart: unless-stopped
