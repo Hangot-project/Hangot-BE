@@ -26,22 +26,8 @@ public class S3StorageManager {
         String extension = getFileExtension(fileName);
         FileType fileType = FileType.fromExtension(extension);
 
-        try {
-            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(s3ObjectPath)
-                    .build();
-            
-            s3Client.headObject(headObjectRequest);
-            
-            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(s3ObjectPath)
-                    .build();
-            s3Client.deleteObject(deleteRequest);
-        } catch (Exception e) {
-            // 파일이 존재하지 않는 경우 무시
-        }
+        // 해당 폴더 내 모든 파일 삭제
+        deleteAllFilesInFolder(folderName);
 
         try {
             uploadWithMultipart(s3ObjectPath, inputStream, fileType.getContentType());
@@ -118,6 +104,30 @@ public class S3StorageManager {
                     .build();
             s3Client.abortMultipartUpload(abortRequest);
             throw new IOException("멀티파트 업로드 실패", e);
+        }
+    }
+
+    private void deleteAllFilesInFolder(String folderName) {
+        try {
+            ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(folderName + "/")
+                    .build();
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(listObjectsRequest);
+            List<S3Object> s3ObjectsList = response.contents();
+
+            if (!s3ObjectsList.isEmpty()) {
+                for (S3Object s3Object : s3ObjectsList) {
+                    DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(s3Object.key())
+                            .build();
+                    s3Client.deleteObject(deleteRequest);
+                }
+            }
+        } catch (S3Exception e) {
+            // 폴더가 존재하지 않거나 삭제 실패 시 무시
         }
     }
 
