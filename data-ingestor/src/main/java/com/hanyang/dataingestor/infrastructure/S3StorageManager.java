@@ -21,23 +21,17 @@ public class S3StorageManager {
     private final S3Client s3Client;
 
     public InputStream getFile(String datasetId) {
-        try {
-            String key = findFirstFileKey(datasetId);
-            if (key == null) {
-                return null;
-            }
-            
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .build();
-
-            return s3Client.getObject(getObjectRequest);
-            
-        } catch (S3Exception e) {
-            log.error("S3에서 파일을 찾을 수 없습니다: {} - {}", datasetId, e.getMessage());
+        String key = findFirstFileKey(datasetId);
+        if (key == null) {
             return null;
         }
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+
+        return s3Client.getObject(getObjectRequest);
     }
     
     public String getFirstFileName(String datasetId) {

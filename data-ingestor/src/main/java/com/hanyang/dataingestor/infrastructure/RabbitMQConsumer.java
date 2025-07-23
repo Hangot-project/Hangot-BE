@@ -1,5 +1,6 @@
 package com.hanyang.dataingestor.infrastructure;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.service.DataParsingService;
@@ -24,7 +25,8 @@ public class RabbitMQConsumer {
     private final S3StorageManager s3StorageManager;
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbitTemplate;
-    
+    private final MongoManager mongoManager;
+
     @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
     
@@ -35,18 +37,28 @@ public class RabbitMQConsumer {
     public void handleMessage(Message message, Channel channel) {
         long tag = message.getMessageProperties().getDeliveryTag();
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
-        
+        log.info("메세지 수령: : {}", messageBody);
+
+        MessageDto messageDto;
         try {
-            MessageDto messageDto = objectMapper.readValue(messageBody, MessageDto.class);
-            log.info("메세지 수령: : {}", messageBody);
+            messageDto = objectMapper.readValue(messageBody, MessageDto.class);
+        } catch (JsonProcessingException e) {
+            log.error("JSON 파싱 실패, 메시지 버림: {}", messageBody, e);
+            try {
+                channel.basicAck(tag, false);
+            } catch (Exception ackException) {
+                log.error("메시지 ACK 실패: {}", ackException.getMessage());
+            }
+            return;
+        }
 
-            dataParsingService.createDataTable(messageDto.getDatasetId(),messageDto.getResourceUrl());
+        try{
+            dataParsingService.createDataTable(messageDto.getDatasetId());
             s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
-
-            //메세지 처리 완료
             channel.basicAck(tag, false);
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (Exception e) {
+            mongoManager.dropIfExists(messageDto.getDatasetId());
             sendToDLQ(message, e);
         }
     }

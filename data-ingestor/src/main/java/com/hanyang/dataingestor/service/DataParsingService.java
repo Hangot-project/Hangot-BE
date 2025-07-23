@@ -1,5 +1,7 @@
 package com.hanyang.dataingestor.service;
 
+import com.hanyang.dataingestor.core.exception.DataProcessingException;
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.infrastructure.MongoManager;
 import com.hanyang.dataingestor.infrastructure.S3StorageManager;
 import lombok.RequiredArgsConstructor;
@@ -26,32 +28,22 @@ public class DataParsingService {
     
     private static final String ID_FIELD = "_id";
 
-    public void createDataTable(String datasetId,String resourceUrl) {
-        try (InputStream file = s3StorageManager.getFile(datasetId)) {
-            if (file == null) {
-                log.error("파일을 찾을 수 없습니다: datasetId - {}", datasetId);
-                return;
-            }
-            
-            String fileName = s3StorageManager.getFirstFileName(datasetId);
-            if (fileName == null) {
-                log.error("파일명을 가져올 수 없습니다: datasetId - {}", datasetId);
-                return;
-            }
-            
-            FileDataHandler fileHandler = FileHandlerFactory.createHandler(fileName, file);
-            
-            mongoManager.createCollection(datasetId);
-            
-            processFileData(datasetId, fileHandler);
-            
-        }catch (IllegalArgumentException e){
-            log.info("지원 하지 않는 파일 형식: resourceUrl - {} errorMessage - {}", resourceUrl,e.getMessage());
+    public void createDataTable(String datasetId) {
+        InputStream file = s3StorageManager.getFile(datasetId);
+        if (file == null) {
+            throw new ResourceNotFoundException("파일을 찾을 수 없습니다: datasetId - " + datasetId);
         }
-        catch (Exception e) {
-            log.error("데이터 파싱 실패: resourceUrl - {} errorMessage - {}", resourceUrl, e.getMessage());
-            cleanupOnFailure(datasetId);
+
+        String fileName = s3StorageManager.getFirstFileName(datasetId);
+        if (fileName == null) {
+            throw new DataProcessingException("파일명을 가져올 수 없습니다: datasetId - " + datasetId);
         }
+
+        FileDataHandler fileHandler = FileHandlerFactory.createHandler(fileName, file);
+
+        mongoManager.dropIfExists(datasetId);
+        mongoManager.createCollection(datasetId);
+        processFileData(datasetId, fileHandler);
     }
 
     private void processFileData(String datasetId, FileDataHandler fileHandler) {
@@ -131,14 +123,6 @@ public class DataParsingService {
             return Double.parseDouble(cellValue);
         } catch (NumberFormatException e) {
             return cellValue.trim();
-        }
-    }
-
-    private void cleanupOnFailure(String datasetId) {
-        try {
-            mongoManager.dropIfExists(datasetId);
-        } catch (Exception e) {
-            log.error("컬렉션 정리 실패: {}", datasetId);
         }
     }
 }
