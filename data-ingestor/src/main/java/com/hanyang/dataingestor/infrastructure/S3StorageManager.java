@@ -75,7 +75,6 @@ public class S3StorageManager {
                     s3Client.deleteObject(deleteRequest);
                     log.debug("S3 파일 삭제 완료: {}", s3Object.key());
                 }
-                log.info("데이터셋 파일 삭제 완료: {}", datasetId);
             }
         } catch (S3Exception e) {
             log.error("S3 파일 삭제 실패: {} - {}", datasetId, e.getMessage());

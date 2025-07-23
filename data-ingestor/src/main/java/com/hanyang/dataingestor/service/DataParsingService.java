@@ -102,7 +102,6 @@ public class DataParsingService {
             mongoManager.insertDocuments(datasetId, buffer);
         }
         
-        log.info("데이터 저장 완료: {} 건", rowCount);
     }
 
     private Map<String, Object> createDocument(List<String> row, String[] columns, int rowId) {
