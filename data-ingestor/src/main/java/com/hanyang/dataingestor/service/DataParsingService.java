@@ -41,6 +41,7 @@ public class DataParsingService {
 
         FileDataHandler fileHandler = FileHandlerFactory.createHandler(fileName, file);
 
+        mongoManager.dropIfExists(datasetId);
         mongoManager.createCollection(datasetId);
         processFileData(datasetId, fileHandler);
     }
