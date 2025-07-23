@@ -22,6 +22,7 @@ public class DeadLetterQueueConsumer {
     private final ObjectMapper objectMapper;
     private final DataParsingService dataParsingService;
     private final S3StorageManager s3StorageManager;
+    private final MongoManager mongoManager;
 
     @RabbitListener(queues = "${rabbitmq.queue.name}.dlq", concurrency = "1")
     public void handleDeadLetterMessage(Message message, Channel channel) {
@@ -38,6 +39,7 @@ public class DeadLetterQueueConsumer {
             log.warn("실패 시간: {}", headers.get("x-failure-time"));
             log.warn("에러 메시지: {}", headers.get("x-error-message"));
 
+            mongoManager.dropIfExists(messageDto.getDatasetId());
             dataParsingService.createDataTable(messageDto.getDatasetId());
             s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
             channel.basicAck(tag, false);
