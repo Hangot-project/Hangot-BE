@@ -128,7 +128,6 @@ public class DataGoKrCrawler implements DataCrawler {
                 resourceUrl(dataset.getResourceUrl()).
                 sourceUrl(dataset.getSourceUrl()).
                 build());
-        log.info("메세지 큐 요청 - URL: {} - 리소스 URL: {}", dataset.getSourceUrl(), dataset.getResourceUrl());
     }
 
     private String buildPageUrl(int pageNo, int pageSize) {
