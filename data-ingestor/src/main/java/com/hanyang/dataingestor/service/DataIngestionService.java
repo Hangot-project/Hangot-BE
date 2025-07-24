@@ -1,6 +1,5 @@
 package com.hanyang.dataingestor.service;
 
-import com.hanyang.dataingestor.core.exception.DataProcessingException;
 import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.infrastructure.MongoManager;
 import com.hanyang.dataingestor.infrastructure.S3StorageManager;
@@ -30,20 +29,13 @@ public class DataIngestionService {
             throw new ResourceNotFoundException("파일을 찾을 수 없습니다: datasetId - " + datasetId);
         }
 
-        List<String> fileNames = s3StorageManager.getAllFileNames(datasetId);
-        if (fileNames.isEmpty()) {
-            throw new DataProcessingException("파일명을 가져올 수 없습니다: datasetId - " + datasetId);
-        }
-
+        String fileName = s3StorageManager.getFirstFileName(datasetId);
         mongoManager.createCollection(datasetId);
 
-        for (int i = 0; i < files.size(); i++) {
-            InputStream file = files.get(i);
-            String fileName = fileNames.get(i);
-            
+        for (InputStream file : files) {
             ParserStrategy strategy = parsingStrategyResolver.getStrategy(fileName);
             ParsedData parsedData = strategy.parse(file, datasetId);
-            
+
             if (!parsedData.getHeader().isEmpty() && !parsedData.getRows().isEmpty()) {
                 String[] columns = parsedData.getHeader().toArray(new String[0]);
                 mongoManager.insertDataRows(datasetId, columns, parsedData.getRows());
