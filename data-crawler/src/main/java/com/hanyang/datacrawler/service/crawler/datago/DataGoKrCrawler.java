@@ -5,6 +5,7 @@ import com.hanyang.datacrawler.dto.DatasetWithTag;
 import com.hanyang.datacrawler.dto.MessageDto;
 import com.hanyang.datacrawler.exception.CrawlStopException;
 import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
+import com.hanyang.datacrawler.service.file.FileType;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
@@ -13,11 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -26,13 +28,11 @@ public class DataGoKrCrawler implements DataCrawler {
 
     private final RestTemplate restTemplate;
     private final DataGoKrHtmlParser htmlParser;
-    private final DataGoKrFileDownloadService fileDownloadService;
+    private final DataGoKrResourceService resourceService;
     private final DataGoKrDownloadParamExtractor downloadParamExtractor;
     private final RabbitMQPublisher rabbitMQPublisher;
 
     private static final String DATASET_LIST_URL = "https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE";
-    private static final Set<String> SUPPORTED_FILE_TYPES = Set.of(
-            "csv", "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm");
     private final DatasetService datasetService;
 
     @Override
@@ -75,7 +75,15 @@ public class DataGoKrCrawler implements DataCrawler {
             List<Dataset> savedDatasets = datasetService.saveDatasetsBatch(datasetList, tagsList);
 
             for (Dataset dataset : savedDatasets) {
-                extractResourceURL(dataset);
+                downloadParamExtractor.extractDownloadParams(dataset.getSourceUrl()).ifPresent(params -> {
+                    String resourceURL = buildDownloadUrl(params, dataset.getResourceName());
+                    Dataset updatedDataset = datasetService.updateResourceUrl(dataset, resourceURL);
+
+                    FileType fileType = FileType.getFileType(updatedDataset.getResourceName());
+                    if (fileType.IsSupportVisualization()) {
+                        downloadFileToS3(updatedDataset, resourceURL);
+                    }
+                });
             }
             log.info("데이터셋 배치 저장 완료 - 저장된 데이터셋 개수: {}", savedDatasets.size());
         }
@@ -89,12 +97,6 @@ public class DataGoKrCrawler implements DataCrawler {
         return Optional.of(dataset);
     }
 
-    @Override
-    public void extractResourceURL(Dataset dataset) {
-        String sourceUrl = dataset.getSourceUrl();
-        downloadParamExtractor.extractDownloadParams(sourceUrl).ifPresent(params -> handleFileDownload(dataset, params));
-    }
-
     private boolean shouldSkipPage(String html, LocalDate endDate) {
         if (endDate == null) return false;
         
@@ -106,54 +108,27 @@ public class DataGoKrCrawler implements DataCrawler {
         return lastDate.isAfter(endDate);
     }
 
-    private void handleFileDownload(Dataset dataset, Object params) {
-        try {
-            FileDownloadParams downloadParams = (FileDownloadParams) params;
-            String downloadUrl = buildDownloadUrl(downloadParams, dataset.getResourceName());
-            
-            if (isSupportedFileType(dataset.getType())) {
-                downloadFileToS3(dataset, downloadUrl);
-            } else {
-                saveDownloadUrlOnly(dataset, downloadUrl);
-            }
-        } catch (Exception e) {
-            log.error("파일 다운로드 처리 중 오류 발생 - URL: {} - {}", dataset.getSourceUrl(), e.getMessage());
-        }
-    }
-    
     private String buildDownloadUrl(FileDownloadParams downloadParams, String fileName) {
-        return fileDownloadService.buildDataGoDownloadUrl(
-                downloadParams.atchFileId(), downloadParams.fileDetailSn(), fileName);
+        String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
+        return "https://www.data.go.kr/cmm/cmm/fileDownload.do"
+                + "?atchFileId=" + downloadParams.atchFileId()
+                + "&fileDetailSn=" + downloadParams.fileDetailSn()
+                + "&dataNm=" + encoded;
     }
-    
-    private void saveDownloadUrlOnly(Dataset dataset, String downloadUrl) {
-        log.info("지원하지 않는 파일 형식({}) - URL: {} : {} - S3 업로드 스킵", dataset.getType(), dataset.getSourceUrl(), dataset.getTitle());
-        datasetService.updateResourceUrl(dataset, downloadUrl);
-    }
-    
+
     private void downloadFileToS3(Dataset dataset, String downloadUrl) {
         String folderName = String.valueOf(dataset.getDatasetId());
-        String fileName = dataset.getResourceName()+"."+dataset.getType().toLowerCase();
+        String resourceName = dataset.getResourceName();
         
-        String s3Url = fileDownloadService.downloadAndUploadFile(
-                downloadUrl, folderName, fileName, dataset.getSourceUrl());
-        
-        if (s3Url != null) {
-            Dataset updatedDataset = datasetService.updateResourceUrl(dataset, downloadUrl);
-            rabbitMQPublisher.sendMessage(MessageDto.builder().
-                    datasetId(String.valueOf(updatedDataset.getDatasetId())).
-                    resourceUrl(updatedDataset.getResourceUrl()).
-                    sourceUrl(updatedDataset.getSourceUrl()).
-                    build());
-            log.info("메세지 큐 요청 - URL: {} - 리소스 URL: {}", updatedDataset.getSourceUrl(), updatedDataset.getResourceUrl());
-        }
-    }
-    
-    private boolean isSupportedFileType(String fileType) {
-        if (fileType == null || fileType.trim().isEmpty()) {
-            return false;
-        }
-        return SUPPORTED_FILE_TYPES.contains(fileType.toLowerCase().trim());
+        resourceService.downloadAndUploadFile(
+                downloadUrl, folderName, resourceName, dataset.getSourceUrl());
+
+        rabbitMQPublisher.sendMessage(MessageDto.builder().
+                datasetId(String.valueOf(dataset.getDatasetId())).
+                resourceUrl(dataset.getResourceUrl()).
+                sourceUrl(dataset.getSourceUrl()).
+                build());
+        log.info("메세지 큐 요청 - URL: {} - 리소스 URL: {}", dataset.getSourceUrl(), dataset.getResourceUrl());
     }
 
     private String buildPageUrl(int pageNo, int pageSize) {

@@ -1,6 +1,6 @@
 package com.hanyang.datacrawler.service.crawler.datago;
 
-import com.hanyang.datacrawler.infrastructure.S3StorageManager;
+import com.hanyang.datacrawler.service.file.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -8,10 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -19,19 +16,19 @@ import java.nio.file.StandardCopyOption;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DataGoKrFileDownloadService {
+public class DataGoKrResourceService {
 
     private final RestTemplate restTemplate;
-    private final S3StorageManager s3StorageManager;
+    private final FileService fileService;
 
-    public String downloadAndUploadFile(String downloadUrl, String folderName, String fileName, String sourceUrl) {
+    public void downloadAndUploadFile(String downloadUrl, String folderName, String fileName, String sourceUrl) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", "*/*");
         headers.set("Accept-Encoding", "identity");
-        
+
         try {
-            return restTemplate.execute(
+            restTemplate.execute(
                 downloadUrl,
                 HttpMethod.GET,
                 request -> {
@@ -41,7 +38,7 @@ public class DataGoKrFileDownloadService {
                     if (!clientHttpResponse.getStatusCode().is2xxSuccessful()) {
                         throw new IllegalStateException("파일 다운로드 실패: " + clientHttpResponse.getStatusCode());
                     }
-                    
+
                     InputStream inputStream = clientHttpResponse.getBody();
 
 
@@ -50,31 +47,17 @@ public class DataGoKrFileDownloadService {
                     Path tempFile = Files.createTempFile("download-", safeFileName);
                     Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
-                    // 임시 파일에서 읽어서 S3 업로드
-                    try (FileInputStream fileInputStream = new FileInputStream(tempFile.toFile())) {
-                        return s3StorageManager.uploadAndGetUrl(folderName, fileName, fileInputStream);
-                    }
-                    finally {
+                    try {
+                        fileService.processFileInChunks(folderName, tempFile);
+                    } finally {
                         Files.deleteIfExists(tempFile);
                     }
-
+                    return null;
                 }
             );
-            
+
         } catch (Exception e) {
-            log.error("파일 다운로드 중 예상치 못한 오류 - downloadURL: {}, sourceURL: {}, 에러: {}",downloadUrl, sourceUrl, e.getMessage(), e);
+            log.error("파일 다운로드 중 예상치 못한 오류 - downloadURL: {}, sourceURL: {}, 에러: {}", downloadUrl, sourceUrl, e.getMessage(), e);
         }
-        return null;
-    }
-
-    public String buildDataGoDownloadUrl(String atchFileId,
-                                         String fileDetailSn,
-                                         String fileName) {
-
-        String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
-        return "https://www.data.go.kr/cmm/cmm/fileDownload.do"
-                + "?atchFileId=" + atchFileId
-                + "&fileDetailSn=" + fileDetailSn
-                + "&dataNm=" + encoded;
     }
 }

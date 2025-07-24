@@ -4,7 +4,6 @@ dependencies {
     implementation 'org.apache.poi:poi:4.1.2'
     implementation 'org.apache.poi:poi-ooxml:5.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
-    implementation 'com.ibm.icu:icu4j:73.2'
 
     // AWS S3 (via BOM)
     implementation platform('software.amazon.awssdk:bom:2.17.230')

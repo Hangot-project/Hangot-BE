@@ -13,6 +13,10 @@ dependencies {
 	
 	// HTTP Client for RestTemplate
 	implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+	
+	// Excel Processing
+	implementation 'org.apache.poi:poi:5.2.4'
+	implementation 'org.apache.poi:poi-ooxml:5.2.4'
 
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
