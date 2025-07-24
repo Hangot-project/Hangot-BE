@@ -16,8 +16,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
-    private static final String ID_FIELD = "_id";
-
 
     public void createCollection(String collectionName) {
         dropIfExists(collectionName);
@@ -93,11 +91,9 @@ public class MongoManager {
 
     public void insertDataRows(String datasetId, String[] columns, List<List<String>> rows) {
         List<Map<String, Object>> documents = new ArrayList<>();
-        int rowCount = 0;
 
         for (List<String> row : rows) {
-            rowCount++;
-            Map<String, Object> document = createDocument(row, columns, rowCount);
+            Map<String, Object> document = createDocument(row, columns);
 
             if (!document.isEmpty()) {
                 documents.add(document);
@@ -109,9 +105,8 @@ public class MongoManager {
         }
     }
 
-    private Map<String, Object> createDocument(List<String> row, String[] columns, int rowId) {
+    private Map<String, Object> createDocument(List<String> row, String[] columns) {
         Map<String, Object> document = new LinkedHashMap<>();
-        document.put(ID_FIELD, rowId);
 
         for (int j = 0; j < row.size() && j < columns.length; j++) {
             String cellValue = row.get(j);
