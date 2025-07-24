@@ -23,7 +23,7 @@ public class S3StorageManager {
     
     private final S3Client s3Client;
 
-    public void deleteDatasetFiles(String datasetId) {
+    public void deleteFiles(String datasetId) {
         try {
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
                     .bucket(bucket)
@@ -40,11 +40,10 @@ public class S3StorageManager {
                             .key(s3Object.key())
                             .build();
                     s3Client.deleteObject(deleteRequest);
-                    log.debug("S3 파일 삭제 완료: {}", s3Object.key());
                 }
             }
         } catch (S3Exception e) {
-            log.error("S3 파일 삭제 실패: {} - {}", datasetId, e.getMessage());
+            //파일 삭제 실패 해도 파일이 없는거니 괜찮다.
         }
     }
 

@@ -46,7 +46,7 @@ public class DataIngestionConsumer {
 
         try{
             dataIngestionService.createDataTable(messageDto.getDatasetId());
-            s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
+            s3StorageManager.deleteFiles(messageDto.getDatasetId());
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (Exception e) {
             sendToDLQ(message, e);
@@ -61,8 +61,6 @@ public class DataIngestionConsumer {
             dlqProps.getHeaders().put("x-failure-type", error.getClass().getSimpleName());
 
             rabbitTemplate.send(exchangeName + ".dlx", routingKey + ".dlq", message);
-            log.error("메시지 DLQ로 전송 완료: {} (원인: {})", message, error.getClass().getSimpleName());
-
         } catch (Exception e) {
             log.error("DLQ 전송 실패: {}", e.getMessage());
         }

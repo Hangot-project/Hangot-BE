@@ -21,13 +21,13 @@ public class DataIngestionService {
     private final MongoManager mongoManager;
 
 
-    public void createDataTable(String datasetId) {
+    public void createDataTable(String datasetId){
         String fileName = s3StorageManager.getFirstFileName(datasetId);
         mongoManager.createCollection(datasetId);
 
         s3StorageManager.processFiles(datasetId, file -> {
+            ParserStrategy strategy = parsingStrategyResolver.getStrategy(fileName);
             try {
-                ParserStrategy strategy = parsingStrategyResolver.getStrategy(fileName);
                 ParsedData parsedData = strategy.parse(file, datasetId);
 
                 if (!parsedData.getHeader().isEmpty() && !parsedData.getRows().isEmpty()) {
@@ -35,8 +35,7 @@ public class DataIngestionService {
                     mongoManager.insertDataRows(datasetId, columns, parsedData.getRows());
                 }
             } catch (Exception e) {
-                log.error("파일 파싱 및 저장 중 오류 발생: datasetId={}", datasetId);
-                throw e;
+                throw new RuntimeException(e);
             }
         });
     }

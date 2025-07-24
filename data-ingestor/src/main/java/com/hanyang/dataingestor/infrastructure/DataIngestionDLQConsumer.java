@@ -10,7 +10,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Component
@@ -26,40 +25,17 @@ public class DataIngestionDLQConsumer {
     public void handleDeadLetterMessage(Message message) {
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
-        LocalDateTime startTime = LocalDateTime.now();
-        
+
         try {
             MessageDto messageDto = objectMapper.readValue(messageBody, MessageDto.class);
             
-            log.warn("=== DLQ 처리 시작 ===");
-            log.warn("데이터셋 ID: {}", messageDto.getDatasetId());
-            log.warn("실패 시간: {}", headers.get("x-failure-time"));
-            log.warn("에러 메시지: {}", headers.get("x-error-message"));
-
+            log.warn("DLQ 처리 시작: {} ",messageBody);
             dataIngestionService.createDataTable(messageDto.getDatasetId());
-            s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
-
-            LocalDateTime endTime = LocalDateTime.now();
-            log.warn("DLQ 처리 성공: {} (소요시간: {}초)", messageDto.getDatasetId(), 
-                    java.time.Duration.between(startTime, endTime).getSeconds());
-            log.warn("=== DLQ 처리 완료 ===");
+          //  s3StorageManager.deleteFiles(messageDto.getDatasetId());
+            log.warn("DLQ 처리 완료: {} ",messageBody);
             
         } catch (Exception e) {
-            try {
-                LocalDateTime endTime = LocalDateTime.now();
-                
-                log.error("=== DLQ 최종 실패 ===");
-                log.error("실패 시간: {}", endTime);
-                log.error("소요시간: {}초", java.time.Duration.between(startTime, endTime).getSeconds());
-                log.error("실패 메시지: {}", messageBody);
-                log.error("실패 사유: {}", e.getMessage());
-                log.error("스택 트레이스: ", e);
-                log.error("메시지 헤더: {}", headers);
-                log.error("=== 메시지 완전 폐기 ===");
-                
-            } catch (Exception ackEx) {
-                log.error("메시지 ACK/NACK 실패: {}", ackEx.getMessage());
-            }
+            log.error("DLQ 최종 실패: {} ",messageBody,e);
         }
     }
 }
