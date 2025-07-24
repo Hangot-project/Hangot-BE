@@ -7,6 +7,5 @@ import lombok.Data;
 @Builder
 public class MessageDto {
     String datasetId;
-    String resourceUrl;
     String sourceUrl;
 }

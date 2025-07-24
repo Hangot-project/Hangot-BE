@@ -102,8 +102,9 @@ public class DataGoKrHtmlParser {
         String createdDate = metaData.getOrDefault("등록일", "");
         String updatedDate = metaData.getOrDefault("수정일", "");
         String licenseStr = metaData.getOrDefault("이용허락범위", "");
-        String resourceName = metaData.getOrDefault("파일데이터명", "");
         String type = metaData.getOrDefault("확장자", "");
+        String fileName = metaData.getOrDefault("파일데이터명", "");
+        String resourceName = fileName.isEmpty() ? "" : fileName + "." + type.toLowerCase();
         String keywords = metaData.getOrDefault("키워드", "");
         List<String> tagList = keywords.isEmpty() ? new ArrayList<>() : Arrays.asList(keywords.split(","));
 

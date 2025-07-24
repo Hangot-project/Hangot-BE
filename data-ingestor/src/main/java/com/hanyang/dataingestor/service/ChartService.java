@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TableService {
+public class ChartService {
     
     private static final int FIRST_ROW_ID = 1;
     private static final String MONGO_ID_FIELD = "_id";

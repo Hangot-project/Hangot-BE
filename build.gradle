@@ -48,6 +48,9 @@ subprojects {
 		
 		// Test DB
 		testImplementation 'com.h2database:h2'
+
+		// 인코딩
+		implementation 'com.ibm.icu:icu4j:73.2'
 	}
 
 	test {

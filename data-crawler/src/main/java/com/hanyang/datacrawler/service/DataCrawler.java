@@ -11,5 +11,4 @@ public interface DataCrawler {
     String getSiteName();
     void crawlDatasetsPage(int pageNo, int pageSize, LocalDate startDate, LocalDate endDate);
     Optional<DatasetWithTag> crawlSingleDataset(String datasetUrl, LocalDate startDate, LocalDate endDate);
-    void extractResourceURL(Dataset dataset);
 }

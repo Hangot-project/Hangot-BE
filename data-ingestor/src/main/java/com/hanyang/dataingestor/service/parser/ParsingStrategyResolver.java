@@ -1,20 +1,24 @@
-package com.hanyang.dataingestor.service;
+package com.hanyang.dataingestor.service.parser;
 
-import java.io.InputStream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-public class FileHandlerFactory {
+@Component
+@RequiredArgsConstructor
+public class ParsingStrategyResolver {
 
-    public static FileDataHandler createHandler(String fileName, InputStream inputStream) {
+    private final CsvParser csvParser;
+
+    public ParserStrategy getStrategy(String fileName) {
         String extension = getFileExtension(fileName).toLowerCase();
 
         return switch (extension) {
-            case "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm" -> ExcelSheetHandler.readExcel(inputStream);
-            case "csv" -> CsvHandler.readCsv(inputStream);
+            case "xlsx", "xls", "csv" -> csvParser;
             default -> throw new IllegalArgumentException(fileName + "은 지원하지 않는 파일 형식입니다.");
         };
     }
 
-    private static String getFileExtension(String fileName) {
+    private String getFileExtension(String fileName) {
         if (fileName == null || fileName.isEmpty()) {
             return "";
         }

@@ -1,6 +1,5 @@
 package com.hanyang.datacrawler.infrastructure;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -8,8 +7,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,96 +16,24 @@ import java.util.List;
 public class S3StorageManager {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
+    
     private final S3Client s3Client;
 
-
-    public String uploadAndGetUrl(String folderName, String fileName, InputStream inputStream) {
-        String s3ObjectPath = folderName + "/" + fileName;
-        String extension = getFileExtension(fileName);
-        FileType fileType = FileType.fromExtension(extension);
-
-        // 해당 폴더 내 모든 파일 삭제
-        deleteAllFilesInFolder(folderName);
-
+    public void uploadFile(String objectKey, byte[] data, String contentType) {
         try {
-            uploadWithMultipart(s3ObjectPath, inputStream, fileType.getContentType());
-        } catch (IOException e) {
-            throw new RuntimeException("S3 멀티파트 업로드 실패", e);
-        }
-
-        GetUrlRequest getUrlRequest = GetUrlRequest.builder()
-                .bucket(bucket)
-                .key(s3ObjectPath)
-                .build();
-
-        return String.valueOf(s3Client.utilities().getUrl(getUrlRequest));
-    }
-
-    private void uploadWithMultipart(String s3ObjectPath, InputStream inputStream, String contentType) throws IOException {
-        CreateMultipartUploadRequest createRequest = CreateMultipartUploadRequest.builder()
-                .bucket(bucket)
-                .key(s3ObjectPath)
-                .contentType(contentType)
-                .build();
-
-        CreateMultipartUploadResponse createResponse = s3Client.createMultipartUpload(createRequest);
-        String uploadId = createResponse.uploadId();
-
-        List<CompletedPart> completedParts = new ArrayList<>();
-        byte[] buffer = new byte[5 * 1024 * 1024]; // 5MB chunks
-        int partNumber = 1;
-
-        try {
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byte[] partData = new byte[bytesRead];
-                System.arraycopy(buffer, 0, partData, 0, bytesRead);
-
-                UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
-                        .bucket(bucket)
-                        .key(s3ObjectPath)
-                        .uploadId(uploadId)
-                        .partNumber(partNumber)
-                        .build();
-
-                UploadPartResponse uploadPartResponse = s3Client.uploadPart(uploadPartRequest, 
-                    RequestBody.fromBytes(partData));
-
-                CompletedPart completedPart = CompletedPart.builder()
-                        .partNumber(partNumber)
-                        .eTag(uploadPartResponse.eTag())
-                        .build();
-
-                completedParts.add(completedPart);
-                partNumber++;
-            }
-
-            CompletedMultipartUpload completedUpload = CompletedMultipartUpload.builder()
-                    .parts(completedParts)
-                    .build();
-
-            CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
+            PutObjectRequest putRequest = PutObjectRequest.builder()
                     .bucket(bucket)
-                    .key(s3ObjectPath)
-                    .uploadId(uploadId)
-                    .multipartUpload(completedUpload)
+                    .key(objectKey)
+                    .contentType(contentType)
                     .build();
-
-            s3Client.completeMultipartUpload(completeRequest);
-
+            
+            s3Client.putObject(putRequest, RequestBody.fromBytes(data));
         } catch (Exception e) {
-            // 실패 시 멀티파트 업로드 중단
-            AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
-                    .bucket(bucket)
-                    .key(s3ObjectPath)
-                    .uploadId(uploadId)
-                    .build();
-            s3Client.abortMultipartUpload(abortRequest);
-            throw new IOException("멀티파트 업로드 실패", e);
+            throw new RuntimeException("S3 파일 업로드 실패", e);
         }
     }
 
-    private void deleteAllFilesInFolder(String folderName) {
+    public void deleteAllFilesInFolder(String folderName) {
         try {
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
                     .bucket(bucket)
@@ -131,10 +57,67 @@ public class S3StorageManager {
         }
     }
 
-    private String getFileExtension(String fileName) {
-        if (fileName == null || fileName.lastIndexOf('.') == -1) {
-            return "";
+    private void uploadWithMultipart(String objectKey, InputStream inputStream, String contentType) throws IOException {
+        CreateMultipartUploadRequest createRequest = CreateMultipartUploadRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .contentType(contentType)
+                .build();
+
+        CreateMultipartUploadResponse createResponse = s3Client.createMultipartUpload(createRequest);
+        String uploadId = createResponse.uploadId();
+
+        List<CompletedPart> completedParts = new ArrayList<>();
+        byte[] buffer = new byte[5 * 1024 * 1024]; // 5MB chunks
+        int partNumber = 1;
+
+        try {
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byte[] partData = new byte[bytesRead];
+                System.arraycopy(buffer, 0, partData, 0, bytesRead);
+
+                UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
+                        .bucket(bucket)
+                        .key(objectKey)
+                        .uploadId(uploadId)
+                        .partNumber(partNumber)
+                        .build();
+
+                UploadPartResponse uploadPartResponse = s3Client.uploadPart(uploadPartRequest, 
+                    RequestBody.fromBytes(partData));
+
+                CompletedPart completedPart = CompletedPart.builder()
+                        .partNumber(partNumber)
+                        .eTag(uploadPartResponse.eTag())
+                        .build();
+
+                completedParts.add(completedPart);
+                partNumber++;
+            }
+
+            CompletedMultipartUpload completedUpload = CompletedMultipartUpload.builder()
+                    .parts(completedParts)
+                    .build();
+
+            CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .uploadId(uploadId)
+                    .multipartUpload(completedUpload)
+                    .build();
+
+            s3Client.completeMultipartUpload(completeRequest);
+
+        } catch (Exception e) {
+            // 실패 시 멀티파트 업로드 중단
+            AbortMultipartUploadRequest abortRequest = AbortMultipartUploadRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .uploadId(uploadId)
+                    .build();
+            s3Client.abortMultipartUpload(abortRequest);
+            throw new IOException("멀티파트 업로드 실패", e);
         }
-        return fileName.substring(fileName.lastIndexOf('.') + 1);
     }
 }

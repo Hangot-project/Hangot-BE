@@ -3,14 +3,17 @@ package com.hanyang.dataingestor.infrastructure;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class S3StorageManager {
@@ -20,37 +23,7 @@ public class S3StorageManager {
     
     private final S3Client s3Client;
 
-    public InputStream getFile(String datasetId) {
-        String key = findFirstFileKey(datasetId);
-        if (key == null) {
-            return null;
-        }
-
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-
-        return s3Client.getObject(getObjectRequest);
-    }
-    
-    public String getFirstFileName(String datasetId) {
-        try {
-            String key = findFirstFileKey(datasetId);
-            if (key == null) {
-                return null;
-            }
-            
-            int lastSlashIndex = key.lastIndexOf('/');
-            return lastSlashIndex == -1 ? key : key.substring(lastSlashIndex + 1);
-            
-        } catch (Exception e) {
-            log.error("파일명 조회 실패: {} - {}", datasetId, e.getMessage());
-            return null;
-        }
-    }
-
-    public void deleteDatasetFiles(String datasetId) {
+    public void deleteFiles(String datasetId) {
         try {
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
                     .bucket(bucket)
@@ -67,34 +40,67 @@ public class S3StorageManager {
                             .key(s3Object.key())
                             .build();
                     s3Client.deleteObject(deleteRequest);
-                    log.debug("S3 파일 삭제 완료: {}", s3Object.key());
                 }
             }
         } catch (S3Exception e) {
-            log.error("S3 파일 삭제 실패: {} - {}", datasetId, e.getMessage());
+            //파일 삭제 실패 해도 파일이 없는거니 괜찮다.
         }
     }
 
-    private String findFirstFileKey(String datasetId) {
-        try {
-            ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
-                    .bucket(bucket)
-                    .prefix(datasetId + "/")
-                    .delimiter("/")
-                    .build();
 
-            ListObjectsV2Response response = s3Client.listObjectsV2(listObjectsRequest);
-            List<S3Object> s3ObjectsList = response.contents();
-
-            if (s3ObjectsList.isEmpty()) {
-                log.error("데이터셋에 해당하는 파일이 없습니다: {}", datasetId);
-                return null;
-            }
-
-            return s3ObjectsList.get(0).key();
-        } catch (S3Exception e) {
-            log.error("S3 파일 목록 조회 실패: {} - {}", datasetId, e.getMessage());
-            return null;
+    public void processFiles(String datasetId, Consumer<InputStream> fileProcessor) {
+        List<String> keys = getAllFilePath(datasetId);
+        if (keys.isEmpty()) {
+            return;
+        }
+        
+        for (String key : keys) {
+            InputStream fileStream = getFileStream(key);
+            fileProcessor.accept(fileStream);
         }
     }
+
+    private InputStream getFileStream(String key) {
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
+        return s3Client.getObject(getObjectRequest);
+    }
+
+    public String getFirstFileName(String datasetId) {
+        String key = Objects.requireNonNull(getFirstFilePath(datasetId));
+        int lastSlashIndex = key.lastIndexOf('/');
+        return lastSlashIndex == -1 ? key : key.substring(lastSlashIndex + 1);
+    }
+
+    private List<String> getAllFilePath(String datasetId) {
+        List<String> keys = new ArrayList<>();
+        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix(datasetId + "/")
+                .build();
+
+        ListObjectsV2Response response = s3Client.listObjectsV2(listObjectsRequest);
+        List<S3Object> s3ObjectsList = response.contents();
+
+        for (S3Object s3Object : s3ObjectsList) {
+            keys.add(s3Object.key());
+        }
+        return keys;
+    }
+
+    private String getFirstFilePath(String datasetId) {
+        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix(datasetId + "/")
+                .delimiter("/")
+                .build();
+
+        ListObjectsV2Response response = s3Client.listObjectsV2(listObjectsRequest);
+        List<S3Object> s3ObjectsList = response.contents();
+
+        return s3ObjectsList.get(0).key();
+    }
+
 }
