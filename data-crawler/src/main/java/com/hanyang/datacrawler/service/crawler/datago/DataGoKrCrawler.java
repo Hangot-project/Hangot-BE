@@ -5,12 +5,13 @@ import com.hanyang.datacrawler.dto.DatasetWithTag;
 import com.hanyang.datacrawler.dto.MessageDto;
 import com.hanyang.datacrawler.exception.CrawlStopException;
 import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
-import com.hanyang.datacrawler.service.file.FileType;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
+import com.hanyang.datacrawler.service.file.FileType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -76,7 +77,8 @@ public class DataGoKrCrawler implements DataCrawler {
 
             for (Dataset dataset : savedDatasets) {
                 downloadParamExtractor.extractDownloadParams(dataset.getSourceUrl()).ifPresent(params -> {
-                    String resourceURL = buildDownloadUrl(params, dataset.getResourceName());
+                    String fileName = FilenameUtils.removeExtension(dataset.getResourceName());
+                    String resourceURL = buildDownloadUrl(params, fileName);
                     Dataset updatedDataset = datasetService.updateResourceUrl(dataset, resourceURL);
 
                     FileType fileType = FileType.getFileType(updatedDataset.getResourceName());
@@ -119,13 +121,18 @@ public class DataGoKrCrawler implements DataCrawler {
     private void downloadFileToS3(Dataset dataset, String downloadUrl) {
         String folderName = String.valueOf(dataset.getDatasetId());
         String resourceName = dataset.getResourceName();
-        
-        resourceService.downloadAndUploadFile(
-                downloadUrl, folderName, resourceName, dataset.getSourceUrl());
+
+        try{
+            resourceService.downloadAndUploadFile(
+                    downloadUrl, folderName, resourceName);
+        } catch (UnsupportedOperationException zipException) {
+            //zip 파일은 파싱 안함
+        } catch (Exception e) {
+            log.error("파일 다운로드 중 예상치 못한 오류 - datasetId: {} sourceURL: {}, 에러: {}",dataset.getDatasetId(), dataset.getSourceUrl(), e.getMessage(), e);
+        }
 
         rabbitMQPublisher.sendMessage(MessageDto.builder().
                 datasetId(String.valueOf(dataset.getDatasetId())).
-                resourceUrl(dataset.getResourceUrl()).
                 sourceUrl(dataset.getSourceUrl()).
                 build());
     }
