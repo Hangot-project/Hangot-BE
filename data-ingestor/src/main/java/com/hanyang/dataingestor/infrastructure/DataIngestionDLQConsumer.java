@@ -2,7 +2,7 @@ package com.hanyang.dataingestor.infrastructure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanyang.dataingestor.dto.MessageDto;
-import com.hanyang.dataingestor.service.DataParsingService;
+import com.hanyang.dataingestor.service.DataIngestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -16,10 +16,10 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DeadLetterQueueConsumer {
+public class DataIngestionDLQConsumer {
 
     private final ObjectMapper objectMapper;
-    private final DataParsingService dataParsingService;
+    private final DataIngestionService dataIngestionService;
     private final S3StorageManager s3StorageManager;
 
     @RabbitListener(queues = "${rabbitmq.queue.name}.dlq", concurrency = "1")
@@ -36,7 +36,7 @@ public class DeadLetterQueueConsumer {
             log.warn("실패 시간: {}", headers.get("x-failure-time"));
             log.warn("에러 메시지: {}", headers.get("x-error-message"));
 
-            dataParsingService.createDataTable(messageDto.getDatasetId());
+            dataIngestionService.createDataTable(messageDto.getDatasetId());
             s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
 
             LocalDateTime endTime = LocalDateTime.now();

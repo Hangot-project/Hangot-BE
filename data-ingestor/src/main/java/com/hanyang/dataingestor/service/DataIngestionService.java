@@ -1,0 +1,54 @@
+package com.hanyang.dataingestor.service;
+
+import com.hanyang.dataingestor.core.exception.DataProcessingException;
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
+import com.hanyang.dataingestor.infrastructure.MongoManager;
+import com.hanyang.dataingestor.infrastructure.S3StorageManager;
+import com.hanyang.dataingestor.service.parser.ParsedData;
+import com.hanyang.dataingestor.service.parser.ParserStrategy;
+import com.hanyang.dataingestor.service.parser.ParsingStrategyResolver;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class DataIngestionService {
+
+    private final S3StorageManager s3StorageManager;
+    private final ParsingStrategyResolver parsingStrategyResolver;
+    private final MongoManager mongoManager;
+
+
+    public void createDataTable(String datasetId) {
+        List<InputStream> files = s3StorageManager.getAllFiles(datasetId);
+        if (files.isEmpty()) {
+            throw new ResourceNotFoundException("파일을 찾을 수 없습니다: datasetId - " + datasetId);
+        }
+
+        List<String> fileNames = s3StorageManager.getAllFileNames(datasetId);
+        if (fileNames.isEmpty()) {
+            throw new DataProcessingException("파일명을 가져올 수 없습니다: datasetId - " + datasetId);
+        }
+
+        mongoManager.createCollection(datasetId);
+
+        for (int i = 0; i < files.size(); i++) {
+            InputStream file = files.get(i);
+            String fileName = fileNames.get(i);
+            
+            ParserStrategy strategy = parsingStrategyResolver.getStrategy(fileName);
+            ParsedData parsedData = strategy.parse(file, datasetId);
+            
+            if (!parsedData.getHeader().isEmpty() && !parsedData.getRows().isEmpty()) {
+                String[] columns = parsedData.getHeader().toArray(new String[0]);
+                mongoManager.insertDataRows(datasetId, columns, parsedData.getRows());
+            }
+        }
+
+    }
+}

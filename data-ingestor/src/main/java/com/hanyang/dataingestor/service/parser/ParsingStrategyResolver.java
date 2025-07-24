@@ -1,4 +1,4 @@
-package com.hanyang.dataingestor.service.strategy;
+package com.hanyang.dataingestor.service.parser;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -7,15 +7,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ParsingStrategyResolver {
 
-    private final ExcelParsingStrategy excelParsingStrategy;
-    private final CsvParsingStrategy csvParsingStrategy;
+    private final ExcelParser excelParser;
+    private final CsvParser csvParser;
 
-    public ParsingStrategy getStrategy(String fileName) {
+    public ParserStrategy getStrategy(String fileName) {
         String extension = getFileExtension(fileName).toLowerCase();
 
         return switch (extension) {
-            case "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm" -> excelParsingStrategy;
-            case "csv" -> csvParsingStrategy;
+            case "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm" -> excelParser;
+            case "csv" -> csvParser;
             default -> throw new IllegalArgumentException(fileName + "은 지원하지 않는 파일 형식입니다.");
         };
     }

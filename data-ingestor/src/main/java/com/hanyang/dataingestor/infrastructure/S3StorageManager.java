@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -19,36 +20,6 @@ public class S3StorageManager {
     private String bucket;
     
     private final S3Client s3Client;
-
-    public InputStream getFile(String datasetId) {
-        String key = findFirstFileKey(datasetId);
-        if (key == null) {
-            return null;
-        }
-
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-
-        return s3Client.getObject(getObjectRequest);
-    }
-    
-    public String getFirstFileName(String datasetId) {
-        try {
-            String key = findFirstFileKey(datasetId);
-            if (key == null) {
-                return null;
-            }
-            
-            int lastSlashIndex = key.lastIndexOf('/');
-            return lastSlashIndex == -1 ? key : key.substring(lastSlashIndex + 1);
-            
-        } catch (Exception e) {
-            log.error("파일명 조회 실패: {} - {}", datasetId, e.getMessage());
-            return null;
-        }
-    }
 
     public void deleteDatasetFiles(String datasetId) {
         try {
@@ -73,6 +44,63 @@ public class S3StorageManager {
         } catch (S3Exception e) {
             log.error("S3 파일 삭제 실패: {} - {}", datasetId, e.getMessage());
         }
+    }
+
+    public List<InputStream> getAllFiles(String datasetId) {
+        List<InputStream> files = new ArrayList<>();
+        try {
+            List<String> keys = getAllFileKeys(datasetId);
+            for (String key : keys) {
+                GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .build();
+                files.add(s3Client.getObject(getObjectRequest));
+            }
+        } catch (Exception e) {
+            log.error("S3 파일들 조회 실패: {} - {}", datasetId, e.getMessage());
+        }
+        return files;
+    }
+
+    public List<String> getAllFileNames(String datasetId) {
+        List<String> fileNames = new ArrayList<>();
+        try {
+            List<String> keys = getAllFileKeys(datasetId);
+            for (String key : keys) {
+                int lastSlashIndex = key.lastIndexOf('/');
+                String fileName = lastSlashIndex == -1 ? key : key.substring(lastSlashIndex + 1);
+                fileNames.add(fileName);
+            }
+        } catch (Exception e) {
+            log.error("S3 파일명들 조회 실패: {} - {}", datasetId, e.getMessage());
+        }
+        return fileNames;
+    }
+
+    private List<String> getAllFileKeys(String datasetId) {
+        List<String> keys = new ArrayList<>();
+        try {
+            ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(datasetId + "/")
+                    .build();
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(listObjectsRequest);
+            List<S3Object> s3ObjectsList = response.contents();
+
+            if (s3ObjectsList.isEmpty()) {
+                log.error("데이터셋에 해당하는 파일이 없습니다: {}", datasetId);
+                return keys;
+            }
+
+            for (S3Object s3Object : s3ObjectsList) {
+                keys.add(s3Object.key());
+            }
+        } catch (S3Exception e) {
+            log.error("S3 파일 목록 조회 실패: {} - {}", datasetId, e.getMessage());
+        }
+        return keys;
     }
 
     private String findFirstFileKey(String datasetId) {

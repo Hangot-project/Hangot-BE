@@ -3,7 +3,7 @@ package com.hanyang.dataingestor.infrastructure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanyang.dataingestor.dto.MessageDto;
-import com.hanyang.dataingestor.service.DataParsingService;
+import com.hanyang.dataingestor.service.DataIngestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -18,9 +18,9 @@ import java.nio.charset.StandardCharsets;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class RabbitMQConsumer {
+public class DataIngestionConsumer {
 
-    private final DataParsingService dataParsingService;
+    private final DataIngestionService dataIngestionService;
     private final S3StorageManager s3StorageManager;
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbitTemplate;
@@ -45,8 +45,8 @@ public class RabbitMQConsumer {
         }
 
         try{
-            dataParsingService.createDataTable(messageDto.getDatasetId());
-        //    s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
+            dataIngestionService.createDataTable(messageDto.getDatasetId());
+            s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (Exception e) {
             sendToDLQ(message, e);

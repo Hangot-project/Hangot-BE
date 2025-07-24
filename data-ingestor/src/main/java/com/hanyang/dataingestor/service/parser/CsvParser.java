@@ -1,12 +1,9 @@
-package com.hanyang.dataingestor.service.strategy;
+package com.hanyang.dataingestor.service.parser;
 
 import com.hanyang.dataingestor.core.exception.InvalidFileFormatException;
-import com.hanyang.dataingestor.infrastructure.MongoManager;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 import com.opencsv.CSVReader;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -19,19 +16,12 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
-public class CsvParsingStrategy implements ParsingStrategy {
-
-    @Value("${data.batch.size}")
-    private int batchSize;
-
-    private final MongoManager mongoManager;
+public class CsvParser implements ParserStrategy {
 
     @Override
-    public void parse(InputStream inputStream, String datasetId) {
+    public ParsedData parse(InputStream inputStream, String datasetId) {
         List<String> header = new ArrayList<>();
         List<List<String>> rows = new ArrayList<>();
-        mongoManager.createCollection(datasetId);
 
         try {
             BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
@@ -48,32 +38,17 @@ public class CsvParsingStrategy implements ParsingStrategy {
                         isFirstRow = false;
                     } else {
                         rows.add(Arrays.asList(nextRecord));
-                        
-                        // 배치 처리
-                        if (rows.size() >= batchSize) {
-                            processBatch(datasetId, header, rows);
-                        }
                     }
                 }
-                
-                // 남은 데이터 처리
-                if (!rows.isEmpty()) {
-                    processBatch(datasetId, header, rows);
-                }
             }
+
+            return new ParsedData(header, rows);
 
         } catch (Exception e) {
             throw new InvalidFileFormatException("CSV 파일 읽기 실패", e);
         }
     }
 
-    private void processBatch(String datasetId, List<String> header, List<List<String>> rows) {
-        if (!header.isEmpty() && !rows.isEmpty()) {
-            String[] columns = header.toArray(new String[0]);
-            mongoManager.insertDataRows(datasetId, columns, new ArrayList<>(rows));
-            rows.clear();
-        }
-    }
     
     private static Charset detectCharset(BufferedInputStream inputStream) throws Exception {
         inputStream.mark(8192);
@@ -93,13 +68,15 @@ public class CsvParsingStrategy implements ParsingStrategy {
             if ("UTF-8".equals(detectedEncoding)) {
                 return StandardCharsets.UTF_8;
             }
-            
-            if ("EUC-KR".equals(detectedEncoding) || "x-windows-949".equals(detectedEncoding)) {
+
+            if ("EUC-KR".equals(detectedEncoding) || "x-windows-949".equals(detectedEncoding) || "CP949".equals(detectedEncoding)) {
                 return Charset.forName("EUC-KR");
             }
             
             return StandardCharsets.UTF_8;
             
+        } catch (Exception e) {
+            return StandardCharsets.UTF_8;
         } finally {
             inputStream.reset();
         }
