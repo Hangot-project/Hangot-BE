@@ -1,6 +1,5 @@
 package com.hanyang.dataingestor.service;
 
-import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.infrastructure.MongoManager;
 import com.hanyang.dataingestor.infrastructure.S3StorageManager;
 import com.hanyang.dataingestor.service.parser.ParsedData;
@@ -10,8 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
-import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -24,23 +22,22 @@ public class DataIngestionService {
 
 
     public void createDataTable(String datasetId) {
-        List<InputStream> files = s3StorageManager.getAllFiles(datasetId);
-        if (files.isEmpty()) {
-            throw new ResourceNotFoundException("파일을 찾을 수 없습니다: datasetId - " + datasetId);
-        }
-
         String fileName = s3StorageManager.getFirstFileName(datasetId);
         mongoManager.createCollection(datasetId);
 
-        for (InputStream file : files) {
-            ParserStrategy strategy = parsingStrategyResolver.getStrategy(fileName);
-            ParsedData parsedData = strategy.parse(file, datasetId);
+        s3StorageManager.processFiles(datasetId, file -> {
+            try {
+                ParserStrategy strategy = parsingStrategyResolver.getStrategy(fileName);
+                ParsedData parsedData = strategy.parse(file, datasetId);
 
-            if (!parsedData.getHeader().isEmpty() && !parsedData.getRows().isEmpty()) {
-                String[] columns = parsedData.getHeader().toArray(new String[0]);
-                mongoManager.insertDataRows(datasetId, columns, parsedData.getRows());
+                if (!parsedData.getHeader().isEmpty() && !parsedData.getRows().isEmpty()) {
+                    String[] columns = parsedData.getHeader().toArray(new String[0]);
+                    mongoManager.insertDataRows(datasetId, columns, parsedData.getRows());
+                }
+            } catch (Exception e) {
+                log.error("파일 파싱 및 저장 중 오류 발생: datasetId={}", datasetId);
+                throw e;
             }
-        }
-
+        });
     }
 }

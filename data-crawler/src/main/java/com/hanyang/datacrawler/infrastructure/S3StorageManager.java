@@ -28,19 +28,9 @@ public class S3StorageManager {
                     .build();
             
             s3Client.putObject(putRequest, RequestBody.fromBytes(data));
-            getObjectUrl(objectKey);
         } catch (Exception e) {
             throw new RuntimeException("S3 파일 업로드 실패", e);
         }
-    }
-
-    public String getObjectUrl(String objectKey) {
-        GetUrlRequest getUrlRequest = GetUrlRequest.builder()
-                .bucket(bucket)
-                .key(objectKey)
-                .build();
-        
-        return String.valueOf(s3Client.utilities().getUrl(getUrlRequest));
     }
 
     public void deleteAllFilesInFolder(String folderName) {
