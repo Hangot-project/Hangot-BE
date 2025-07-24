@@ -24,28 +24,38 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class ExcelHandler implements FileStrategy, XSSFSheetXMLHandler.SheetContentsHandler {
-    
+
     private final S3StorageManager s3StorageManager;
     
-    private String folderName;
-    private int batchSize;
-    private final List<String> header = new ArrayList<>();
-    private final List<List<String>> currentChunk = new ArrayList<>();
-    private final List<String> currentRow = new ArrayList<>();
-    
-    private int headerRowIndex = -1;
-    private int checkedCol = -1;
-    private int chunkIndex = 0;
+    private final ThreadLocal<String> folderName = new ThreadLocal<>();
+    private final ThreadLocal<Integer> batchSize = new ThreadLocal<>();
+    private final ThreadLocal<List<String>> header = ThreadLocal.withInitial(ArrayList::new);
+    private final ThreadLocal<List<List<String>>> currentChunk = ThreadLocal.withInitial(ArrayList::new);
+    private final ThreadLocal<List<String>> currentRow = ThreadLocal.withInitial(ArrayList::new);
+
+    private final ThreadLocal<Integer> headerRowIndex = ThreadLocal.withInitial(() -> -1);
+    private final ThreadLocal<Integer> checkedCol = ThreadLocal.withInitial(() -> -1);
+    private final ThreadLocal<Integer> chunkIndex = ThreadLocal.withInitial(() -> 0);
+
     
     @Override
     public void processFile(String folderName, Path filePath, int batchSize) {
-        this.folderName = folderName;
-        this.batchSize = batchSize;
-        
+        this.folderName.set(folderName);
+        this.batchSize.set(batchSize);
+
+        header.get().clear();
+        currentChunk.get().clear();
+        currentRow.get().clear();
+        headerRowIndex.set(-1);
+        checkedCol.set(-1);
+        chunkIndex.set(0);
+
         try {
             processExcelWithChunking(filePath);
         } catch (Exception e) {
             throw new RuntimeException("Excel 파일 처리 실패", e);
+        } finally {
+            clearThreadLocalValues();
         }
     }
     
@@ -71,66 +81,75 @@ public class ExcelHandler implements FileStrategy, XSSFSheetXMLHandler.SheetCont
     
     @Override
     public void startRow(int rowNum) {
-        this.checkedCol = -1;
+        this.checkedCol.set(-1);
     }
     
     @Override
     public void endRow(int rowNum) {
-        if (headerRowIndex == -1 && !currentRow.isEmpty() && 
-            currentRow.stream().anyMatch(cell -> cell != null && !cell.trim().isEmpty())) {
-            headerRowIndex = rowNum;
-            header.clear();
-            header.addAll(currentRow);
-        } else if (headerRowIndex != -1 && rowNum > headerRowIndex) {
-            while (currentRow.size() < header.size()) {
-                currentRow.add("");
+        List<String> currentRowList = currentRow.get();
+        List<String> headerList = header.get();
+        List<List<String>> currentChunkList = currentChunk.get();
+        
+        if (headerRowIndex.get() == -1 && !currentRowList.isEmpty() && 
+            currentRowList.stream().anyMatch(cell -> cell != null && !cell.trim().isEmpty())) {
+            headerRowIndex.set(rowNum);
+            headerList.clear();
+            headerList.addAll(currentRowList);
+        } else if (headerRowIndex.get() != -1 && rowNum > headerRowIndex.get()) {
+            while (currentRowList.size() < headerList.size()) {
+                currentRowList.add("");
             }
-            currentChunk.add(new ArrayList<>(currentRow));
+            currentChunkList.add(new ArrayList<>(currentRowList));
             
-            if (currentChunk.size() >= batchSize) {
+            if (currentChunkList.size() >= batchSize.get()) {
                 saveChunkToCsv();
-                currentChunk.clear();
-                chunkIndex++;
+                currentChunkList.clear();
+                chunkIndex.set(chunkIndex.get() + 1);
             }
         }
-        currentRow.clear();
+        currentRowList.clear();
     }
     
     @Override
     public void cell(String cellReference, String value, XSSFComment comment) {
         int currentCol = new CellReference(cellReference).getCol();
-        int emptyColumnCount = currentCol - checkedCol - 1;
+        int checkedColValue = checkedCol.get();
+        int emptyColumnCount = currentCol - checkedColValue - 1;
+        List<String> currentRowList = currentRow.get();
         
         for (int i = 0; i < emptyColumnCount; i++) {
-            currentRow.add("");
+            currentRowList.add("");
         }
         
-        currentRow.add(value != null ? value : "");
-        checkedCol = currentCol;
+        currentRowList.add(value != null ? value : "");
+        checkedCol.set(currentCol);
     }
     
     private void finalizeChunks() {
-        if (!currentChunk.isEmpty()) {
+        if (!currentChunk.get().isEmpty()) {
             saveChunkToCsv();
         }
     }
     
     private void saveChunkToCsv() {
-        if (header.isEmpty() || currentChunk.isEmpty()) {
+        List<String> headerList = header.get();
+        List<List<String>> currentChunkList = currentChunk.get();
+        
+        if (headerList.isEmpty() || currentChunkList.isEmpty()) {
             return;
         }
         
         try {
             StringBuilder csvContent = new StringBuilder();
             
-            csvContent.append(String.join(",", header)).append("\n");
+            csvContent.append(String.join(",", headerList)).append("\n");
             
-            for (List<String> row : currentChunk) {
+            for (List<String> row : currentChunkList) {
                 csvContent.append(String.join(",", row)).append("\n");
             }
             
-            String chunkFileName = "chunk_" + chunkIndex + ".csv";
-            String s3ObjectPath = folderName + "/" + chunkFileName;
+            String chunkFileName = chunkIndex.get() + ".csv";
+            String s3ObjectPath = folderName.get() + "/" + chunkFileName;
             
             byte[] csvBytes = csvContent.toString().getBytes(StandardCharsets.UTF_8);
             s3StorageManager.uploadFile(s3ObjectPath, csvBytes, "text/csv; charset=UTF-8");
@@ -138,5 +157,16 @@ public class ExcelHandler implements FileStrategy, XSSFSheetXMLHandler.SheetCont
         } catch (Exception e) {
             throw new RuntimeException("CSV 청크 저장 실패", e);
         }
+    }
+    
+    private void clearThreadLocalValues() {
+        folderName.remove();
+        batchSize.remove();
+        header.remove();
+        currentChunk.remove();
+        currentRow.remove();
+        headerRowIndex.remove();
+        checkedCol.remove();
+        chunkIndex.remove();
     }
 }
