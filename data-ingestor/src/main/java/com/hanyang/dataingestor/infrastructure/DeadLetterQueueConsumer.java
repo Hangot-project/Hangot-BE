@@ -3,7 +3,6 @@ package com.hanyang.dataingestor.infrastructure;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.service.DataParsingService;
-import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -22,12 +21,10 @@ public class DeadLetterQueueConsumer {
     private final ObjectMapper objectMapper;
     private final DataParsingService dataParsingService;
     private final S3StorageManager s3StorageManager;
-    private final MongoManager mongoManager;
 
     @RabbitListener(queues = "${rabbitmq.queue.name}.dlq", concurrency = "1")
-    public void handleDeadLetterMessage(Message message, Channel channel) {
+    public void handleDeadLetterMessage(Message message) {
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
-        long tag = message.getMessageProperties().getDeliveryTag();
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
         LocalDateTime startTime = LocalDateTime.now();
         
@@ -41,8 +38,7 @@ public class DeadLetterQueueConsumer {
 
             dataParsingService.createDataTable(messageDto.getDatasetId());
             s3StorageManager.deleteDatasetFiles(messageDto.getDatasetId());
-            channel.basicAck(tag, false);
-            
+
             LocalDateTime endTime = LocalDateTime.now();
             log.warn("DLQ 처리 성공: {} (소요시간: {}초)", messageDto.getDatasetId(), 
                     java.time.Duration.between(startTime, endTime).getSeconds());
@@ -50,7 +46,6 @@ public class DeadLetterQueueConsumer {
             
         } catch (Exception e) {
             try {
-                channel.basicNack(tag, false, false);
                 LocalDateTime endTime = LocalDateTime.now();
                 
                 log.error("=== DLQ 최종 실패 ===");
