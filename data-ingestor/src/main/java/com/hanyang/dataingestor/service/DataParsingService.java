@@ -6,14 +6,10 @@ import com.hanyang.dataingestor.infrastructure.MongoManager;
 import com.hanyang.dataingestor.infrastructure.S3StorageManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +19,6 @@ public class DataParsingService {
     private final S3StorageManager s3StorageManager;
     private final MongoManager mongoManager;
     
-    @Value("${datastore.batch.size:1000}")
-    private int batchSize;
-    
-    private static final String ID_FIELD = "_id";
 
     public void createDataTable(String datasetId) {
         InputStream file = s3StorageManager.getFile(datasetId);
@@ -41,7 +33,6 @@ public class DataParsingService {
 
         FileDataHandler fileHandler = FileHandlerFactory.createHandler(fileName, file);
 
-        mongoManager.dropIfExists(datasetId);
         mongoManager.createCollection(datasetId);
         processFileData(datasetId, fileHandler);
     }
@@ -61,7 +52,7 @@ public class DataParsingService {
             return;
         }
         
-        processBatchData(datasetId, columns, rows);
+        mongoManager.processBatchData(datasetId, columns, rows);
     }
 
     private boolean validateHeaders(String datasetId, List<String> headers) {
@@ -70,59 +61,5 @@ public class DataParsingService {
             return false;
         }
         return true;
-    }
-
-    private void processBatchData(String datasetId, String[] columns, List<List<String>> rows) {
-        List<Map<String, Object>> buffer = new ArrayList<>();
-        int rowCount = 0;
-        
-        for (List<String> row : rows) {
-            rowCount++;
-            Map<String, Object> document = createDocument(row, columns, rowCount);
-            
-            if (!document.isEmpty()) {
-                buffer.add(document);
-                
-                if (buffer.size() >= batchSize) {
-                    mongoManager.insertDocuments(datasetId, buffer);
-                    buffer.clear();
-                }
-            }
-        }
-        
-        if (!buffer.isEmpty()) {
-            mongoManager.insertDocuments(datasetId, buffer);
-        }
-        
-    }
-
-    private Map<String, Object> createDocument(List<String> row, String[] columns, int rowId) {
-        Map<String, Object> document = new LinkedHashMap<>();
-        document.put(ID_FIELD, rowId);
-        
-        for (int j = 0; j < row.size() && j < columns.length; j++) {
-            String cellValue = row.get(j);
-            Object value = parseValue(cellValue);
-            document.put(columns[j], value);
-        }
-        
-        return document;
-    }
-
-    private Object parseValue(String cellValue) {
-        if (cellValue == null || cellValue.trim().isEmpty()) {
-            return "";
-        }
-        
-        try {
-            // 정수인지 확인
-            if (!cellValue.contains(".")) {
-                return Long.parseLong(cellValue);
-            }
-            // 실수인지 확인
-            return Double.parseDouble(cellValue);
-        } catch (NumberFormatException e) {
-            return cellValue.trim();
-        }
     }
 }

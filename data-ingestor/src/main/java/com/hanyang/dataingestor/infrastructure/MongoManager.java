@@ -4,20 +4,23 @@ import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.GroupType;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
+    @Value("${datastore.batch.size:1000}")
+    private int batchSize;
+    private static final String ID_FIELD = "_id";
+
 
     public void createCollection(String collectionName) {
         dropIfExists(collectionName);
@@ -89,6 +92,61 @@ public class MongoManager {
             }
             return new Document("$group", groupDoc);
         };
+    }
+
+    public void processBatchData(String datasetId, String[] columns, List<List<String>> rows) {
+        List<Map<String, Object>> buffer = new ArrayList<>();
+        int rowCount = 0;
+
+        for (List<String> row : rows) {
+            rowCount++;
+            Map<String, Object> document = createDocument(row, columns, rowCount);
+
+            if (!document.isEmpty()) {
+                buffer.add(document);
+
+                if (buffer.size() >= batchSize) {
+                    insertDocuments(datasetId, buffer);
+                    buffer.clear();
+                }
+            }
+        }
+
+        if (!buffer.isEmpty()) {
+            insertDocuments(datasetId, buffer);
+        }
+
+    }
+
+    private Map<String, Object> createDocument(List<String> row, String[] columns, int rowId) {
+        Map<String, Object> document = new LinkedHashMap<>();
+        document.put(ID_FIELD, rowId);
+
+        for (int j = 0; j < row.size() && j < columns.length; j++) {
+            String cellValue = row.get(j);
+            Object value = parseValue(cellValue);
+            document.put(columns[j], value);
+        }
+
+        return document;
+    }
+
+
+    private Object parseValue(String cellValue) {
+        if (cellValue == null || cellValue.trim().isEmpty()) {
+            return "";
+        }
+
+        try {
+            // 정수인지 확인
+            if (!cellValue.contains(".")) {
+                return Long.parseLong(cellValue);
+            }
+            // 실수인지 확인
+            return Double.parseDouble(cellValue);
+        } catch (NumberFormatException e) {
+            return cellValue.trim();
+        }
     }
 
 }
