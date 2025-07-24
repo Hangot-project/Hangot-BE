@@ -4,7 +4,6 @@ import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.GroupType;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
@@ -17,8 +16,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
-    @Value("${datastore.batch.size:1000}")
-    private int batchSize;
     private static final String ID_FIELD = "_id";
 
 
@@ -94,8 +91,8 @@ public class MongoManager {
         };
     }
 
-    public void processBatchData(String datasetId, String[] columns, List<List<String>> rows) {
-        List<Map<String, Object>> buffer = new ArrayList<>();
+    public void insertDataRows(String datasetId, String[] columns, List<List<String>> rows) {
+        List<Map<String, Object>> documents = new ArrayList<>();
         int rowCount = 0;
 
         for (List<String> row : rows) {
@@ -103,19 +100,13 @@ public class MongoManager {
             Map<String, Object> document = createDocument(row, columns, rowCount);
 
             if (!document.isEmpty()) {
-                buffer.add(document);
-
-                if (buffer.size() >= batchSize) {
-                    insertDocuments(datasetId, buffer);
-                    buffer.clear();
-                }
+                documents.add(document);
             }
         }
 
-        if (!buffer.isEmpty()) {
-            insertDocuments(datasetId, buffer);
+        if (!documents.isEmpty()) {
+            insertDocuments(datasetId, documents);
         }
-
     }
 
     private Map<String, Object> createDocument(List<String> row, String[] columns, int rowId) {

@@ -1,7 +1,9 @@
 package com.hanyang.dataingestor.service;
 
 import com.hanyang.dataingestor.core.exception.InvalidFileFormatException;
+import com.hanyang.dataingestor.infrastructure.MongoManager;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.XMLHelper;
@@ -21,6 +23,9 @@ import java.util.List;
 public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandler, FileDataHandler {
 
     private static final int HEADER_ROW_INDEX = 0;
+    
+    @Value("${data.batch.size:1000}")
+    private int batchSize;
 
     @Getter
     private final List<String> header = new ArrayList<>();
@@ -29,8 +34,16 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
     private final List<List<String>> rows = new ArrayList<>();
 
     private final List<String> row = new ArrayList<>();
+    private final MongoManager mongoManager;
+    private final String datasetId;
 
     private int checkedCol = -1;
+
+    public ExcelSheetHandler(MongoManager mongoManager, String datasetId, InputStream inputStream) {
+        this.mongoManager = mongoManager;
+        this.datasetId = datasetId;
+        parseExcel(inputStream);
+    }
 
     @Override
     public void startRow(int currentRowNum) {
@@ -52,9 +65,22 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
                 row.add("");
             }
             rows.add(new ArrayList<>(row));
+            
+            // 배치 처리
+            if (mongoManager != null && rows.size() >= batchSize) {
+                processBatch();
+            }
         }
 
         row.clear();
+    }
+
+    private void processBatch() {
+        if (!header.isEmpty() && !rows.isEmpty()) {
+            String[] columns = header.toArray(new String[0]);
+            mongoManager.insertDataRows(datasetId, columns, new ArrayList<>(rows));
+            rows.clear();
+        }
     }
 
 
@@ -65,6 +91,10 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
 
     @Override
     public void endSheet() {
+        // 남은 데이터 처리
+        if (mongoManager != null && !rows.isEmpty()) {
+            processBatch();
+        }
         XSSFSheetXMLHandler.SheetContentsHandler.super.endSheet();
     }
 
@@ -81,9 +111,7 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
         checkedCol = currentCol;
     }
 
-    public static ExcelSheetHandler readExcel(InputStream inputStream) {
-        ExcelSheetHandler excelSheetHandler = new ExcelSheetHandler();
-
+    private void parseExcel(InputStream inputStream) {
         try {
             OPCPackage opcPackage = OPCPackage.open(inputStream);
 
@@ -94,7 +122,7 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
             InputStream sheetStream = xssfReader.getSheetsData().next();
             InputSource sheetSource = new InputSource(sheetStream);
 
-            ContentHandler handler = new XSSFSheetXMLHandler(stylesTable, strings, excelSheetHandler, false);
+            ContentHandler handler = new XSSFSheetXMLHandler(stylesTable, strings, this, false);
             XMLReader sheetParser = XMLHelper.newXMLReader();
 
             sheetParser.setContentHandler(handler);
@@ -104,7 +132,5 @@ public class ExcelSheetHandler implements XSSFSheetXMLHandler.SheetContentsHandl
         } catch (Exception e) {
             throw new InvalidFileFormatException("엑셀 파일 읽기 실패", e);
         }
-
-        return excelSheetHandler;
     }
 }

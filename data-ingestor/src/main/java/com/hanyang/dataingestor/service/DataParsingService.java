@@ -18,6 +18,7 @@ public class DataParsingService {
 
     private final S3StorageManager s3StorageManager;
     private final MongoManager mongoManager;
+    private final FileHandlerFactory fileHandlerFactory;
     
 
     public void createDataTable(String datasetId) {
@@ -31,9 +32,9 @@ public class DataParsingService {
             throw new DataProcessingException("파일명을 가져올 수 없습니다: datasetId - " + datasetId);
         }
 
-        FileDataHandler fileHandler = FileHandlerFactory.createHandler(fileName, file);
-
         mongoManager.createCollection(datasetId);
+        
+        FileDataHandler fileHandler = fileHandlerFactory.createHandler(fileName, file, datasetId);
         processFileData(datasetId, fileHandler);
     }
 
@@ -44,15 +45,11 @@ public class DataParsingService {
             return;
         }
         
-        String[] columns = headers.toArray(new String[0]);
         List<List<String>> rows = fileHandler.getRows();
-        
-        if (rows.isEmpty()) {
-            log.warn("처리할 데이터가 없습니다: {}", datasetId);
-            return;
+        if (!rows.isEmpty()) {
+            String[] columns = headers.toArray(new String[0]);
+            mongoManager.insertDataRows(datasetId, columns, rows);
         }
-        
-        mongoManager.processBatchData(datasetId, columns, rows);
     }
 
     private boolean validateHeaders(String datasetId, List<String> headers) {
