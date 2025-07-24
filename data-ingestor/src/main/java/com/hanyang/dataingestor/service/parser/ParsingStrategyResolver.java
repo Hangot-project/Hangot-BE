@@ -7,15 +7,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ParsingStrategyResolver {
 
-    private final ExcelParser excelParser;
     private final CsvParser csvParser;
 
     public ParserStrategy getStrategy(String fileName) {
         String extension = getFileExtension(fileName).toLowerCase();
 
         return switch (extension) {
-            case "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm" -> excelParser;
-            case "csv" -> csvParser;
+            case "xlsx", "xls", "csv" -> csvParser;
             default -> throw new IllegalArgumentException(fileName + "은 지원하지 않는 파일 형식입니다.");
         };
     }
