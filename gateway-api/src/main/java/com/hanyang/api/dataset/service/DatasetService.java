@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -41,5 +43,15 @@ public class DatasetService {
         Long scrapCount = scrapRepository.countByDataset(dataset);
         dataset.updateView();
         return new ResDatasetDetailDto(dataset, scrapCount.intValue());
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getAllOrganizations() {
+        return datasetRepository.findDistinctOrganizations();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getAllTypes() {
+        return datasetRepository.findDistinctTypes();
     }
 }

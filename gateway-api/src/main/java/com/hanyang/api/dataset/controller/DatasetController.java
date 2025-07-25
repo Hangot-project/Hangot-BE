@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Tag(name = "데이터셋 API")
 @RestController
 @RequiredArgsConstructor
@@ -34,6 +36,18 @@ public class DatasetController {
     @GetMapping("/dataset/{datasetId}")
     public ResponseEntity<ApiResponse<ResDatasetDetailDto>> getDataset(@PathVariable Long datasetId){
         return ResponseEntity.ok(ApiResponse.ok(datasetService.getDatasetDetail(datasetId)));
+    }
+
+    @Operation(summary = "모든 organization 조회")
+    @GetMapping("/datasets/organizations")
+    public ResponseEntity<ApiResponse<List<String>>> getAllOrganizations(){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getAllOrganizations()));
+    }
+
+    @Operation(summary = "모든 type 조회")
+    @GetMapping("/datasets/types")
+    public ResponseEntity<ApiResponse<List<String>>> getAllTypes(){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getAllTypes()));
     }
 
 }
