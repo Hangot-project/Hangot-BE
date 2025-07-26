@@ -37,7 +37,7 @@ public class MongoManager {
         return Optional.ofNullable(doc);
     }
 
-    public List<Document> findAll(String collectionName) {
+    public List<Document> findLimit100(String collectionName) {
         Query query = new Query().limit(100);
         return mongoTemplate.find(query, Document.class, collectionName);
     }

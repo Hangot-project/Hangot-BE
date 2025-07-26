@@ -12,9 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 public class ReqDataSearchDto {
     private String keyword;
-    private List<String> organization;
-    private List<String> tag;
-    private List<String> type;
+    private List<String> organizations;
+    private List<String> tags;
+    private List<String> types;
     private DatasetSort sort = DatasetSort.최신;
     private int page = 1;
 }

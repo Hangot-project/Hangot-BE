@@ -14,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "데이터셋 API")
 @RestController
@@ -35,5 +38,30 @@ public class DatasetController {
     public ResponseEntity<ApiResponse<ResDatasetDetailDto>> getDataset(@PathVariable Long datasetId){
         return ResponseEntity.ok(ApiResponse.ok(datasetService.getDatasetDetail(datasetId)));
     }
+
+    @Operation(summary = "모든 organization 조회")
+    @GetMapping("/datasets/organizations")
+    public ResponseEntity<ApiResponse<List<String>>> getAllOrganizations(){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getAllOrganizations()));
+    }
+
+    @Operation(summary = "모든 type 조회")
+    @GetMapping("/datasets/types")
+    public ResponseEntity<ApiResponse<List<String>>> getAllTypes(){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getAllTypes()));
+    }
+
+    @Operation(summary = "태그 자동완성")
+    @GetMapping("/datasets/tags/search")
+    public ResponseEntity<ApiResponse<List<String>>> searchTags(@RequestParam String keyword){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTags(keyword)));
+    }
+
+    @Operation(summary = "제목 기반 검색어 자동완성")
+    @GetMapping("/datasets/titles/search")
+    public ResponseEntity<ApiResponse<List<String>>> searchTitles(@RequestParam String keyword){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTitles(keyword)));
+    }
+
 
 }

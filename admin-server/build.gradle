@@ -1,0 +1,27 @@
+configurations {
+    implementation.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-jpa'
+}
+
+dependencies {
+    // MongoDB for failed message management
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    
+    // Security for admin authentication
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+bootJar {
+    enabled = true
+    archiveFileName = 'admin-server.jar'
+}
+
+jar {
+    enabled = false
+}

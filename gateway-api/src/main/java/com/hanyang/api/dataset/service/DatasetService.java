@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -25,11 +27,16 @@ public class DatasetService {
     @Transactional(readOnly = true)
     public Page<Dataset> getDatasetList(ReqDataSearchDto reqDataSearchDto) {
 
+        List<String> lowercaseTypes = reqDataSearchDto.getTypes() != null ? 
+            reqDataSearchDto.getTypes().stream()
+                .map(String::toLowerCase)
+                .toList() : null;
+
         DataSearch dataSearch = DataSearch.builder().keyword(reqDataSearchDto.getKeyword()).
-                organization(reqDataSearchDto.getOrganization()).
-                tag(reqDataSearchDto.getTag()).
+                organization(reqDataSearchDto.getOrganizations()).
+                tag(reqDataSearchDto.getTags()).
                 page(reqDataSearchDto.getPage()).
-                type(reqDataSearchDto.getType()).
+                type(lowercaseTypes).
                 sort(reqDataSearchDto.getSort()).
                 build();
         return datasetSearchRepository.searchDatasetList(dataSearch);
@@ -42,4 +49,28 @@ public class DatasetService {
         dataset.updateView();
         return new ResDatasetDetailDto(dataset, scrapCount.intValue());
     }
+
+    @Transactional(readOnly = true)
+    public List<String> getAllOrganizations() {
+        return datasetRepository.findDistinctOrganizations();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getAllTypes() {
+        return datasetRepository.findDistinctTypes();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> searchTags(String keyword) {
+        return datasetRepository.findTagsContaining(keyword);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> searchTitles(String keyword) {
+        if (keyword == null) return List.of();
+        String processedKeyword = keyword.trim().replace(" ", "").replace("_", "");
+        if (processedKeyword.isEmpty()) return List.of();
+        return datasetRepository.findTitlesContaining(processedKeyword);
+    }
+
 }

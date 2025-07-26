@@ -33,8 +33,16 @@ services:
       - hy-network
     restart: unless-stopped
 
-volumes:
-  mysql_data:
+  admin-server:
+    image: ${DOCKER_USERNAME}/admin-server:latest
+    container_name: admin-server
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8080:8080"
+    networks:
+      - hy-network
+    restart: unless-stopped
 
 networks:
   hy-network:

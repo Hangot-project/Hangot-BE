@@ -66,7 +66,7 @@ public class ChartService {
     }
 
     public ResChartTableDto getChartTable(String datasetId) {
-        List<Document> resultList = mongoManager.findAll(datasetId);
+        List<Document> resultList = mongoManager.findLimit100(datasetId);
         if (resultList.isEmpty()) {
             throw new ResourceNotFoundException(DATASET_NOT_FOUND_MESSAGE);
         }
