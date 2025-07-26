@@ -5,8 +5,6 @@ import com.hanyang.api.dataset.domain.Dataset;
 import com.hanyang.api.dataset.dto.req.ReqDataSearchDto;
 import com.hanyang.api.dataset.dto.res.ResDatasetDetailDto;
 import com.hanyang.api.dataset.dto.res.ResDatasetListDto;
-import com.hanyang.api.dataset.dto.res.ResOrganizationListDto;
-import com.hanyang.api.dataset.dto.res.ResTypeListDto;
 import com.hanyang.api.dataset.service.DatasetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -42,16 +41,27 @@ public class DatasetController {
 
     @Operation(summary = "모든 organization 조회")
     @GetMapping("/datasets/organizations")
-    public ResponseEntity<ApiResponse<ResOrganizationListDto>> getAllOrganizations(){
-        List<String> organizations = datasetService.getAllOrganizations();
-        return ResponseEntity.ok(ApiResponse.ok(new ResOrganizationListDto(organizations)));
+    public ResponseEntity<ApiResponse<List<String>>> getAllOrganizations(){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getAllOrganizations()));
     }
 
     @Operation(summary = "모든 type 조회")
     @GetMapping("/datasets/types")
-    public ResponseEntity<ApiResponse<ResTypeListDto>> getAllTypes(){
-        List<String> types = datasetService.getAllTypes();
-        return ResponseEntity.ok(ApiResponse.ok(new ResTypeListDto(types)));
+    public ResponseEntity<ApiResponse<List<String>>> getAllTypes(){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.getAllTypes()));
     }
+
+    @Operation(summary = "태그 자동완성")
+    @GetMapping("/datasets/tags/search")
+    public ResponseEntity<ApiResponse<List<String>>> searchTags(@RequestParam String keyword){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTags(keyword)));
+    }
+
+    @Operation(summary = "제목 기반 검색어 자동완성")
+    @GetMapping("/datasets/titles/search")
+    public ResponseEntity<ApiResponse<List<String>>> searchTitles(@RequestParam String keyword){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTitles(keyword)));
+    }
+
 
 }
