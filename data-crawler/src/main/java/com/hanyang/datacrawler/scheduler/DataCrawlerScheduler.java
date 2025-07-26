@@ -21,7 +21,7 @@ public class DataCrawlerScheduler {
     public void scheduledDailyCrawl() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         log.info("데이터 크롤링 시작 - 목표 날짜: {}", yesterday);
-        dataCrawlerService.crawlDatasets("data.go.kr", 10, yesterday,yesterday);
+        dataCrawlerService.crawlDatasets("data.go.kr", 40, yesterday,yesterday);
         log.info("데이터 크롤링 완료");
     }
 }
