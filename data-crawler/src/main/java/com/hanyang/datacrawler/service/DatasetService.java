@@ -7,7 +7,6 @@ import com.hanyang.datacrawler.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +20,11 @@ public class DatasetService {
     private final DatasetRepository datasetRepository;
     private final TagRepository tagRepository;
 
-    @Transactional
     public Dataset updateResourceUrl(Dataset dataset, String resourceUrl) {
         dataset.setResourceUrl(resourceUrl);
         return datasetRepository.save(dataset);
     }
 
-    @Transactional
     public List<Dataset> saveDatasetsBatch(List<Dataset> datasets, List<List<String>> tagsList) {
         if (datasets.size() != tagsList.size()) {
             throw new IllegalArgumentException("데이터셋과 태그 리스트 크기가 일치하지 않습니다.");

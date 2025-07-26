@@ -12,6 +12,11 @@ import com.hanyang.datacrawler.service.file.FileType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,9 +37,15 @@ public class DataGoKrCrawler implements DataCrawler {
     private final DataGoKrResourceService resourceService;
     private final DataGoKrDownloadParamExtractor downloadParamExtractor;
     private final RabbitMQPublisher rabbitMQPublisher;
+    private final DatasetService datasetService;
+
+    @Value("${crawler.delay.request:2000}")
+    private int requestDelay;
+    
+    @Value("${crawler.delay.page:5000}")
+    private int pageDelay;
 
     private static final String DATASET_LIST_URL = "https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE";
-    private final DatasetService datasetService;
 
     @Override
     public String getSiteName() {
@@ -44,7 +55,7 @@ public class DataGoKrCrawler implements DataCrawler {
     @Override
     public void crawlDatasetsPage(int pageNo, int pageSize, LocalDate startDate, LocalDate endDate) {
         String url = buildPageUrl(pageNo, pageSize);
-        String html = restTemplate.getForObject(url, String.class);
+        String html = getHtmlWithHeaders(url);
 
         // 페이지의 마지막 데이터셋 날짜 확인하여 스킵 여부 결정
         if (shouldSkipPage(html, endDate)) {
@@ -58,6 +69,7 @@ public class DataGoKrCrawler implements DataCrawler {
         
         for (String datasetUrl : datasetUrls) {
             try {
+                Thread.sleep(requestDelay);
                 crawlSingleDataset(datasetUrl,startDate,endDate).ifPresent(datasets::add);
             } catch (CrawlStopException e) {
                 log.info("페이지 크롤링 중단: 날짜 범위 밖 데이터 도달 - {}", datasetUrl);
@@ -89,12 +101,19 @@ public class DataGoKrCrawler implements DataCrawler {
             }
             log.info("데이터셋 배치 저장 완료 - 저장된 데이터셋 개수: {}", savedDatasets.size());
         }
+        
+        try {
+            Thread.sleep(pageDelay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("페이지 간 대기 중 인터럽트 발생", e);
+        }
     }
 
     @Override
     public Optional<DatasetWithTag> crawlSingleDataset(String datasetUrl, LocalDate startDate, LocalDate endDate) {
         log.info("단일 데이터셋 크롤링 시작 - URL: {}", datasetUrl);
-        String html = restTemplate.getForObject(datasetUrl, String.class);
+        String html = getHtmlWithHeaders(datasetUrl);
         DatasetWithTag dataset = htmlParser.parseMetaData(html, datasetUrl, startDate, endDate);
         return Optional.of(dataset);
     }
@@ -137,6 +156,20 @@ public class DataGoKrCrawler implements DataCrawler {
                 build());
     }
 
+    private String getHtmlWithHeaders(String url) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+        headers.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        headers.set("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.8");
+        headers.set("Accept-Encoding", "gzip, deflate, br");
+        headers.set("Connection", "keep-alive");
+        headers.set("Upgrade-Insecure-Requests", "1");
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        return response.getBody();
+    }
+    
     private String buildPageUrl(int pageNo, int pageSize) {
         return DATASET_LIST_URL +
                 "&currentPage=" + pageNo +
