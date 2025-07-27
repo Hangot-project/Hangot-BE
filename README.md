@@ -34,7 +34,7 @@
 <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=RabbitMQ&logoColor=white"> <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=Docker&logoColor=white">
 
 ## 아키텍처
-<img width="1109" height="399" alt="Image" src="https://github.com/user-attachments/assets/dd2000fd-6680-439a-9769-43ed8c5f97b9" />
+<img width="929" height="374" alt="Image" src="https://github.com/user-attachments/assets/d929084a-55ff-4a35-af24-449bbff30ff8" />
 
 ## 팀원
 <table>
