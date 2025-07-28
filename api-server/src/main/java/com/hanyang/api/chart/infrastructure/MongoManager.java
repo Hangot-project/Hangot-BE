@@ -1,7 +1,6 @@
 package com.hanyang.api.chart.infrastructure;
 
 import com.hanyang.api.chart.dto.GroupType;
-import com.hanyang.api.core.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -17,8 +16,8 @@ import java.util.*;
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
 
-    public Optional<Map<String, Object>> findById(String collectionName, Object id) {
-        Document doc = mongoTemplate.findById(id, Document.class, collectionName);
+    public Optional<Map<String, Object>> findOne(String collectionName) {
+        Document doc = mongoTemplate.findOne(new Query(), Document.class, collectionName);
         return Optional.ofNullable(doc);
     }
 
@@ -27,33 +26,21 @@ public class MongoManager {
         return mongoTemplate.find(query, Document.class, collectionName);
     }
 
-    public List<Document> groupByAxis(String collectionName, String axis, GroupType type) {
-        Optional<Map<String, Object>> row = findById(collectionName, 1);
-        if (row.isEmpty()) {
-            throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
-        }
-
-        if (!row.get().containsKey(axis)) {
-            throw new IllegalArgumentException("지정된 축 '" + axis + "'가 데이터에 존재하지 않습니다");
-        }
-
-        List<String> keys = row.get().entrySet().stream()
-                .filter(e -> e.getKey().equals(axis) || (!e.getKey().equals("_id") && isNumericColumn(e.getValue())))
-                .map(Map.Entry::getKey)
-                .toList();
-
-        if (keys.isEmpty()) {
-            throw new IllegalArgumentException("숫자 컬럼이 없어 그룹핑할 수 없습니다");
-        }
-
+    public List<Document> groupByAxis(String collectionName, String axis, GroupType type, List<String> keys) {
         AggregationOperation groupStage = buildGroupStage(axis, keys, type);
-
         Aggregation aggregation = Aggregation.newAggregation(groupStage);
         return mongoTemplate.aggregate(aggregation, collectionName, Document.class).getMappedResults();
     }
 
-    private boolean isNumericColumn(Object value) {
-        return value instanceof Number;
+
+    public List<Document> groupBxAxisCount(String collectionName, String axis) {
+        AggregationOperation groupStage = context -> new Document("$group", 
+            new Document("_id", "$" + axis)
+                .append("count", new Document("$sum", 1))
+        );
+
+        Aggregation aggregation = Aggregation.newAggregation(groupStage);
+        return mongoTemplate.aggregate(aggregation, collectionName, Document.class).getMappedResults();
     }
 
     private AggregationOperation buildGroupStage(String axis, List<String> keys, GroupType type) {

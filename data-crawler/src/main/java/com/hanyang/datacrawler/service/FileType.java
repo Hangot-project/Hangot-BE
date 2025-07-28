@@ -1,4 +1,4 @@
-package com.hanyang.datacrawler.service.file;
+package com.hanyang.datacrawler.service;
 
 import lombok.Getter;
 

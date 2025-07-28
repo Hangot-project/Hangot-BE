@@ -15,7 +15,21 @@
 
 한 곳 에서 제공된 정보를 기반으로 다양한 서비스를 만들 수 있는 환경을 제공합니다. 
 
-## 주요기능 소개
+## 주요기능
+
+### 제목 및 태그를 통한 데이터 검색
+>일반 검색 및 크롤링을 통해 추출한 키워드를 기반한 태그 검색
+<img src="https://github.com/user-attachments/assets/bd9ee4d7-31f9-4892-a704-b08d5dd80f23" width="45%">
+<img src="https://github.com/user-attachments/assets/abd6000a-fcd8-4353-b9ae-9400bf13fb56" width="45%">
+
+### 파일유형,제공기관 필터링
+>원하는 파일 유형과 제공기관을 지정 하여 원하는 데이터를 빠르게 검색
+<img src="https://github.com/user-attachments/assets/a5b622aa-f852-48a6-bcf5-a8f431953c87" width="60%">
+
+### 데이터 시각화
+>다양한 형태의 데이터 시각화 지원
+<img src="https://github.com/user-attachments/assets/dce718fb-d247-45af-a49f-531bb7a3992b" height="200px">
+<img src="https://github.com/user-attachments/assets/475a182b-348c-41f5-b448-745a8914789c" height="200px">
 
 ## 기술 스택
 

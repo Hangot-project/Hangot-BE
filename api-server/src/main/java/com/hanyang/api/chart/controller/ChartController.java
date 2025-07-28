@@ -4,6 +4,7 @@ import com.hanyang.api.chart.dto.GroupType;
 import com.hanyang.api.chart.dto.ResAxisDto;
 import com.hanyang.api.chart.dto.ResChartDto;
 import com.hanyang.api.chart.dto.ResChartTableDto;
+import com.hanyang.api.chart.dto.ResPieChartDto;
 import com.hanyang.api.chart.service.ChartService;
 import com.hanyang.api.core.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,13 @@ public class ChartController {
     @GetMapping("/{datasetId}/table")
     public ResponseEntity<ApiResponse<ResChartTableDto>> chartTable(@PathVariable String datasetId) {
         return ResponseEntity.ok(ApiResponse.ok(chartService.getChartTable(datasetId)));
+    }
+
+    @GetMapping("/{datasetId}/pie-chart")
+    public ResponseEntity<ApiResponse<ResPieChartDto>> pieChart(
+            @PathVariable String datasetId,
+            @RequestParam String colName
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(chartService.getPieChart(datasetId, colName)));
     }
 }

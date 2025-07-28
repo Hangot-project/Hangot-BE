@@ -11,11 +11,6 @@ import java.util.*;
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
 
-    public void createCollection(String collectionName) {
-        dropIfExists(collectionName);
-        mongoTemplate.createCollection(collectionName);
-    }
-
     public void dropIfExists(String collectionName) {
         boolean isExists = mongoTemplate.collectionExists(collectionName);
         if (isExists) mongoTemplate.dropCollection(collectionName);
