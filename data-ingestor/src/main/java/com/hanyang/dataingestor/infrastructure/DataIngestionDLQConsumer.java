@@ -22,7 +22,6 @@ public class DataIngestionDLQConsumer {
     private final ObjectMapper objectMapper;
     private final DataIngestionService dataIngestionService;
     private final FailedMessageService failedMessageService;
-    private final S3StorageManager s3StorageManager;
 
     @RabbitListener(queues = "${rabbitmq.queue.name}.dlq", concurrency = "1")
     public void handleDeadLetterMessage(Message message) {
@@ -37,8 +36,7 @@ public class DataIngestionDLQConsumer {
             if (deathCount <= 1) {
                 // 첫 번째 DLQ 도착 - 한 번 더 처리 시도
                 log.warn("DLQ 처리 시작 ({}회차): {}", deathCount, messageBody);
-                dataIngestionService.createDataTable(messageDto.getDatasetId());
-                s3StorageManager.deleteFiles(messageDto.getDatasetId());
+                dataIngestionService.createDataTable(messageDto);
                 log.warn("DLQ 처리 성공 ({}회차): {}", deathCount, messageBody);
             } else {
                 // 두 번째 이상 DLQ 도착 - 최종 실패로 MongoDB에 저장

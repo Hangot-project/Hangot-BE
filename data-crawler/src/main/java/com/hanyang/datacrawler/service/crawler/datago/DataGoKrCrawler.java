@@ -8,7 +8,7 @@ import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
-import com.hanyang.datacrawler.service.file.FileType;
+import com.hanyang.datacrawler.service.FileType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -34,7 +34,6 @@ public class DataGoKrCrawler implements DataCrawler {
 
     private final RestTemplate restTemplate;
     private final DataGoKrHtmlParser htmlParser;
-    private final DataGoKrResourceService resourceService;
     private final DataGoKrDownloadParamExtractor downloadParamExtractor;
     private final RabbitMQPublisher rabbitMQPublisher;
     private final DatasetService datasetService;
@@ -73,7 +72,7 @@ public class DataGoKrCrawler implements DataCrawler {
                 crawlSingleDataset(datasetUrl,startDate,endDate).ifPresent(datasets::add);
             } catch (CrawlStopException e) {
                 log.info("페이지 크롤링 중단: 날짜 범위 밖 데이터 도달 - {}", datasetUrl);
-                throw e;
+                break;
             } catch (NoCrawlNextDayException e) {
                 log.info("지정일 보다 최신 데이터 : 크롤링 대상 아님 - {}", datasetUrl);
             } catch (Exception e) {
@@ -95,7 +94,7 @@ public class DataGoKrCrawler implements DataCrawler {
 
                     FileType fileType = FileType.getFileType(updatedDataset.getResourceName());
                     if (fileType.IsSupportVisualization()) {
-                        downloadFileToS3(updatedDataset, resourceURL);
+                        sendDataParsingRequest(updatedDataset);
                     }
                 });
             }
@@ -137,22 +136,12 @@ public class DataGoKrCrawler implements DataCrawler {
                 + "&dataNm=" + encoded;
     }
 
-    private void downloadFileToS3(Dataset dataset, String downloadUrl) {
-        String folderName = String.valueOf(dataset.getDatasetId());
-        String resourceName = dataset.getResourceName();
-
-        try{
-            resourceService.downloadAndUploadFile(
-                    downloadUrl, folderName, resourceName);
-        } catch (UnsupportedOperationException zipException) {
-            //zip 파일은 파싱 안함
-        } catch (Exception e) {
-            log.error("파일 다운로드 중 예상치 못한 오류 - datasetId: {} sourceURL: {}, 에러: {}",dataset.getDatasetId(), dataset.getSourceUrl(), e.getMessage(), e);
-        }
-
+    private void sendDataParsingRequest(Dataset dataset) {
         rabbitMQPublisher.sendMessage(MessageDto.builder().
                 datasetId(String.valueOf(dataset.getDatasetId())).
                 sourceUrl(dataset.getSourceUrl()).
+                resourceUrl(dataset.getResourceUrl()).
+                type(dataset.getType()).
                 build());
     }
 

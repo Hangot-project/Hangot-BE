@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 public class DataIngestionConsumer {
 
     private final DataIngestionService dataIngestionService;
-    private final S3StorageManager s3StorageManager;
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbitTemplate;
 
@@ -45,8 +44,7 @@ public class DataIngestionConsumer {
         }
 
         try{
-            dataIngestionService.createDataTable(messageDto.getDatasetId());
-            s3StorageManager.deleteFiles(messageDto.getDatasetId());
+            dataIngestionService.createDataTable(messageDto);
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (Exception e) {
             sendToDLQ(message, e);
