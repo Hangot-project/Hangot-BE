@@ -17,8 +17,8 @@ import java.util.*;
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
 
-    public Optional<Map<String, Object>> findById(String collectionName, Object id) {
-        Document doc = mongoTemplate.findById(id, Document.class, collectionName);
+    public Optional<Map<String, Object>> findOne(String collectionName) {
+        Document doc = mongoTemplate.findOne(new Query(), Document.class, collectionName);
         return Optional.ofNullable(doc);
     }
 
@@ -28,7 +28,7 @@ public class MongoManager {
     }
 
     public List<Document> groupByAxis(String collectionName, String axis, GroupType type) {
-        Optional<Map<String, Object>> row = findById(collectionName, 1);
+        Optional<Map<String, Object>> row = findOne(collectionName);
         if (row.isEmpty()) {
             throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
         }

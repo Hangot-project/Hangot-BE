@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChartService {
     
-    private static final int FIRST_ROW_ID = 1;
     private static final String MONGO_ID_FIELD = "_id";
     private static final double DEFAULT_NUMERIC_VALUE = 0.0;
     private static final String DEFAULT_STRING_VALUE = "";
@@ -57,7 +56,7 @@ public class ChartService {
     }
 
     public Set<String> getAxis(String datasetId) {
-        Optional<Map<String, Object>> row = mongoManager.findById(datasetId, FIRST_ROW_ID);
+        Optional<Map<String, Object>> row = mongoManager.findOne(datasetId);
         validateDatasetExists(row);
         return row.get().keySet().stream()
                 .filter(key -> !key.equals(MONGO_ID_FIELD))
