@@ -12,8 +12,8 @@ public class ParsingStrategyResolver {
 
     public ParserStrategy getStrategy(String type) {
         return switch (type) {
-            case "csv" -> csvParser;
-            case "xlsx" -> excelParser;
+            case "CSV" -> csvParser;
+            case "XLSX" -> excelParser;
             default -> throw new IllegalArgumentException(type + "은 지원하지 않는 파일 형식입니다.");
         };
     }

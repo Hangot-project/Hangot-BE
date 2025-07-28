@@ -36,7 +36,7 @@ public class CrawlerFactory {
     private void initializeCrawlerMap() {
         crawlerMap = crawlers.stream()
                 .collect(Collectors.toMap(
-                        DataCrawler::getSiteName,
+                        DataCrawler::getSiteDomain,
                         Function.identity()
                 ));
         

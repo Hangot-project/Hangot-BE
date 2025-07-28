@@ -11,7 +11,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -27,37 +26,21 @@ public class DataIngestionDLQConsumer {
     public void handleDeadLetterMessage(Message message) {
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
         Map<String, Object> headers = message.getMessageProperties().getHeaders();
-        
-        int deathCount = getDeathCount(headers);
-        
+
         try {
             MessageDto messageDto = objectMapper.readValue(messageBody, MessageDto.class);
             
-            if (deathCount <= 1) {
-                // 첫 번째 DLQ 도착 - 한 번 더 처리 시도
-                log.warn("DLQ 처리 시작 ({}회차): {}", deathCount, messageBody);
-                dataIngestionService.createDataTable(messageDto);
-                log.warn("DLQ 처리 성공 ({}회차): {}", deathCount, messageBody);
-            } else {
-                // 두 번째 이상 DLQ 도착 - 최종 실패로 MongoDB에 저장
-                log.error("DLQ 최종 실패 ({}회차): {}", deathCount, messageBody);
-                saveToFailedMessages(messageBody, headers, message, "DLQ에서 처리 실패");
-            }
-            
+            log.warn("DLQ 처리 시작: {}", messageBody);
+            dataIngestionService.createDataTable(messageDto);
+            log.warn("DLQ 처리 성공: {}", messageBody);
+
         } catch (Exception e) {
             // 처리 실패 시 항상 MongoDB에 저장하고 메시지 소비 완료
-            log.error("DLQ 처리 실패 ({}회차): {}", deathCount, messageBody, e);
+            log.error("DLQ 처리 실패  {}", messageBody, e);
             saveToFailedMessages(messageBody, headers, message, e.getMessage());
         }
     }
-    
-    private int getDeathCount(Map<String, Object> headers) {
-        Object deathHeader = headers.get("x-death");
-        if (deathHeader instanceof List) {
-            return ((List<?>) deathHeader).size();
-        }
-        return 0;
-    }
+
     
     private void saveToFailedMessages(String messageBody, Map<String, Object> headers, 
                                       Message message, String failureReason) {

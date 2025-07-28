@@ -21,7 +21,7 @@ public class DataCrawlerController {
 
     @PostMapping("/crawl")
     public ResponseEntity<String> crawlData(
-            @RequestParam(defaultValue = "data.go.kr") String siteName,
+            @RequestParam(defaultValue = "https://www.data.go.kr") String siteName,
             @RequestParam(defaultValue = "40") int pageSize,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
