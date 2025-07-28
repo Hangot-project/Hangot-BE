@@ -1,4 +1,4 @@
-package com.hanyang.dataingestor.dto;
+package com.hanyang.api.chart.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

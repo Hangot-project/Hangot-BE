@@ -1,13 +1,7 @@
 package com.hanyang.dataingestor.infrastructure;
 
-import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
-import com.hanyang.dataingestor.dto.GroupType;
 import lombok.RequiredArgsConstructor;
-import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -30,63 +24,6 @@ public class MongoManager {
     public void insertDocuments(String collectionName, List<?> objects) {
         if (objects == null || objects.isEmpty()) return;
         mongoTemplate.insert(objects, collectionName);
-    }
-
-    public Optional<Map<String, Object>> findById(String collectionName, Object id) {
-        Document doc = mongoTemplate.findById(id, Document.class, collectionName);
-        return Optional.ofNullable(doc);
-    }
-
-    public List<Document> findLimit100(String collectionName) {
-        Query query = new Query().limit(100);
-        return mongoTemplate.find(query, Document.class, collectionName);
-    }
-
-    public List<Document> groupByAxis(String collectionName, String axis, GroupType type) {
-        Optional<Map<String, Object>> row = findById(collectionName, 1);
-        if (row.isEmpty()) {
-            throw new ResourceNotFoundException("해당 데이터셋이 없거나 파일이 존재하지 않습니다");
-        }
-
-        if (!row.get().containsKey(axis)) {
-            throw new IllegalArgumentException("지정된 축 '" + axis + "'가 데이터에 존재하지 않습니다");
-        }
-
-        List<String> keys = row.get().entrySet().stream()
-                .filter(e -> e.getKey().equals(axis) || (!e.getKey().equals("_id") && isNumericColumn(e.getValue())))
-                .map(Map.Entry::getKey)
-                .toList();
-
-        if (keys.isEmpty()) {
-            throw new IllegalArgumentException("숫자 컬럼이 없어 그룹핑할 수 없습니다");
-        }
-
-        AggregationOperation groupStage = buildGroupStage(axis, keys, type);
-
-        Aggregation aggregation = Aggregation.newAggregation(groupStage);
-        return mongoTemplate.aggregate(aggregation, collectionName, Document.class).getMappedResults();
-    }
-
-
-    private boolean isNumericColumn(Object value) {
-        return value instanceof Number;
-    }
-
-    private AggregationOperation buildGroupStage(String axis, List<String> keys, GroupType type) {
-        return context -> {
-            Document groupDoc = new Document("_id", "$" + axis);
-            for (String key : keys) {
-                if(key.equals(axis)) continue;
-                groupDoc.put(key, new Document(
-                        switch (type) {
-                            case SUM -> "$sum";
-                            case AVG -> "$avg";
-                        },
-                        "$" + key
-                ));
-            }
-            return new Document("$group", groupDoc);
-        };
     }
 
     public void insertDataRows(String datasetId, String[] columns, List<List<String>> rows) {

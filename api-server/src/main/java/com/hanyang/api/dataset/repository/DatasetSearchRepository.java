@@ -35,7 +35,7 @@ public class DatasetSearchRepository {
             case "스크랩" -> query.orderBy(dataset.scrap.desc());
             case "조회" -> query.orderBy(dataset.view.desc());
             case "인기" -> query.orderBy(dataset.popular.desc());
-            default -> query.orderBy(dataset.createdDate.desc());
+            default -> query.orderBy(dataset.updatedDate.desc());
         }
 
         Long totalCountResult = queryFactory.select(dataset.count())

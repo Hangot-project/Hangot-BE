@@ -1,4 +1,4 @@
-package com.hanyang.dataingestor.dto;
+package com.hanyang.api.chart.dto;
 
 public enum GroupType {
     SUM,

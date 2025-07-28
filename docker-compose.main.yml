@@ -9,9 +9,9 @@ services:
     networks:
       - hy-network
 
-  gateway-api:
-    image: ${DOCKER_USERNAME}/gateway-api:latest
-    container_name: gateway-api
+  api-server:
+    image: ${DOCKER_USERNAME}/api-server:latest
+    container_name: api-server
     environment:
       SPRING_PROFILES_ACTIVE: prod
     ports:

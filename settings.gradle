@@ -1,5 +1,5 @@
 rootProject.name = 'dataportal'
 include 'data-crawler'
 include 'data-ingestor'
-include 'gateway-api'
+include 'api-server'
 include 'admin-server'
