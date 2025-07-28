@@ -10,8 +10,9 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +26,6 @@ public class DataIngestionDLQConsumer {
     @RabbitListener(queues = "${rabbitmq.queue.name}.dlq", concurrency = "1")
     public void handleDeadLetterMessage(Message message) {
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
-        Map<String, Object> headers = message.getMessageProperties().getHeaders();
 
         try {
             MessageDto messageDto = objectMapper.readValue(messageBody, MessageDto.class);
@@ -37,23 +37,26 @@ public class DataIngestionDLQConsumer {
         } catch (Exception e) {
             // 처리 실패 시 항상 MongoDB에 저장하고 메시지 소비 완료
             log.error("DLQ 처리 실패  {}", messageBody, e);
-            saveToFailedMessages(messageBody, headers, message, e.getMessage());
+            saveToFailedMessages(messageBody, getFullStackTrace(e));
         }
     }
 
     
-    private void saveToFailedMessages(String messageBody, Map<String, Object> headers, 
-                                      Message message, String failureReason) {
+    private void saveToFailedMessages(String messageBody, String failureReason) {
         try {
             failedMessageService.saveFailedMessage(
                 messageBody,
-                headers,
-                message.getMessageProperties().getReceivedRoutingKey(),
-                message.getMessageProperties().getReceivedExchange(),
                 failureReason
             );
         } catch (Exception e) {
             log.error("실패 메시지 저장 중 오류: {}", messageBody, e);
         }
+    }
+
+    private String getFullStackTrace(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
     }
 }
