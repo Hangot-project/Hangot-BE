@@ -3,15 +3,18 @@ package com.hanyang.datacrawler.service.crawler.datago;
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithTag;
 import com.hanyang.datacrawler.dto.MessageDto;
-import com.hanyang.datacrawler.exception.CrawlStopException;
-import com.hanyang.datacrawler.exception.NoCrawlNextDayException;
+import com.hanyang.datacrawler.exception.SkipPageException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
-import com.hanyang.datacrawler.service.file.FileType;
+import com.hanyang.datacrawler.service.FileType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,10 +37,10 @@ public class DataGoKrCrawler implements DataCrawler {
 
     private final RestTemplate restTemplate;
     private final DataGoKrHtmlParser htmlParser;
-    private final DataGoKrResourceService resourceService;
     private final DataGoKrDownloadParamExtractor downloadParamExtractor;
     private final RabbitMQPublisher rabbitMQPublisher;
     private final DatasetService datasetService;
+
 
     @Value("${crawler.delay.request:2000}")
     private int requestDelay;
@@ -45,39 +48,61 @@ public class DataGoKrCrawler implements DataCrawler {
     @Value("${crawler.delay.page:5000}")
     private int pageDelay;
 
+    private static final String DATA_GO_KR_BASE_URL = "https://www.data.go.kr";
     private static final String DATASET_LIST_URL = "https://www.data.go.kr/tcs/dss/selectDataSetList.do?dType=FILE";
 
     @Override
-    public String getSiteName() {
-        return "data.go.kr";
+    public String getSiteDomain() {
+        return DATA_GO_KR_BASE_URL;
     }
 
     @Override
-    public void crawlDatasetsPage(int pageNo, int pageSize, LocalDate startDate, LocalDate endDate) {
+    public List<String> getSourceUrlList(int pageNo, int pageSize, LocalDate startDate, LocalDate endDate) {
         String url = buildPageUrl(pageNo, pageSize);
         String html = getHtmlWithHeaders(url);
 
+        List<String> datasetUrls = new ArrayList<>();
+
+        Document doc = Jsoup.parse(html);
+        Elements datasetElements = doc.select("#fileDataList li");
+
+        Element lastDataset = datasetElements.get(datasetElements.size() - 1);
+
         // 페이지의 마지막 데이터셋 날짜 확인하여 스킵 여부 결정
-        if (shouldSkipPage(html, endDate)) {
-            log.info("페이지 {} 스킵: 날짜 범위 밖 데이터만 존재", pageNo);
-            return;
+        htmlParser.getDatasetDate(lastDataset).ifPresent((updateDate)->{
+            if(updateDate.isAfter(endDate)) throw new SkipPageException(pageNo) ;
+        });
+
+        for (Element element : datasetElements) {
+            Optional<String> optionalUrl = parseDatasetUrl(element);
+            Optional<LocalDate> optionalDate = htmlParser.getDatasetDate(element);
+
+            if (optionalUrl.isEmpty()) continue;
+
+            if (optionalDate.isPresent()) {
+                LocalDate updateDate = optionalDate.get();
+
+                if (updateDate.isAfter(endDate)) continue;
+
+                if (updateDate.isBefore(startDate)) break;
+            }
+
+            datasetUrls.add(optionalUrl.get());
         }
 
-        List<String> datasetUrls = htmlParser.parseDatasetUrls(html);
-        
+        return datasetUrls;
+    }
+
+    public void crawlDataset(List<String> sourceUrls){
+
         List<DatasetWithTag> datasets = new ArrayList<>();
-        
-        for (String datasetUrl : datasetUrls) {
+
+        for (String datasetUrl :sourceUrls) {
             try {
                 Thread.sleep(requestDelay);
-                crawlSingleDataset(datasetUrl,startDate,endDate).ifPresent(datasets::add);
-            } catch (CrawlStopException e) {
-                log.info("페이지 크롤링 중단: 날짜 범위 밖 데이터 도달 - {}", datasetUrl);
-                throw e;
-            } catch (NoCrawlNextDayException e) {
-                log.info("지정일 보다 최신 데이터 : 크롤링 대상 아님 - {}", datasetUrl);
-            } catch (Exception e) {
-                log.error("페이지 크롤링 에러 - URL-{}  - {}",datasetUrl,e.getMessage());
+                crawlSingleDataset(datasetUrl).ifPresent(datasets::add);
+            } catch (InterruptedException e) {
+                //무시
             }
         }
         
@@ -95,7 +120,7 @@ public class DataGoKrCrawler implements DataCrawler {
 
                     FileType fileType = FileType.getFileType(updatedDataset.getResourceName());
                     if (fileType.IsSupportVisualization()) {
-                        downloadFileToS3(updatedDataset, resourceURL);
+                        sendDataParsingRequest(updatedDataset);
                     }
                 });
             }
@@ -105,28 +130,16 @@ public class DataGoKrCrawler implements DataCrawler {
         try {
             Thread.sleep(pageDelay);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("페이지 간 대기 중 인터럽트 발생", e);
+            //무시
         }
     }
 
     @Override
-    public Optional<DatasetWithTag> crawlSingleDataset(String datasetUrl, LocalDate startDate, LocalDate endDate) {
+    public Optional<DatasetWithTag> crawlSingleDataset(String datasetUrl) {
         log.info("단일 데이터셋 크롤링 시작 - URL: {}", datasetUrl);
         String html = getHtmlWithHeaders(datasetUrl);
-        DatasetWithTag dataset = htmlParser.parseMetaData(html, datasetUrl, startDate, endDate);
+        DatasetWithTag dataset = htmlParser.parseMetaData(html, datasetUrl);
         return Optional.of(dataset);
-    }
-
-    private boolean shouldSkipPage(String html, LocalDate endDate) {
-        if (endDate == null) return false;
-        
-        Optional<LocalDate> lastDateOpt = htmlParser.getLastDatasetDateFromPage(html);
-
-        if (lastDateOpt.isEmpty()) return false;
-
-        LocalDate lastDate = lastDateOpt.get();
-        return lastDate.isAfter(endDate);
     }
 
     private String buildDownloadUrl(FileDownloadParams downloadParams, String fileName) {
@@ -137,22 +150,12 @@ public class DataGoKrCrawler implements DataCrawler {
                 + "&dataNm=" + encoded;
     }
 
-    private void downloadFileToS3(Dataset dataset, String downloadUrl) {
-        String folderName = String.valueOf(dataset.getDatasetId());
-        String resourceName = dataset.getResourceName();
-
-        try{
-            resourceService.downloadAndUploadFile(
-                    downloadUrl, folderName, resourceName);
-        } catch (UnsupportedOperationException zipException) {
-            //zip 파일은 파싱 안함
-        } catch (Exception e) {
-            log.error("파일 다운로드 중 예상치 못한 오류 - datasetId: {} sourceURL: {}, 에러: {}",dataset.getDatasetId(), dataset.getSourceUrl(), e.getMessage(), e);
-        }
-
+    private void sendDataParsingRequest(Dataset dataset) {
         rabbitMQPublisher.sendMessage(MessageDto.builder().
                 datasetId(String.valueOf(dataset.getDatasetId())).
                 sourceUrl(dataset.getSourceUrl()).
+                resourceUrl(dataset.getResourceUrl()).
+                type(dataset.getType()).
                 build());
     }
 
@@ -174,5 +177,19 @@ public class DataGoKrCrawler implements DataCrawler {
         return DATASET_LIST_URL +
                 "&currentPage=" + pageNo +
                 "&perPage=" + pageSize;
+    }
+
+    private Optional<String> parseDatasetUrl(Element element) {
+        try {
+            Element linkElement = element.selectFirst("a[href*='/data/']");
+            if (linkElement == null) return Optional.empty();
+            String datasetUrl = linkElement.attr("href");
+            if (datasetUrl.isEmpty()) return Optional.empty();
+            String resourceUrl = datasetUrl.startsWith("/") ? DATA_GO_KR_BASE_URL + datasetUrl : datasetUrl;
+            return Optional.of(resourceUrl);
+        } catch (Exception e) {
+            log.error("데이터셋 요소 파싱 중 오류: {}", e.getMessage(), e);
+            return Optional.empty();
+        }
     }
 }

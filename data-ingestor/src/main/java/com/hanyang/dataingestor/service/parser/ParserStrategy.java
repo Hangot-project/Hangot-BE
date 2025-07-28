@@ -1,7 +1,7 @@
 package com.hanyang.dataingestor.service.parser;
 
-import java.io.InputStream;
+import java.nio.file.Path;
 
 public interface ParserStrategy {
-    ParsedData parse(InputStream inputStream, String datasetId) throws Exception;
+    ParsedData parse(Path path, String datasetId) throws Exception;
 }
