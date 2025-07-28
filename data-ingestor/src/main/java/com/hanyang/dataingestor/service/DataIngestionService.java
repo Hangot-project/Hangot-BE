@@ -23,7 +23,7 @@ public class DataIngestionService {
 
 
     public void createDataTable(MessageDto messageDto) throws Exception {
-        mongoManager.createCollection(messageDto.getDatasetId());
+        mongoManager.dropIfExists(messageDto.getDatasetId());
         ParserStrategy strategy = parsingStrategyResolver.getStrategy(messageDto.getType());
         Path resourcePath = fileService.downloadFile(messageDto.getResourceUrl(), messageDto.getType());
 
