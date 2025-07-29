@@ -17,19 +17,14 @@
 
 ## 주요기능
 
-### 제목 및 태그를 통한 데이터 검색
->일반 검색 및 크롤링을 통해 추출한 키워드를 기반한 태그 검색
-<img src="https://github.com/user-attachments/assets/bd9ee4d7-31f9-4892-a704-b08d5dd80f23" width="45%">
-<img src="https://github.com/user-attachments/assets/abd6000a-fcd8-4353-b9ae-9400bf13fb56" width="45%">
+### 데이터 검색
+>제목,태그,제공기관,파일유형 기반한 데이터 검색
+<img src="https://github.com/user-attachments/assets/a874d8ad-adf7-48db-86de-1b3f80a3bee3" width="90%">
 
-### 파일유형,제공기관 필터링
->원하는 파일 유형과 제공기관을 지정 하여 원하는 데이터를 빠르게 검색
-<img src="https://github.com/user-attachments/assets/a5b622aa-f852-48a6-bcf5-a8f431953c87" width="60%">
 
 ### 데이터 시각화
->다양한 형태의 데이터 시각화 지원
-<img src="https://github.com/user-attachments/assets/dce718fb-d247-45af-a49f-531bb7a3992b" height="200px">
-<img src="https://github.com/user-attachments/assets/475a182b-348c-41f5-b448-745a8914789c" height="200px">
+>테이블,막대 그래프,꺾은선 그래프,파이 차트 다양한 시각화 지원
+<img src="https://github.com/user-attachments/assets/e98b43f5-25e5-473b-b0c9-8dc9644f1866" width="90%">
 
 ## 기술 스택
 
@@ -48,7 +43,7 @@
 <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=RabbitMQ&logoColor=white"> <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=Docker&logoColor=white">
 
 ## 아키텍처
-<img width="929" height="374" alt="Image" src="https://github.com/user-attachments/assets/d929084a-55ff-4a35-af24-449bbff30ff8" />
+<img width="919" height="357" alt="스크린샷 2025-07-29 오후 4 38 28" src="https://github.com/user-attachments/assets/81a81c65-933e-4677-8b51-964d462d8a82" />
 
 ## 팀원
 <table>

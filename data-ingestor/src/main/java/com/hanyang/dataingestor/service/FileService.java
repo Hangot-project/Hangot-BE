@@ -35,10 +35,16 @@ public class FileService {
                         throw new IllegalStateException("파일 다운로드 실패: " + clientHttpResponse.getStatusCode());
                     }
                     InputStream inputStream = clientHttpResponse.getBody();
-
-                    // It's good practice to handle potential IOException when creating or copying files
                     Path tempFile = Files.createTempFile("download-", "." + type);
                     Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+                    // ZIP 파일 매직 넘버 체크
+                    byte[] header = Files.readAllBytes(tempFile);
+                    if (header.length >= 2 && header[0] == 0x50 && header[1] == 0x4B) {
+                        Files.deleteIfExists(tempFile);
+                        throw new IllegalArgumentException("ZIP 파일은 지원하지 않습니다");
+                    }
+
                     return tempFile;
                 }
         );
