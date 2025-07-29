@@ -1,10 +1,10 @@
-package com.hanyang.adminserver.core.response;
+package com.hanyang.adminserver.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import static com.hanyang.adminserver.core.response.ResponseMessage.SUCCESS;
+import static com.hanyang.adminserver.response.ResponseMessage.SUCCESS;
 
 @Getter
 @AllArgsConstructor
