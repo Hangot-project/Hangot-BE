@@ -18,10 +18,18 @@ public class DataCrawlerScheduler {
     private final DataCrawlerService dataCrawlerService;
 
     @Scheduled(cron = "0 00 2 * * ?")
-    public void scheduledDailyCrawl() {
+    public void scheduledDataGoKRCrawl() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
-        log.info("데이터 크롤링 시작 - 목표 날짜: {}", yesterday);
-        dataCrawlerService.crawlDatasets("data.go.kr", 40, yesterday,yesterday);
-        log.info("데이터 크롤링 완료");
+        log.info("공공 데이터 크롤링 시작 - 목표 날짜: {}", yesterday);
+        dataCrawlerService.crawlDatasets("https://www.data.go.kr", 40, yesterday,yesterday);
+        log.info("공공 데이터 크롤링 완료");
+    }
+
+    @Scheduled(cron = "0 00 3 * * ?")
+    public void scheduledSeoulDataCrawl() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        log.info("서울 열린데이터 광장 크롤링 시작 - 목표 날짜: {}", yesterday);
+        dataCrawlerService.crawlDatasets("https://data.seoul.go.kr", 10, yesterday,yesterday);
+        log.info("서울 열린데이터 광장 크롤링 완료");
     }
 }
