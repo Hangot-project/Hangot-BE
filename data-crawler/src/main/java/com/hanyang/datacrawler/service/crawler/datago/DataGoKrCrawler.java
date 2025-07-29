@@ -112,12 +112,15 @@ public class DataGoKrCrawler implements DataCrawler {
             List<Dataset> savedDatasets = datasetService.saveDatasetsBatch(datasetList, tagsList);
 
             for (Dataset dataset : savedDatasets) {
-                downloadParamExtractor.extractDownloadParams(dataset.getSourceUrl()).ifPresent(params -> {
-                    String fileName = FilenameUtils.removeExtension(dataset.getResourceName());
-                    String resourceURL = buildDownloadUrl(params, fileName);
-                    Dataset updatedDataset = datasetService.updateResourceUrl(dataset, resourceURL);
-                    sendDataParsingRequest(updatedDataset);
-                });
+                String resourceURL = downloadParamExtractor.extractDownloadParams(dataset.getSourceUrl())
+                        .map(params -> {
+                            String fileName = FilenameUtils.removeExtension(dataset.getResourceName());
+                            return buildDownloadUrl(params, fileName);
+                        })
+                        .orElse("");
+
+                Dataset updatedDataset = datasetService.updateResourceUrl(dataset, resourceURL);
+                sendDataParsingRequest(updatedDataset);
             }
             log.info("데이터셋 배치 저장 완료 - 저장된 데이터셋 개수: {}", savedDatasets.size());
         }
