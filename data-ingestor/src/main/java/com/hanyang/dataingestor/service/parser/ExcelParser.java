@@ -1,5 +1,6 @@
 package com.hanyang.dataingestor.service.parser;
 
+import com.hanyang.dataingestor.core.exception.ParsingException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.util.XMLHelper;
@@ -16,6 +17,7 @@ import org.xml.sax.XMLReader;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -28,7 +30,7 @@ public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetCon
     private final ThreadLocal<Integer> checkedCol = ThreadLocal.withInitial(() -> -1);
 
     @Override
-    public ParsedData parse(Path path, String datasetId) throws Exception {
+    public ParsedData parse(Path path, String datasetId) throws ParsingException {
         initializeFields();
         
         try {
@@ -47,8 +49,9 @@ public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetCon
                     sheetParser.parse(sheetSource);
                 }
             }
-            
             return new ParsedData(header.get(), rows.get());
+        } catch (Exception e) {
+            throw new ParsingException(Arrays.toString(e.getStackTrace()));
         } finally {
             clearThreadLocalValues();
         }

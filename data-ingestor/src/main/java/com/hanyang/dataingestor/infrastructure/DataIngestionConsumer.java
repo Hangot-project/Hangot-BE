@@ -2,6 +2,7 @@ package com.hanyang.dataingestor.infrastructure;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanyang.dataingestor.core.exception.ParsingException;
 import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.service.DataIngestionService;
@@ -40,7 +41,7 @@ public class DataIngestionConsumer {
         try {
             messageDto = objectMapper.readValue(messageBody, MessageDto.class);
         } catch (JsonProcessingException e) {
-            log.error("JSON 파싱 실패, 메시지 버림: {}", messageBody, e);
+            log.error("JSON 파싱 실패, 메시지 버림: {}", messageBody);
             return;
         }
 
@@ -49,7 +50,7 @@ public class DataIngestionConsumer {
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (IllegalArgumentException | ResourceNotFoundException e) {
             // 데이터 시각화 지원하지 않거나,파일 다운로드를 지원하지 않음
-        } catch (Exception e) {
+        } catch (ParsingException e) {
             sendToDLQ(message, e);
         }
     }

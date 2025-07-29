@@ -1,5 +1,6 @@
 package com.hanyang.dataingestor.service;
 
+import com.hanyang.dataingestor.core.exception.ParsingException;
 import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.infrastructure.MongoManager;
@@ -22,7 +23,7 @@ public class DataIngestionService {
     private final MongoManager mongoManager;
     private final FileService fileService;
 
-    public void createDataTable(MessageDto messageDto) throws Exception {
+    public void createDataTable(MessageDto messageDto) throws ResourceNotFoundException,IllegalArgumentException, ParsingException {
         mongoManager.dropCollection(messageDto.getDatasetId());
 
         if(messageDto.getResourceUrl() == null || messageDto.getResourceUrl().isEmpty()){

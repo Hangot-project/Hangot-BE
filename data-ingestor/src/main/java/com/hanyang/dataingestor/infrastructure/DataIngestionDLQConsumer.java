@@ -1,6 +1,8 @@
 package com.hanyang.dataingestor.infrastructure;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanyang.dataingestor.core.exception.ParsingException;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.service.DataIngestionService;
 import com.hanyang.dataingestor.service.FailedMessageService;
@@ -27,14 +29,19 @@ public class DataIngestionDLQConsumer {
     public void handleDeadLetterMessage(Message message) {
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
 
+        MessageDto messageDto;
         try {
-            MessageDto messageDto = objectMapper.readValue(messageBody, MessageDto.class);
-            
+            messageDto = objectMapper.readValue(messageBody, MessageDto.class);
+        } catch (JsonProcessingException e) {
+            return;
+        }
+
+        try {
             log.warn("DLQ 처리 시작: {}", messageBody);
             dataIngestionService.createDataTable(messageDto);
             log.warn("DLQ 처리 성공: {}", messageBody);
 
-        } catch (Exception e) {
+        } catch (ParsingException e) {
             // 처리 실패 시 항상 MongoDB에 저장하고 메시지 소비 완료
             log.error("DLQ 처리 실패  {}", messageBody, e);
             saveToFailedMessages(messageBody, getFullStackTrace(e));
