@@ -2,6 +2,7 @@ package com.hanyang.dataingestor.infrastructure;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.service.DataIngestionService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,8 @@ public class DataIngestionConsumer {
         try{
             dataIngestionService.createDataTable(messageDto);
             log.info("메세지 처리 완료: {}", messageBody);
+        } catch (IllegalArgumentException | ResourceNotFoundException e) {
+            // 데이터 시각화 지원하지 않거나,파일 다운로드를 지원하지 않음
         } catch (Exception e) {
             sendToDLQ(message, e);
         }

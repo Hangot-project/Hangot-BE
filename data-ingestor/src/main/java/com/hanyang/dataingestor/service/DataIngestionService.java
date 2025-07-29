@@ -1,5 +1,6 @@
 package com.hanyang.dataingestor.service;
 
+import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.infrastructure.MongoManager;
 import com.hanyang.dataingestor.service.parser.ParsedData;
@@ -21,10 +22,15 @@ public class DataIngestionService {
     private final MongoManager mongoManager;
     private final FileService fileService;
 
-
     public void createDataTable(MessageDto messageDto) throws Exception {
-        mongoManager.dropIfExists(messageDto.getDatasetId());
+        mongoManager.dropCollection(messageDto.getDatasetId());
+
+        if(messageDto.getResourceUrl() == null || messageDto.getResourceUrl().isEmpty()){
+            throw new ResourceNotFoundException("파일 다운로드 링크가 없습니다.");
+        }
+
         ParserStrategy strategy = parsingStrategyResolver.getStrategy(messageDto.getType());
+
         Path resourcePath = fileService.downloadFile(messageDto.getResourceUrl(), messageDto.getType());
 
         ParsedData parsedData = strategy.parse(resourcePath,messageDto.getDatasetId());
