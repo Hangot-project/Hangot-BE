@@ -25,7 +25,7 @@ public class DataGoKrHtmlParser {
         if(date == null) return Optional.empty();
         String dateText = date.text().trim();
 
-        return Optional.of(parseDate(dateText));
+        return Optional.ofNullable(parseDate(dateText));
     }
 
 
@@ -109,7 +109,12 @@ public class DataGoKrHtmlParser {
     }
 
     private LocalDate parseDate(String dateStr) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return LocalDate.parse(dateStr.trim(), formatter);
+        try{
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            return LocalDate.parse(dateStr.trim(), formatter);
+        } catch (Exception e){
+            return null;
+        }
+
     }
 }
