@@ -7,7 +7,6 @@ import com.hanyang.datacrawler.exception.SkipPageException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
-import com.hanyang.datacrawler.service.FileType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -117,11 +116,7 @@ public class DataGoKrCrawler implements DataCrawler {
                     String fileName = FilenameUtils.removeExtension(dataset.getResourceName());
                     String resourceURL = buildDownloadUrl(params, fileName);
                     Dataset updatedDataset = datasetService.updateResourceUrl(dataset, resourceURL);
-
-                    FileType fileType = FileType.getFileType(updatedDataset.getResourceName());
-                    if (fileType.IsSupportVisualization()) {
-                        sendDataParsingRequest(updatedDataset);
-                    }
+                    sendDataParsingRequest(updatedDataset);
                 });
             }
             log.info("데이터셋 배치 저장 완료 - 저장된 데이터셋 개수: {}", savedDatasets.size());

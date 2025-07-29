@@ -11,9 +11,8 @@ import java.util.*;
 public class MongoManager {
     private final MongoTemplate mongoTemplate;
 
-    public void dropIfExists(String collectionName) {
-        boolean isExists = mongoTemplate.collectionExists(collectionName);
-        if (isExists) mongoTemplate.dropCollection(collectionName);
+    public void dropCollection(String collectionName) {
+        mongoTemplate.dropCollection(collectionName);
     }
 
     public void insertDocuments(String collectionName, List<?> objects) {
