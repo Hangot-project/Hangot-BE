@@ -76,8 +76,7 @@ public class SeoulDataHtmlParser {
             // CSV 다운로드 URL 추출
             String resourceUrl = downloadParamExtractor.extractCsvDownloadUrl(sourceUrl);
             
-            // HEAD 요청으로 실제 파일명 추출
-            String fileName = downloadParamExtractor.extractFileNameFromUrl(resourceUrl);
+            String fileName = title + ".csv";
 
             Dataset dataset = Dataset.builder()
                     .title(title)

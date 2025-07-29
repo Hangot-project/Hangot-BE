@@ -3,6 +3,7 @@ package com.hanyang.datacrawler.service.crawler.seouldata;
 import com.hanyang.datacrawler.domain.Dataset;
 import com.hanyang.datacrawler.dto.DatasetWithTag;
 import com.hanyang.datacrawler.dto.MessageDto;
+import com.hanyang.datacrawler.exception.SkipPageException;
 import com.hanyang.datacrawler.infrastructure.RabbitMQPublisher;
 import com.hanyang.datacrawler.service.DataCrawler;
 import com.hanyang.datacrawler.service.DatasetService;
@@ -20,6 +21,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +43,7 @@ public class SeoulDataCrawler implements DataCrawler {
     private int pageDelay;
 
     private static final String SEOUL_BASE_URL = "https://data.seoul.go.kr";
-    private static final String DATASET_LIST_URL = "https://data.seoul.go.kr/dataList/datasetTotalList.do";
+    private static final String DATASET_LIST_URL = "https://data.seoul.go.kr/dataList/datasetList.do";
 
     @Override
     public String getSiteDomain() {
@@ -55,18 +57,37 @@ public class SeoulDataCrawler implements DataCrawler {
         List<String> datasetUrls = new ArrayList<>();
         Document doc = Jsoup.parse(html);
         
-        // HTML 구조에 맞게 수정: .total-search-type01 내의 링크를 찾음
-        Elements datasetElements = doc.select(".total-search-type01 a[href*='datasetView.do']");
+        Elements datasetElements = doc.select("dl.type-b");
         
-        for (Element linkElement : datasetElements) {
-            String href = linkElement.attr("href");
-            if (!href.isEmpty()) {
-                String fullUrl =  SEOUL_BASE_URL+"/dataList/"+ href;
-                datasetUrls.add(fullUrl);
-            }
+        if (!datasetElements.isEmpty()) {
+            // 페이지의 마지막 데이터셋 날짜 확인하여 스킵 여부 결정
+            Element lastDataset = datasetElements.get(datasetElements.size() - 1);
+            getDatasetDate(lastDataset).ifPresent((updateDate) -> {
+                if (updateDate.isAfter(endDate)) throw new SkipPageException(pageNo);
+            });
         }
         
-        log.info("페이지 {} - 추출된 데이터셋 URL 개수: {}", pageNo, datasetUrls.size());
+        for (Element element : datasetElements) {
+            Element linkElement = element.selectFirst("a.goView");
+            if (linkElement == null) continue;
+            
+            String href = linkElement.attr("data-rel");
+            if (href.isEmpty()) continue;
+            
+            Optional<LocalDate> optionalDate = getDatasetDate(element);
+            
+            if (optionalDate.isPresent()) {
+                LocalDate updateDate = optionalDate.get();
+                
+                if (updateDate.isAfter(endDate)) continue;
+                
+                if (updateDate.isBefore(startDate)) break;
+            }
+            
+            String fullUrl = SEOUL_BASE_URL + "/dataList/" + href;
+            datasetUrls.add(fullUrl);
+        }
+        
         return datasetUrls;
     }
 
@@ -150,7 +171,8 @@ public class SeoulDataCrawler implements DataCrawler {
             formData.add("datasetKind", "1");
             formData.add("searchFlag", "N");
             formData.add("pageIndex", String.valueOf(pageNo));
-            formData.add("sortColBy", "R");
+            formData.add("sortColBy", "최신수정일순");
+            formData.add("menuCd", "SHEET");
             formData.add("searchValue", "");
             formData.add("resSearch", "N");
             
@@ -167,7 +189,27 @@ public class SeoulDataCrawler implements DataCrawler {
         } catch (Exception e) {
             log.error("폼 데이터로 페이지 요청 실패 - 페이지: {}, 오류: {}", pageNo, e.getMessage());
             // 폴백으로 GET 요청 시도
-            return getHtmlWithHeaders(DATASET_LIST_URL + "?datasetKind=1&searchFlag=N&pageIndex=" + pageNo + "&sortColBy=R");
+            return getHtmlWithHeaders(DATASET_LIST_URL + "?datasetKind=1&searchFlag=N&pageIndex=" + pageNo + "&sortColBy=최신수정일순&menuCd=SHEET");
+        }
+    }
+    
+    private Optional<LocalDate> getDatasetDate(Element element) {
+        try {
+            // "수정일자 :" 텍스트를 포함하는 span 찾기
+            Elements infoSpans = element.select(".list-statistics-info2 span");
+            for (Element span : infoSpans) {
+                String text = span.text().trim();
+                if (text.contains("수정일자 :")) {
+                    // "수정일자 : 2025-07-29" 형태에서 날짜 부분 추출
+                    String dateText = text.replace("수정일자 :", "").trim();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    return Optional.of(LocalDate.parse(dateText, formatter));
+                }
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.debug("날짜 파싱 실패: {}", e.getMessage());
+            return Optional.empty();
         }
     }
 
