@@ -1,5 +1,6 @@
 package com.hanyang.dataingestor.service.parser;
 
+import com.hanyang.dataingestor.core.exception.ParsingException;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 import com.opencsv.CSVReader;
@@ -22,7 +23,7 @@ public class CsvParser implements ParserStrategy {
 
 
     @Override
-    public ParsedData parse(Path path, String datasetId) throws Exception {
+    public ParsedData parse(Path path, String datasetId) throws ParsingException {
         List<String> header = new ArrayList<>();
         List<List<String>> rows = new ArrayList<>();
 
@@ -44,6 +45,8 @@ public class CsvParser implements ParserStrategy {
                     rows.add(Arrays.asList(nextRecord));
                 }
             }
+        } catch (Exception e) {
+            throw new ParsingException(Arrays.toString(e.getStackTrace()));
         }
 
         return new ParsedData(header, rows);

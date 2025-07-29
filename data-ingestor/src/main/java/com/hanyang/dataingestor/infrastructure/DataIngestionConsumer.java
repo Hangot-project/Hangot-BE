@@ -2,13 +2,13 @@ package com.hanyang.dataingestor.infrastructure;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanyang.dataingestor.core.exception.ParsingException;
 import com.hanyang.dataingestor.core.exception.ResourceNotFoundException;
 import com.hanyang.dataingestor.dto.MessageDto;
 import com.hanyang.dataingestor.service.DataIngestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +40,7 @@ public class DataIngestionConsumer {
         try {
             messageDto = objectMapper.readValue(messageBody, MessageDto.class);
         } catch (JsonProcessingException e) {
-            log.error("JSON 파싱 실패, 메시지 버림: {}", messageBody, e);
+            log.error("JSON 파싱 실패, 메시지 버림: {}", messageBody);
             return;
         }
 
@@ -49,19 +49,15 @@ public class DataIngestionConsumer {
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (IllegalArgumentException | ResourceNotFoundException e) {
             // 데이터 시각화 지원하지 않거나,파일 다운로드를 지원하지 않음
-        } catch (Exception e) {
+        } catch (ParsingException e) {
             sendToDLQ(message, e);
         }
     }
     
     private void sendToDLQ(Message message, Exception error) {
         try {
-            MessageProperties dlqProps = new MessageProperties();
-            dlqProps.setContentType("application/json");
-            dlqProps.getHeaders().put("x-error-message", error.getMessage());
-            dlqProps.getHeaders().put("x-failure-type", error.getClass().getSimpleName());
-
             rabbitTemplate.send(exchangeName + ".dlx", routingKey + ".dlq", message);
+            log.error("DLQ 전송 - 파싱 에러: {}", error.getMessage(), error);
         } catch (Exception e) {
             log.error("DLQ 전송 실패: {}", e.getMessage());
         }

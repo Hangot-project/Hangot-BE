@@ -1,6 +1,6 @@
 package com.hanyang.adminserver.controller;
 
-import com.hanyang.adminserver.core.response.ApiResponse;
+import com.hanyang.adminserver.response.ApiResponse;
 import com.hanyang.adminserver.entity.FailedMessage;
 import com.hanyang.adminserver.service.FailedMessageService;
 import io.swagger.v3.oas.annotations.Operation;
