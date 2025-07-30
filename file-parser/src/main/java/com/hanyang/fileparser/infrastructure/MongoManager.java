@@ -42,12 +42,20 @@ public class MongoManager {
         for (int j = 0; j < row.size() && j < columns.length; j++) {
             String cellValue = row.get(j);
             Object value = parseValue(cellValue);
-            document.put(columns[j], value);
+            String sanitizedColumnName = sanitizeColumnName(columns[j]);
+            document.put(sanitizedColumnName, value);
         }
 
         return document;
     }
 
+
+    private String sanitizeColumnName(String columnName) {
+        if (columnName == null) {
+            return null;
+        }
+        return columnName.replace(".", "\u00b7");
+    }
 
     private Object parseValue(String cellValue) {
         if (cellValue == null || cellValue.trim().isEmpty()) {
