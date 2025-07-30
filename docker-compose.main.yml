@@ -22,9 +22,9 @@ services:
       - hy-network
     restart: unless-stopped
 
-  data-ingestor:
-    image: ${DOCKER_USERNAME}/data-ingestor:latest
-    container_name: data-ingestor
+  file-parser:
+    image: ${DOCKER_USERNAME}/file-parser:latest
+    container_name: file-parser
     environment:
       SPRING_PROFILES_ACTIVE: prod
     ports:

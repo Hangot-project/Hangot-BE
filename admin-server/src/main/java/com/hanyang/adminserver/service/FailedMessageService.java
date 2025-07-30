@@ -27,7 +27,7 @@ public class FailedMessageService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     
-    @Value("${data-ingestor.url:http://localhost:8081}")
+    @Value("${file-parser.url:http://localhost:8081}")
     private String dataIngestorUrl;
 
     public List<FailedMessage> getFailedMessages(int page, int size) {
