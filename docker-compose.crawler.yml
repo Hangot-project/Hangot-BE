@@ -7,11 +7,14 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+      TZ: Asia/Seoul
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - hy-network
 
@@ -20,8 +23,12 @@ services:
     container_name: data-crawler
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
     ports:
       - "8082:8082"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     depends_on:
       - rabbitmq
     networks:
