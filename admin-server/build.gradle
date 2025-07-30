@@ -11,6 +11,9 @@ dependencies {
     // Security for admin authentication
     implementation 'org.springframework.boot:spring-boot-starter-security'
     
+    // Spring Boot Admin Server
+    implementation 'de.codecentric:spring-boot-admin-starter-server:3.1.0'
+    
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
 }

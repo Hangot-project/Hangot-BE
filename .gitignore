@@ -36,4 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Logs ###
+logs/
+*.log
+*.log.*
+
 .DS_Store

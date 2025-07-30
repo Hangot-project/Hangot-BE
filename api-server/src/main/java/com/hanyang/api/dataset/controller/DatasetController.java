@@ -53,14 +53,14 @@ public class DatasetController {
 
     @Operation(summary = "태그 자동완성")
     @GetMapping("/datasets/tags/search")
-    public ResponseEntity<ApiResponse<List<String>>> searchTags(@RequestParam String keyword){
-        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTags(keyword)));
+    public ResponseEntity<ApiResponse<List<String>>> searchTags(@RequestParam String query){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTags(query)));
     }
 
     @Operation(summary = "제목 기반 검색어 자동완성")
     @GetMapping("/datasets/titles/search")
-    public ResponseEntity<ApiResponse<List<String>>> searchTitles(@RequestParam String keyword){
-        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTitles(keyword)));
+    public ResponseEntity<ApiResponse<List<String>>> searchTitles(@RequestParam String query){
+        return ResponseEntity.ok(ApiResponse.ok(datasetService.searchTitles(query)));
     }
 
 

@@ -17,6 +17,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/admin/**", "/webjars/**").permitAll()
+                .requestMatchers("/instances", "/instances/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(httpBasic -> {})

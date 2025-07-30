@@ -2,6 +2,8 @@ dependencies {
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'de.codecentric:spring-boot-admin-starter-client:3.1.0'
 	implementation 'org.springframework:spring-context-support:5.3.9'
 
 	// AWS S3 (via BOM)
