@@ -49,8 +49,12 @@ public class DataIngestionConsumer {
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (IllegalArgumentException | ResourceNotFoundException e) {
             // 데이터 시각화 지원하지 않거나,파일 다운로드를 지원하지 않음
-            log.info("메시지 처리 중 예외 발생 (메시지 소비됨): {}", e.getMessage());
+            log.info("지원하지 않는 형식이나거나 파일 링크가 없는 경우: {}", e.getMessage());
         } catch (ParsingException e) {
+            sendToDLQ(message, e);
+        } catch (Exception e) {
+            //예상하지 못한 에러
+            log.error("예상 하지 못한 에러로 예외처리가 필요: {}", e.getMessage());
             sendToDLQ(message, e);
         }
     }
