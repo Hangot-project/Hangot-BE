@@ -1,23 +1,34 @@
 package com.hanyang.adminserver.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanyang.adminserver.entity.FailedMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class FailedMessageService {
 
     private final MongoTemplate mongoTemplate;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+    
+    @Value("${data-ingestor.url:http://localhost:8081}")
+    private String dataIngestorUrl;
 
     public List<FailedMessage> getFailedMessages(int page, int size) {
         Query query = new Query()
@@ -27,59 +38,45 @@ public class FailedMessageService {
         return mongoTemplate.find(query, FailedMessage.class);
     }
 
-    public void retryProcessing(String messageId, String processedBy, String notes) {
+    public void retryProcessing(String messageId) throws JsonProcessingException {
         FailedMessage failedMessage = getFailedMessageById(messageId);
         if (failedMessage == null) {
-            throw new RuntimeException("Failed message not found: " + messageId);
+            throw new RuntimeException("실패 메시지를 찾을 수 없습니다: " + messageId);
         }
         
-        try {
-            // 실제 처리 로직 호출 (data-ingestor API 호출)
-            processMessageDirectly(failedMessage);
-            
-            // 성공 시 PROCESSED로 상태 변경
-            Query query = new Query(Criteria.where("id").is(messageId));
-            Update update = new Update()
-                    .set("status", "PROCESSED")
-                    .set("processedBy", processedBy)
-                    .set("processedAt", LocalDateTime.now())
-                    .set("notes", notes);
-            
-            mongoTemplate.updateFirst(query, update, FailedMessage.class);
-            log.info("Successfully reprocessed message: {}", messageId);
-            
-        } catch (Exception e) {
-            log.error("Failed to reprocess message: {}", messageId, e);
-            
-            // 재처리 실패 시 실패 정보 업데이트
-            Query query = new Query(Criteria.where("id").is(messageId));
-            Update update = new Update()
-                    .set("lastRetryAt", LocalDateTime.now())
-                    .set("retryFailureReason", e.getMessage())
-                    .inc("retryCount", 1);
-            
-            mongoTemplate.updateFirst(query, update, FailedMessage.class);
-            throw new RuntimeException("Retry processing failed: " + e.getMessage(), e);
-        }
-    }
-    
-    private void processMessageDirectly(FailedMessage failedMessage) {
-        // TODO: data-ingestor의 처리 로직을 직접 호출하거나 HTTP API 호출
-        // 예시: RestTemplate을 사용해서 data-ingestor API 호출
-        log.info("Processing message directly: {}", failedMessage.getMessageBody());
-        
-        // 실제 구현에서는 여기서 data-ingestor API를 호출하거나
-        // 처리 로직을 직접 실행해야 합니다
-    }
+        processMessageDirectly(failedMessage);
 
-    public void markAsIgnored(String messageId, String processedBy, String notes) {
         Query query = new Query(Criteria.where("id").is(messageId));
         Update update = new Update()
-                .set("status", "IGNORED")
-                .set("processedBy", processedBy)
-                .set("processedAt", LocalDateTime.now())
-                .set("notes", notes);
-        
+                .set("status", "SUCCESS")
+                .set("notes", "성공");
+
+        mongoTemplate.updateFirst(query, update, FailedMessage.class);
+    }
+    
+    private void processMessageDirectly(FailedMessage failedMessage) throws JsonProcessingException {
+        Map messageMap = objectMapper.readValue(failedMessage.getMessageBody(), Map.class);
+
+        String url = dataIngestorUrl + "/api/file/create";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity entity = new HttpEntity<>(messageMap, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            String errorMessage = response.getBody();
+            throw new RuntimeException(errorMessage != null ? errorMessage : "데이터 처리 API 호출 실패: " + response.getStatusCode());
+        }
+    }
+
+    public void markAsIgnored(String messageId) {
+        Query query = new Query(Criteria.where("id").is(messageId));
+        Update update = new Update()
+                .set("status", "IGNORE");
+
         mongoTemplate.updateFirst(query, update, FailedMessage.class);
     }
 
@@ -88,20 +85,13 @@ public class FailedMessageService {
         mongoTemplate.remove(query, FailedMessage.class);
     }
 
-    public long getFailedMessageCount() {
-        return mongoTemplate.count(new Query(), FailedMessage.class);
-    }
-
-    public List<FailedMessage> getFailedMessagesByStatus(String status) {
-        Query query = new Query(Criteria.where("status").is(status));
-        return mongoTemplate.find(query, FailedMessage.class);
-    }
-
     public FailedMessage getFailedMessageById(String messageId) {
         return mongoTemplate.findById(messageId, FailedMessage.class);
     }
 
-    public List<FailedMessage> getAllFailedMessages() {
-        return mongoTemplate.findAll(FailedMessage.class);
+    public void updateNotes(String messageId, String notes) {
+        Query query = new Query(Criteria.where("id").is(messageId));
+        Update update = new Update().set("notes", notes);
+        mongoTemplate.updateFirst(query, update, FailedMessage.class);
     }
 }

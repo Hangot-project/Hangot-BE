@@ -1,5 +1,6 @@
 package com.hanyang.adminserver.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hanyang.adminserver.response.ApiResponse;
 import com.hanyang.adminserver.entity.FailedMessage;
 import com.hanyang.adminserver.service.FailedMessageService;
@@ -28,27 +29,32 @@ public class FailedMessageController {
 
     @PostMapping("/{messageId}/process")
     public ResponseEntity<ApiResponse<Void>> retryProcessing(
-            @PathVariable String messageId,
-            @RequestParam String processedBy,
-            @RequestParam(required = false) String notes
-    ) {
-        failedMessageService.retryProcessing(messageId, processedBy, notes);
+            @PathVariable String messageId
+    ) throws JsonProcessingException {
+        failedMessageService.retryProcessing(messageId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @PostMapping("/{messageId}/ignore")
     public ResponseEntity<ApiResponse<Void>> markAsIgnored(
-            @PathVariable String messageId,
-            @RequestParam String processedBy,
-            @RequestParam(required = false) String notes
+            @PathVariable String messageId
     ) {
-        failedMessageService.markAsIgnored(messageId, processedBy, notes);
+        failedMessageService.markAsIgnored(messageId);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @DeleteMapping("/{messageId}")
     public ResponseEntity<ApiResponse<Void>> deleteFailedMessage(@PathVariable String messageId) {
         failedMessageService.deleteFailedMessage(messageId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PutMapping("/{messageId}/notes")
+    public ResponseEntity<ApiResponse<Void>> updateNotes(
+            @PathVariable String messageId,
+            @RequestParam String notes
+    ) {
+        failedMessageService.updateNotes(messageId, notes);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

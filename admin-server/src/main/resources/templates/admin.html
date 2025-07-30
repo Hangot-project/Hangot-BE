@@ -38,6 +38,9 @@
             vertical-align: middle;
             width: fit-content;
         }
+        .notes-cell {
+            width: 150px;
+        }
         .btn-sm {
             padding: 5px 10px;
             font-size: 12px;
@@ -62,6 +65,26 @@
         .field-label {
             font-weight: bold;
             color: #666;
+        }
+        .notes-display {
+            display: block;
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            min-height: 28px;
+            font-size: 13px;
+        }
+        .notes-display:hover {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        .notes-input {
+            width: 100px;
+            font-size: 13px;
+            height: 28px;
         }
     </style>
 </head>
@@ -147,7 +170,11 @@
                         <td><div class="message-body">${messageBodyHtml}</div></td>
                         <td><div class="failure-reason">${message.failureReason}</div></td>
                         <td>${message.status}</td>
-                        <td>${message.notes}</td>
+                        <td class="notes-cell">
+                            <span class="notes-display" onclick="editNotes('${message.id}', this)" style="cursor: pointer; color: ${message.notes ? '#000' : '#6c757d'};">
+                                ${message.notes || '클릭하여 수정'}
+                            </span>
+                        </td>
                         <td>
                             <button class="btn btn-sm btn-success" onclick="processMessage('${message.id}')">Process</button>
                             <button class="btn btn-sm btn-warning" onclick="ignoreMessage('${message.id}')">Ignore</button>
@@ -165,28 +192,142 @@
     }
 
     function processMessage(messageId) {
-        const processedBy = prompt("Enter your name:", "admin");
-        if (!processedBy) return;
-        const notes = prompt("Enter notes (optional):");
-
-        fetch(`/api/admin/failed-messages/${messageId}/process?processedBy=${processedBy}&notes=${notes}`, {method: 'POST'})
-            .then(() => fetchAndRenderMessages());
+        const button = event.target;
+        const originalText = button.textContent;
+        
+        // 버튼 비활성화 및 로딩 표시
+        button.disabled = true;
+        button.textContent = '처리중...';
+        button.className = 'btn btn-sm btn-secondary';
+        
+        fetch(`/api/admin/failed-messages/${messageId}/process`, {method: 'POST'})
+            .then(response => {
+                if (response.ok) {
+                    alert('재처리가 완료되었습니다.');
+                    fetchAndRenderMessages();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.msg || '재처리에 실패했습니다.');
+                    });
+                }
+            })
+            .catch(error => {
+                alert('오류: ' + error.message);
+                // 버튼 복원
+                button.disabled = false;
+                button.textContent = originalText;
+                button.className = 'btn btn-sm btn-success';
+            });
     }
 
     function ignoreMessage(messageId) {
-        const processedBy = prompt("Enter your name:", "admin");
-        if (!processedBy) return;
-        const notes = prompt("Enter notes (optional):");
-
-        fetch(`/api/admin/failed-messages/${messageId}/ignore?processedBy=${processedBy}&notes=${notes}`, {method: 'POST'})
-            .then(() => fetchAndRenderMessages());
+        const button = event.target;
+        const originalText = button.textContent;
+        
+        // 버튼 비활성화 및 로딩 표시
+        button.disabled = true;
+        button.textContent = '처리중...';
+        button.className = 'btn btn-sm btn-secondary';
+        
+        fetch(`/api/admin/failed-messages/${messageId}/ignore`, {method: 'POST'})
+            .then(response => {
+                if (response.ok) {
+                    alert('무시 처리가 완료되었습니다.');
+                    fetchAndRenderMessages();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.msg || '무시 처리에 실패했습니다.');
+                    });
+                }
+            })
+            .catch(error => {
+                alert('오류: ' + error.message);
+                // 버튼 복원
+                button.disabled = false;
+                button.textContent = originalText;
+                button.className = 'btn btn-sm btn-warning';
+            });
     }
 
     function deleteMessage(messageId) {
-        if (!confirm("Are you sure you want to delete this message?")) return;
+        if (!confirm("정말로 삭제하시겠습니까?")) return;
+        
+        const button = event.target;
+        const originalText = button.textContent;
+        
+        // 버튼 비활성화 및 로딩 표시
+        button.disabled = true;
+        button.textContent = '삭제중...';
+        button.className = 'btn btn-sm btn-secondary';
 
         fetch(`/api/admin/failed-messages/${messageId}`, {method: 'DELETE'})
-            .then(() => fetchAndRenderMessages());
+            .then(response => {
+                if (response.ok) {
+                    alert('삭제가 완료되었습니다.');
+                    fetchAndRenderMessages();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.msg || '삭제에 실패했습니다.');
+                    });
+                }
+            })
+            .catch(error => {
+                alert('오류: ' + error.message);
+                // 버튼 복원
+                button.disabled = false;
+                button.textContent = originalText;
+                button.className = 'btn btn-sm btn-danger';
+            });
+    }
+
+    function editNotes(messageId, spanElement) {
+        const currentNotes = spanElement.textContent === '클릭하여 수정' ? '' : spanElement.textContent;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'notes-input';
+        input.value = currentNotes;
+        input.size = 10
+        input.name = 'note';
+
+        input.onblur = function() {
+            updateNotes(messageId, this.value, spanElement);
+        };
+        
+        spanElement.replaceWith(input);
+        input.focus();
+        input.select(); // 텍스트 전체 선택
+    }
+
+
+    function updateNotes(messageId, notes) {
+        fetch(`/api/admin/failed-messages/${messageId}/notes?notes=${encodeURIComponent(notes)}`, {
+            method: 'PUT'
+        })
+        .then(response => {
+            if (response.ok) {
+                // 성공시 다시 span으로 변경
+                const newSpan = document.createElement('span');
+                newSpan.className = 'notes-display';
+                newSpan.style.cursor = 'pointer';
+                newSpan.style.color = notes ? '#000' : '#6c757d';
+                newSpan.textContent = notes || '클릭하여 수정';
+                newSpan.onclick = function() {
+                    editNotes(messageId, this);
+                };
+                
+                // 현재 input을 span으로 교체
+                const currentInput = document.querySelector('.notes-input');
+                if (currentInput) {
+                    currentInput.replaceWith(newSpan);
+                }
+            } else {
+                console.error('Failed to update notes');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating notes:', error);
+        });
     }
 </script>
 <script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
