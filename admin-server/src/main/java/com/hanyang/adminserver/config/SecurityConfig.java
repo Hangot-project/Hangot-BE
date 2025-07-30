@@ -17,10 +17,15 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/admin/**", "/webjars/**").permitAll()
+                .requestMatchers("/instances", "/instances/**").permitAll()
+                .requestMatchers("/dlq", "/dlq/**").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(httpBasic -> {})
-            .csrf(csrf -> csrf.disable());
+            .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers
+                .frameOptions().sameOrigin()
+            );
         
         return http.build();
     }
