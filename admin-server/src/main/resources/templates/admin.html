@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>실패 메세지 관리</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container-fluid {
+            max-width: 100%;
+            padding: 0;
+        }
+        h1 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .table {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            border-top: none;
+            padding: 15px 10px;
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 12px 10px;
+            vertical-align: middle;
+            width: fit-content;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        .failure-reason {
+            max-height: 200px;
+            overflow-y: auto;
+            width: fit-content;
+            min-width: 300px;
+            max-width: 700px;
+            word-wrap: break-word;
+        }
+        .message-body {
+            max-width: 250px;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+        .message-field {
+            margin-bottom: 5px;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <h1>실패 메세지 관리</h1>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>메세지</th>
+                <th>실패 이유</th>
+                <th>상태</th>
+                <th>비고</th>
+                <th>액션</th>
+            </tr>
+            </thead>
+            <tbody id="messages-tbody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetchAndRenderMessages();
+    });
+
+    function fetchAndRenderMessages() {
+        fetch("/api/admin/failed-messages?size=1000")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(apiResponse => {
+                console.log("Full API Response:", apiResponse);
+                const messages = apiResponse.result;
+                console.log("Extracted messages:", messages);
+
+                const tbody = document.getElementById("messages-tbody");
+                tbody.innerHTML = ""; // Clear existing rows
+
+                if (!messages || !Array.isArray(messages)) {
+                    console.error("'messages' is not a valid array:", messages);
+                    tbody.innerHTML = '<tr><td colspan="6">Error: Data is not a valid array. Check console.</td></tr>';
+                    return;
+                }
+
+                if (messages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6">No failed messages found.</td></tr>';
+                    return;
+                }
+
+                messages.forEach(message => {
+                    const row = document.createElement("tr");
+                    
+                    // Parse messageBody if it's JSON
+                    let messageBodyHtml = '';
+                    try {
+                        const parsedBody = JSON.parse(message.messageBody);
+                        messageBodyHtml = `
+                            <div class="message-field">
+                                <span class="field-label">Dataset ID:</span><br>
+                                ${parsedBody.datasetId || 'N/A'}
+                            </div>
+                            <div class="message-field">
+                                <span class="field-label">Resource URL:</span><br>
+                                ${parsedBody.resourceUrl || 'N/A'}
+                            </div>
+                            <div class="message-field">
+                                <span class="field-label">Source URL:</span><br>
+                                ${parsedBody.sourceUrl || 'N/A'}
+                            </div>
+                        `;
+                    } catch (e) {
+                        // If not JSON, show as is
+                        messageBodyHtml = message.messageBody;
+                    }
+                    
+                    row.innerHTML = `
+                        <td><div class="message-body">${messageBodyHtml}</div></td>
+                        <td><div class="failure-reason">${message.failureReason}</div></td>
+                        <td>${message.status}</td>
+                        <td>${message.notes}</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="processMessage('${message.id}')">Process</button>
+                            <button class="btn btn-sm btn-warning" onclick="ignoreMessage('${message.id}')">Ignore</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteMessage('${message.id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching or rendering messages:", error);
+                const tbody = document.getElementById("messages-tbody");
+                tbody.innerHTML = `<tr><td colspan="6">Failed to load data: ${error.message}</td></tr>`;
+            });
+    }
+
+    function processMessage(messageId) {
+        const processedBy = prompt("Enter your name:", "admin");
+        if (!processedBy) return;
+        const notes = prompt("Enter notes (optional):");
+
+        fetch(`/api/admin/failed-messages/${messageId}/process?processedBy=${processedBy}&notes=${notes}`, {method: 'POST'})
+            .then(() => fetchAndRenderMessages());
+    }
+
+    function ignoreMessage(messageId) {
+        const processedBy = prompt("Enter your name:", "admin");
+        if (!processedBy) return;
+        const notes = prompt("Enter notes (optional):");
+
+        fetch(`/api/admin/failed-messages/${messageId}/ignore?processedBy=${processedBy}&notes=${notes}`, {method: 'POST'})
+            .then(() => fetchAndRenderMessages());
+    }
+
+    function deleteMessage(messageId) {
+        if (!confirm("Are you sure you want to delete this message?")) return;
+
+        fetch(`/api/admin/failed-messages/${messageId}`, {method: 'DELETE'})
+            .then(() => fetchAndRenderMessages());
+    }
+</script>
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
