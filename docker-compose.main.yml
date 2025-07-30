@@ -4,8 +4,13 @@ services:
   redis:
     image: redis:7.0-alpine
     container_name: redis
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "6379:6379"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - hy-network
 
@@ -14,8 +19,12 @@ services:
     container_name: api-server
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
     ports:
       - "8080:8080"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     depends_on:
       - redis
     networks:
@@ -27,8 +36,12 @@ services:
     container_name: file-parser
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
     ports:
       - "8081:8081"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - hy-network
     restart: unless-stopped
@@ -38,8 +51,12 @@ services:
     container_name: admin-server
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
     ports:
       - "8000:8000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - hy-network
     restart: unless-stopped

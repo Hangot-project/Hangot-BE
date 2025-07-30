@@ -94,6 +94,7 @@ jobs:
               "docker-compose down || true",
               "docker pull ${{ secrets.DOCKER_USERNAME }}/api-server:latest",
               "docker pull ${{ secrets.DOCKER_USERNAME }}/file-parser:latest",
+              "docker pull ${{ secrets.DOCKER_USERNAME }}/admin-server:latest",
               "docker-compose up -d"
             ]' 
 
