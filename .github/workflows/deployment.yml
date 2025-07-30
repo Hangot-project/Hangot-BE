@@ -38,10 +38,10 @@ jobs:
           echo "${{ secrets.APPLICATION_CRAWLER }}" | base64 -d > ./data-crawler/src/main/resources/application-prod.yml
         shell: bash
 
-      - name: data-ingestor application.yml 생성
+      - name: file-parser application.yml 생성
         run: |
-          mkdir -p ./data-ingestor/src/main/resources
-          echo "${{ secrets.APPLICATION_INGESTOR }}" | base64 -d > ./data-ingestor/src/main/resources/application-prod.yml
+          mkdir -p ./file-parser/src/main/resources
+          echo "${{ secrets.APPLICATION_PARSER }}" | base64 -d > ./file-parser/src/main/resources/application-prod.yml
         shell: bash
 
       - name: admin-server application.yml 생성
@@ -67,10 +67,10 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/data-crawler:latest ./data-crawler 
           docker push ${{ secrets.DOCKER_USERNAME }}/data-crawler:latest
 
-      - name: Docker data-ingestor 이미지 빌드
+      - name: Docker file-parser 이미지 빌드
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest ./data-ingestor 
-          docker push ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/file-parser:latest ./file-parser 
+          docker push ${{ secrets.DOCKER_USERNAME }}/file-parser:latest
 
       - name: Docker admin-server 이미지 빌드
         run: |
@@ -93,7 +93,7 @@ jobs:
               "cd /home/ubuntu && export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}",
               "docker-compose down || true",
               "docker pull ${{ secrets.DOCKER_USERNAME }}/api-server:latest",
-              "docker pull ${{ secrets.DOCKER_USERNAME }}/data-ingestor:latest",
+              "docker pull ${{ secrets.DOCKER_USERNAME }}/file-parser:latest",
               "docker-compose up -d"
             ]' 
 

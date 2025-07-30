@@ -27,6 +27,7 @@ public class DataCrawlerService {
                 crawler.crawlDataset(sourceUrlList);
             } catch (SkipPageException skip) {
                 //해당 크롤링 안해도됨
+                log.info(skip.getMessage());
             }
 
         }
