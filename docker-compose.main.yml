@@ -49,6 +49,7 @@ services:
   admin-server:
     image: ${DOCKER_USERNAME}/admin-server:latest
     container_name: admin-server
+    privileged: true
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
@@ -57,6 +58,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     networks:
       - hy-network
     restart: unless-stopped

@@ -3,12 +3,9 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'de.codecentric:spring-boot-admin-starter-client:3.1.0'
 	implementation 'org.springframework:spring-context-support:5.3.9'
-
-	// AWS S3 (via BOM)
-	implementation platform('software.amazon.awssdk:bom:2.17.230')
-	implementation 'software.amazon.awssdk:s3'
 
 	// Web Crawler
 	implementation 'org.jsoup:jsoup:1.16.1'
