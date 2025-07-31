@@ -17,16 +17,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Component
 public class CsvParser implements ParserStrategy {
 
-
     @Override
-    public ParsedData parse(Path path, String datasetId) throws ParsingException {
-        List<String> header = new ArrayList<>();
-        List<List<String>> rows = new ArrayList<>();
-
+    public void parse(Path path, String datasetId, Consumer<List<String>> headerCallback,
+                                 Consumer<List<List<String>>> chunkCallback, int chunkSize) throws ParsingException {
+        
         try (BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
             Charset detectedCharset = detectCharset(inputStream);
             
@@ -36,20 +35,30 @@ public class CsvParser implements ParserStrategy {
 
             String[] nextRecord;
             boolean isFirstRow = true;
-
+            List<List<String>> tempChunk = new ArrayList<>();
+            
             while ((nextRecord = csvReader.readNext()) != null) {
                 if (isFirstRow) {
-                    header.addAll(Arrays.asList(nextRecord));
+                    List<String> header = Arrays.asList(nextRecord);
+                    headerCallback.accept(header);
                     isFirstRow = false;
                 } else {
-                    rows.add(Arrays.asList(nextRecord));
+                    tempChunk.add(Arrays.asList(nextRecord));
+                    
+                    if (tempChunk.size() >= chunkSize) {
+                        chunkCallback.accept(new ArrayList<>(tempChunk));
+                        tempChunk.clear();
+                    }
                 }
             }
+            
+            if (!tempChunk.isEmpty()) {
+                chunkCallback.accept(tempChunk);
+            }
+            
         } catch (Exception e) {
             throw new ParsingException(Arrays.toString(e.getStackTrace()));
         }
-
-        return new ParsedData(header, rows);
     }
 
     private Charset detectCharset(BufferedInputStream inputStream) throws IOException {
@@ -67,7 +76,6 @@ public class CsvParser implements ParserStrategy {
             String detectedEncoding = match.getName();
             int confidence = match.getConfidence();
 
-            // 신뢰도가 낮으면 UTF-8 사용
             if (confidence < 50) {
                 return StandardCharsets.UTF_8;
             }
