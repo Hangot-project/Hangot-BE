@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,7 +22,9 @@ public class FailedMessage {
     private String messageBody;
     
     private String failureReason;
-    
+
+    private LocalDateTime failedAt;
+
     private String status;
     
     private String notes;
