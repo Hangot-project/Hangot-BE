@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 
@@ -34,14 +35,22 @@ public class DataIngestionService {
         ParserStrategy strategy = parsingStrategyResolver.getStrategy(messageDto.getType());
         Path resourcePath = fileService.downloadFile(messageDto.getResourceUrl(), messageDto.getType());
 
-        final String[][] columns = new String[1][];
-        
-        strategy.parse(
-            resourcePath, 
-            messageDto.getDatasetId(),
-            header -> columns[0] = header.toArray(new String[0]),
-            chunk -> mongoManager.insertDataRows(messageDto.getDatasetId(), columns[0], chunk),
-            CHUNK_SIZE
-        );
+        try {
+            final String[][] columns = new String[1][];
+            
+            strategy.parse(
+                resourcePath, 
+                messageDto.getDatasetId(),
+                header -> columns[0] = header.toArray(new String[0]),
+                chunk -> mongoManager.insertDataRows(messageDto.getDatasetId(), columns[0], chunk),
+                CHUNK_SIZE
+            );
+        } finally {
+            try {
+                Files.deleteIfExists(resourcePath);
+            } catch (Exception e) {
+                log.warn("임시파일 삭제 실패: {}", resourcePath, e);
+            }
+        }
     }
 }
