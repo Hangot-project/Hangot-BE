@@ -19,19 +19,28 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Component
 public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetContentsHandler {
 
     private final ThreadLocal<List<String>> header = ThreadLocal.withInitial(ArrayList::new);
-    private final ThreadLocal<List<List<String>>> rows = ThreadLocal.withInitial(ArrayList::new);
+    private final ThreadLocal<List<List<String>>> tempChunk = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<List<String>> currentRow = ThreadLocal.withInitial(ArrayList::new);
     private final ThreadLocal<Integer> headerRowIndex = ThreadLocal.withInitial(() -> -1);
     private final ThreadLocal<Integer> checkedCol = ThreadLocal.withInitial(() -> -1);
+    private final ThreadLocal<Consumer<List<String>>> headerCallback = new ThreadLocal<>();
+    private final ThreadLocal<Consumer<List<List<String>>>> chunkCallback = new ThreadLocal<>();
+    private final ThreadLocal<Integer> chunkSize = new ThreadLocal<>();
+    private final ThreadLocal<Boolean> headerSent = ThreadLocal.withInitial(() -> false);
 
     @Override
-    public ParsedData parse(Path path, String datasetId) throws ParsingException {
+    public void parse(Path path, String datasetId, Consumer<List<String>> headerCallback,
+                                 Consumer<List<List<String>>> chunkCallback, int chunkSize) throws ParsingException {
         initializeFields();
+        this.headerCallback.set(headerCallback);
+        this.chunkCallback.set(chunkCallback);
+        this.chunkSize.set(chunkSize);
         
         try {
             try (OPCPackage opcPackage = OPCPackage.open(path.toFile())) {
@@ -49,7 +58,12 @@ public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetCon
                     sheetParser.parse(sheetSource);
                 }
             }
-            return new ParsedData(header.get(), rows.get());
+            
+            List<List<String>> currentTempChunk = tempChunk.get();
+            if (!currentTempChunk.isEmpty()) {
+                this.chunkCallback.get().accept(new ArrayList<>(currentTempChunk));
+            }
+            
         } catch (Exception e) {
             throw new ParsingException(Arrays.toString(e.getStackTrace()));
         } finally {
@@ -59,18 +73,23 @@ public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetCon
 
     private void initializeFields() {
         header.get().clear();
-        rows.get().clear();
+        tempChunk.get().clear();
         currentRow.get().clear();
         headerRowIndex.set(-1);
         checkedCol.set(-1);
+        headerSent.set(false);
     }
 
     private void clearThreadLocalValues() {
         header.remove();
-        rows.remove();
+        tempChunk.remove();
         currentRow.remove();
         headerRowIndex.remove();
         checkedCol.remove();
+        headerCallback.remove();
+        chunkCallback.remove();
+        chunkSize.remove();
+        headerSent.remove();
     }
 
     @Override
@@ -83,18 +102,29 @@ public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetCon
     public void endRow(int rowNum) {
         List<String> currentRowList = currentRow.get();
         List<String> headerList = header.get();
-        List<List<String>> rowsList = rows.get();
+        List<List<String>> tempChunkList = tempChunk.get();
         
         if (headerRowIndex.get() == -1 && !currentRowList.isEmpty() && 
             currentRowList.stream().anyMatch(cell -> cell != null && !cell.trim().isEmpty())) {
             headerRowIndex.set(rowNum);
             headerList.clear();
             headerList.addAll(currentRowList);
+            
+            if (!headerSent.get()) {
+                headerCallback.get().accept(new ArrayList<>(headerList));
+                headerSent.set(true);
+            }
+            
         } else if (headerRowIndex.get() != -1 && rowNum > headerRowIndex.get()) {
             while (currentRowList.size() < headerList.size()) {
                 currentRowList.add("");
             }
-            rowsList.add(new ArrayList<>(currentRowList));
+            tempChunkList.add(new ArrayList<>(currentRowList));
+            
+            if (tempChunkList.size() >= chunkSize.get()) {
+                chunkCallback.get().accept(new ArrayList<>(tempChunkList));
+                tempChunkList.clear();
+            }
         }
     }
 
