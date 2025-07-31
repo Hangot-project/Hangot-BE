@@ -4,7 +4,6 @@ import com.hanyang.fileparser.core.exception.ParsingException;
 import com.hanyang.fileparser.core.exception.ResourceNotFoundException;
 import com.hanyang.fileparser.dto.MessageDto;
 import com.hanyang.fileparser.infrastructure.MongoManager;
-import com.hanyang.fileparser.service.parser.ParsedData;
 import com.hanyang.fileparser.service.parser.ParserStrategy;
 import com.hanyang.fileparser.service.parser.ParsingStrategyResolver;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +18,8 @@ import java.nio.file.Path;
 @Slf4j
 public class DataIngestionService {
 
+    private static final int CHUNK_SIZE = 10000;
+
     private final ParsingStrategyResolver parsingStrategyResolver;
     private final MongoManager mongoManager;
     private final FileService fileService;
@@ -31,11 +32,16 @@ public class DataIngestionService {
         }
 
         ParserStrategy strategy = parsingStrategyResolver.getStrategy(messageDto.getType());
-
         Path resourcePath = fileService.downloadFile(messageDto.getResourceUrl(), messageDto.getType());
 
-        ParsedData parsedData = strategy.parse(resourcePath,messageDto.getDatasetId());
-        String[] columns = parsedData.getHeader().toArray(new String[0]);
-        mongoManager.insertDataRows(messageDto.getDatasetId(), columns, parsedData.getRows());
+        final String[][] columns = new String[1][];
+        
+        strategy.parse(
+            resourcePath, 
+            messageDto.getDatasetId(),
+            header -> columns[0] = header.toArray(new String[0]),
+            chunk -> mongoManager.insertDataRows(messageDto.getDatasetId(), columns[0], chunk),
+            CHUNK_SIZE
+        );
     }
 }
