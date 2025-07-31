@@ -38,11 +38,14 @@ public class FileService {
                     Path tempFile = Files.createTempFile("download-", "." + type);
                     Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
-                    // ZIP 파일 매직 넘버 체크
-                    byte[] header = Files.readAllBytes(tempFile);
-                    if (header.length >= 2 && header[0] == 0x50 && header[1] == 0x4B) {
-                        Files.deleteIfExists(tempFile);
-                        throw new IllegalArgumentException("ZIP 파일은 지원하지 않습니다");
+                    // ZIP 파일 매직 넘버 체크 (첫 2바이트만 읽어서 메모리 효율적으로)
+                    byte[] header = new byte[2];
+                    try (InputStream headerStream = Files.newInputStream(tempFile)) {
+                        int bytesRead = headerStream.read(header);
+                        if (bytesRead >= 2 && header[0] == 0x50 && header[1] == 0x4B) {
+                            Files.deleteIfExists(tempFile);
+                            throw new IllegalArgumentException("ZIP 파일은 지원하지 않습니다");
+                        }
                     }
 
                     return tempFile;
