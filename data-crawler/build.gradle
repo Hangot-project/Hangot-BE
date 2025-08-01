@@ -1,11 +1,21 @@
 dependencies {
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'de.codecentric:spring-boot-admin-starter-client:3.1.0'
-	implementation 'org.springframework:spring-context-support:5.3.9'
+	implementation('org.springframework.boot:spring-boot-starter-amqp') {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
+	implementation('org.springframework.boot:spring-boot-starter-actuator') {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
+	implementation('org.springframework.boot:spring-boot-starter-data-jpa') {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
+	implementation('de.codecentric:spring-boot-admin-starter-client:3.1.0') {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
+	implementation('org.springframework:spring-context-support:5.3.9') {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
 
 	// Web Crawler
 	implementation 'org.jsoup:jsoup:1.16.1'
