@@ -19,7 +19,7 @@ public interface DatasetRepository extends JpaRepository<Dataset,Long>{
     @Query("SELECT DISTINCT t.tag FROM Tag t WHERE t.tag IS NOT NULL AND t.tag <> '' AND t.tag LIKE :keyword% ORDER BY t.tag")
     List<String> findTagsContaining(String keyword);
 
-    @Query("SELECT DISTINCT d.title FROM Dataset d WHERE d.title IS NOT NULL AND d.title <> '' AND REPLACE(REPLACE(d.title, ' ', ''), '_', '') LIKE %:keyword% ORDER BY d.title LIMIT 10")
+    @Query("SELECT DISTINCT d.title FROM Dataset d WHERE d.title IS NOT NULL AND d.title <> '' AND REPLACE(REPLACE(d.title, ' ', ''), '_', '') LIKE :keyword% ORDER BY d.title LIMIT 10")
     List<String> findTitlesContaining(String keyword);
 
 }
