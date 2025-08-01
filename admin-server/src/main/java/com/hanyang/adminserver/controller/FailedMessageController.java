@@ -29,9 +29,11 @@ public class FailedMessageController {
 
     @PostMapping("/{messageId}/process")
     public ResponseEntity<ApiResponse<Void>> retryProcessing(
-            @PathVariable String messageId
+            @PathVariable String messageId,
+            @RequestBody(required = false) ProcessRequest processRequest
     ) throws JsonProcessingException {
-        failedMessageService.retryProcessing(messageId);
+        String editedMessage = processRequest != null ? processRequest.getEditedMessage() : null;
+        failedMessageService.retryProcessing(messageId, editedMessage);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

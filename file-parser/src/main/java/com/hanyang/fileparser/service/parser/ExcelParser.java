@@ -65,7 +65,7 @@ public class ExcelParser implements ParserStrategy, XSSFSheetXMLHandler.SheetCon
             }
             
         } catch (Exception e) {
-            throw new ParsingException(Arrays.toString(e.getStackTrace()));
+            throw new ParsingException("파싱 중 에러",e);
         } finally {
             clearThreadLocalValues();
         }

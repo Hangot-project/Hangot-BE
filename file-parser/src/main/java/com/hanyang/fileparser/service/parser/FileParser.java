@@ -26,7 +26,6 @@ public class FileParser {
 
     private String getFileExtension(Path path) {
         String fileName = path.getFileName().toString();
-        System.out.println(fileName);
         int lastDotIndex = fileName.lastIndexOf('.');
         
         if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {

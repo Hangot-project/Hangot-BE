@@ -38,13 +38,14 @@ public class FailedMessageService {
         return mongoTemplate.find(query, FailedMessage.class);
     }
 
-    public void retryProcessing(String messageId) throws JsonProcessingException {
+    
+    public void retryProcessing(String messageId, String editedMessage) throws JsonProcessingException {
         FailedMessage failedMessage = getFailedMessageById(messageId);
         if (failedMessage == null) {
             throw new RuntimeException("실패 메시지를 찾을 수 없습니다: " + messageId);
         }
         
-        processMessageDirectly(failedMessage);
+        processMessageDirectly(failedMessage, editedMessage);
 
         Query query = new Query(Criteria.where("id").is(messageId));
         Update update = new Update()
@@ -55,7 +56,12 @@ public class FailedMessageService {
     }
     
     private void processMessageDirectly(FailedMessage failedMessage) throws JsonProcessingException {
-        Map messageMap = objectMapper.readValue(failedMessage.getMessageBody(), Map.class);
+        processMessageDirectly(failedMessage, null);
+    }
+    
+    private void processMessageDirectly(FailedMessage failedMessage, String editedMessage) throws JsonProcessingException {
+        String messageToProcess = editedMessage != null ? editedMessage : failedMessage.getMessageBody();
+        Map messageMap = objectMapper.readValue(messageToProcess, Map.class);
 
         String url = dataIngestorUrl + "/api/file/create";
 

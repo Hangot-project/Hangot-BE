@@ -2,13 +2,27 @@
 <html>
 <head>
     <title>실패 메세지 관리</title>
-    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
             margin: 0;
             padding: 20px;
             min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
         }
         .container-fluid {
             max-width: 100%;
@@ -41,6 +55,13 @@
         .notes-cell {
             width: 150px;
         }
+        .notes-input-field {
+            width: 120px;
+            font-size: 12px;
+            padding: 4px 6px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
         .btn-sm {
             padding: 5px 10px;
             font-size: 12px;
@@ -66,25 +87,101 @@
             font-weight: bold;
             color: #666;
         }
-        .notes-display {
-            display: block;
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
             width: 100%;
-            padding: 4px 8px;
-            border: 1px solid transparent;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            max-width: 500px;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
             border-radius: 4px;
-            transition: all 0.2s;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
             box-sizing: border-box;
-            min-height: 28px;
-            font-size: 13px;
         }
-        .notes-display:hover {
-            background-color: #f8f9fa;
-            border-color: #dee2e6;
+        .form-text {
+            font-size: 0.875em;
+            color: #6c757d;
+            margin-top: 5px;
         }
-        .notes-input {
-            width: 100px;
-            font-size: 13px;
-            height: 28px;
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -106,6 +203,27 @@
             <tbody id="messages-tbody">
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Process Modal -->
+<div id="processModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">메시지 편집 및 재처리</h5>
+            <button type="button" class="close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div>
+                <label for="messageEditor" class="form-label">메시지 내용</label>
+                <textarea class="form-control" id="messageEditor" rows="15"></textarea>
+                <div class="form-text">JSON 형식으로 메시지를 편집할 수 있습니다.</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
+            <button type="button" class="btn btn-success" id="processWithEditedMessage">재처리 실행</button>
+        </div>
     </div>
 </div>
 
@@ -173,17 +291,27 @@
                         <td><div class="failure-reason">${message.failureReason}</div></td>
                         <td>${message.status}</td>
                         <td class="notes-cell">
-                            <span class="notes-display" onclick="editNotes('${message.id}', this)" style="cursor: pointer; color: ${message.notes ? '#000' : '#6c757d'};">
-                                ${message.notes || '클릭하여 수정'}
-                            </span>
+                            <input type="text" class="notes-input-field" maxlength="20" 
+                                   value="${message.notes || ''}" 
+                                   placeholder="비고" 
+                                   onchange="updateNotesDirectly('${message.id}', this.value)"
+                                   onkeypress="if(event.key==='Enter') this.blur()">
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-success" onclick="processMessage('${message.id}')">Process</button>
-                            <button class="btn btn-sm btn-warning" onclick="ignoreMessage('${message.id}')">Ignore</button>
+                            <button class="btn btn-sm btn-success process-btn" data-message-id="${message.id}" data-message-body="${message.messageBody.replace(/"/g, '&quot;')}">Process</button>
                             <button class="btn btn-sm btn-danger" onclick="deleteMessage('${message.id}')">Delete</button>
                         </td>
                     `;
                     tbody.appendChild(row);
+                });
+
+                // Process 버튼 이벤트 리스너 추가
+                document.querySelectorAll('.process-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const messageId = this.getAttribute('data-message-id');
+                        const messageBody = this.getAttribute('data-message-body');
+                        showProcessModal(messageId, messageBody);
+                    });
                 });
             })
             .catch(error => {
@@ -222,34 +350,6 @@
             });
     }
 
-    function ignoreMessage(messageId) {
-        const button = event.target;
-        const originalText = button.textContent;
-        
-        // 버튼 비활성화 및 로딩 표시
-        button.disabled = true;
-        button.textContent = '처리중...';
-        button.className = 'btn btn-sm btn-secondary';
-        
-        fetch(`/api/admin/failed-messages/${messageId}/ignore`, {method: 'POST'})
-            .then(response => {
-                if (response.ok) {
-                    alert('무시 처리가 완료되었습니다.');
-                    fetchAndRenderMessages();
-                } else {
-                    return response.json().then(data => {
-                        throw new Error(data.msg || '무시 처리에 실패했습니다.');
-                    });
-                }
-            })
-            .catch(error => {
-                alert('오류: ' + error.message);
-                // 버튼 복원
-                button.disabled = false;
-                button.textContent = originalText;
-                button.className = 'btn btn-sm btn-warning';
-            });
-    }
 
     function deleteMessage(messageId) {
         if (!confirm("정말로 삭제하시겠습니까?")) return;
@@ -282,56 +382,119 @@
             });
     }
 
-    function editNotes(messageId, spanElement) {
-        const currentNotes = spanElement.textContent === '클릭하여 수정' ? '' : spanElement.textContent;
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'notes-input';
-        input.value = currentNotes;
-        input.size = 10
-        input.name = 'note';
-
-        input.onblur = function() {
-            updateNotes(messageId, this.value, spanElement);
-        };
-        
-        spanElement.replaceWith(input);
-        input.focus();
-        input.select(); // 텍스트 전체 선택
-    }
-
-
-    function updateNotes(messageId, notes) {
+    function updateNotesDirectly(messageId, notes) {
         fetch(`/api/admin/failed-messages/${messageId}/notes?notes=${encodeURIComponent(notes)}`, {
             method: 'PUT'
         })
         .then(response => {
-            if (response.ok) {
-                // 성공시 다시 span으로 변경
-                const newSpan = document.createElement('span');
-                newSpan.className = 'notes-display';
-                newSpan.style.cursor = 'pointer';
-                newSpan.style.color = notes ? '#000' : '#6c757d';
-                newSpan.textContent = notes || '클릭하여 수정';
-                newSpan.onclick = function() {
-                    editNotes(messageId, this);
-                };
-                
-                // 현재 input을 span으로 교체
-                const currentInput = document.querySelector('.notes-input');
-                if (currentInput) {
-                    currentInput.replaceWith(newSpan);
-                }
-            } else {
+            if (!response.ok) {
                 console.error('Failed to update notes');
+                alert('비고 업데이트에 실패했습니다.');
             }
         })
         .catch(error => {
             console.error('Error updating notes:', error);
+            alert('비고 업데이트 중 오류가 발생했습니다.');
         });
     }
+
+    let currentMessageId = null;
+
+
+    function showProcessModal(messageId, messageBody) {
+        console.log('showProcessModal called with:', messageId, messageBody);
+        currentMessageId = messageId;
+        
+        const modal = document.getElementById('processModal');
+        const editor = document.getElementById('messageEditor');
+        
+        console.log('Modal element:', modal);
+        console.log('Editor element:', editor);
+        
+        if (!modal || !editor) {
+            console.error('Modal or editor element not found');
+            alert('모달 요소를 찾을 수 없습니다.');
+            return;
+        }
+        
+        // JSON 포맷팅
+        try {
+            const parsed = JSON.parse(messageBody);
+            const formatted = JSON.stringify(parsed, null, 2);
+            editor.value = formatted;
+        } catch (e) {
+            console.log('JSON parse error:', e);
+            editor.value = messageBody;
+        }
+        
+        // 모달 표시
+        modal.style.display = 'block';
+        console.log('Modal display set to block');
+    }
+
+    function closeModal() {
+        document.getElementById('processModal').style.display = 'none';
+    }
+
+    // 모달 외부 클릭시 닫기
+    window.onclick = function(event) {
+        const modal = document.getElementById('processModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+
+    document.getElementById('processWithEditedMessage').addEventListener('click', function() {
+        if (!currentMessageId) return;
+        
+        const editedMessage = document.getElementById('messageEditor').value;
+        
+        // JSON 유효성 검사
+        try {
+            JSON.parse(editedMessage);
+        } catch (e) {
+            alert('유효하지 않은 JSON 형식입니다. 메시지를 확인해주세요.');
+            return;
+        }
+        
+        const button = this;
+        const originalText = button.textContent;
+        
+        // 버튼 비활성화 및 로딩 표시
+        button.disabled = true;
+        button.textContent = '처리중...';
+        button.className = 'btn btn-secondary';
+        
+        fetch(`/api/admin/failed-messages/${currentMessageId}/process`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                editedMessage: editedMessage
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('재처리가 완료되었습니다.');
+                closeModal();
+                fetchAndRenderMessages();
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.msg || '재처리에 실패했습니다.');
+                });
+            }
+        })
+        .catch(error => {
+            alert('오류: ' + error.message);
+        })
+        .finally(() => {
+            // 버튼 복원
+            button.disabled = false;
+            button.textContent = originalText;
+            button.className = 'btn btn-success';
+        });
+    });
 </script>
-<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
