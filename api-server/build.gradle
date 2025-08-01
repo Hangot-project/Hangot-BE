@@ -3,13 +3,23 @@ plugins {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation('org.springframework.boot:spring-boot-starter-data-redis') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+    implementation('org.springframework.boot:spring-boot-starter-data-jpa') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
     runtimeOnly 'com.mysql:mysql-connector-j'
 
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'de.codecentric:spring-boot-admin-starter-client:3.1.0'
+    implementation('org.springframework.boot:spring-boot-starter-security') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+    implementation('org.springframework.boot:spring-boot-starter-actuator') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+    implementation('de.codecentric:spring-boot-admin-starter-client:3.1.0') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
@@ -17,7 +27,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.2'
 
     // MongoDB for chart data
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation('org.springframework.boot:spring-boot-starter-data-mongodb') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
 
     // Flyway
     implementation 'org.flywaydb:flyway-core'

@@ -3,6 +3,7 @@ package com.hanyang.fileparser.infrastructure;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanyang.fileparser.core.exception.ParsingException;
+import com.hanyang.fileparser.core.exception.ResourceNotFoundException;
 import com.hanyang.fileparser.dto.MessageDto;
 import com.hanyang.fileparser.service.DataIngestionService;
 import com.hanyang.fileparser.service.FailedMessageService;
@@ -45,7 +46,10 @@ public class DataIngestionDLQConsumer {
             dataIngestionService.createDataTable(messageDto);
             log.warn("DLQ 처리 성공: {}", messageBody);
 
-        } catch (ParsingException e) {
+        } catch (IllegalArgumentException | ResourceNotFoundException e) {
+            // 데이터 시각화 지원하지 않거나,파일 다운로드를 지원하지 않음
+            log.info("DLQ 지원하지 않는 형식이나거나 파일 링크가 없는 경우: {}", e.getMessage());
+        }catch (ParsingException e) {
             // 처리 실패 시 항상 MongoDB에 저장하고 메시지 소비 완료
             String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
             log.error("DLQ 처리 실패 [{}] {}", timestamp, messageBody, e);
