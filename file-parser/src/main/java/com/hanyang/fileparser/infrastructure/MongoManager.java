@@ -42,7 +42,7 @@ public class MongoManager {
         for (int j = 0; j < row.size() && j < columns.length; j++) {
             String cellValue = row.get(j);
             Object value = parseValue(cellValue);
-            String sanitizedColumnName = sanitizeColumnName(columns[j]);
+            String sanitizedColumnName = replaceDot(columns[j]);
             document.put(sanitizedColumnName, value);
         }
 
@@ -50,7 +50,7 @@ public class MongoManager {
     }
 
 
-    private String sanitizeColumnName(String columnName) {
+    private String replaceDot(String columnName) {
         if (columnName == null) {
             return null;
         }
@@ -70,7 +70,7 @@ public class MongoManager {
             // 실수인지 확인
             return Double.parseDouble(cellValue);
         } catch (NumberFormatException e) {
-            return cellValue.trim();
+            return  replaceDot(cellValue).trim();
         }
     }
 
