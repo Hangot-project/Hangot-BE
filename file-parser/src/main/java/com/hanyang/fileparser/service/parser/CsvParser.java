@@ -57,7 +57,7 @@ public class CsvParser implements ParserStrategy {
             }
             
         } catch (Exception e) {
-            throw new ParsingException(Arrays.toString(e.getStackTrace()));
+            throw new ParsingException("파싱 중 에러",e);
         }
     }
 
