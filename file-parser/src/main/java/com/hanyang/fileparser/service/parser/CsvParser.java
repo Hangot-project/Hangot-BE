@@ -65,31 +65,20 @@ public class CsvParser implements ParserStrategy {
         inputStream.mark(8192);
 
         try {
+            byte[] bom = new byte[3];
+            inputStream.read(bom);
+            inputStream.reset();
+
+            if (bom[0] == (byte)0xEF && bom[1] == (byte)0xBB && bom[2] == (byte)0xBF) {
+                return StandardCharsets.UTF_8;
+            }
+
             CharsetDetector detector = new CharsetDetector();
             detector.setText(inputStream);
-
             CharsetMatch match = detector.detect();
-            if (match == null) {
-                return StandardCharsets.UTF_8;
-            }
 
-            String detectedEncoding = match.getName();
-            int confidence = match.getConfidence();
-
-            if (confidence < 50) {
-                return StandardCharsets.UTF_8;
-            }
-
-            if ("ISO-8859-1".equals(detectedEncoding) || "windows-1252".equals(detectedEncoding)) {
-                return Charset.forName("EUC-KR");
-            }
-
-            if ("UTF-8".equals(detectedEncoding)) {
-                return StandardCharsets.UTF_8;
-            }
-
-            if ("EUC-KR".equals(detectedEncoding) || "x-windows-949".equals(detectedEncoding) || "CP949".equals(detectedEncoding)) {
-                return Charset.forName("EUC-KR");
+            if (match != null && match.getConfidence() >= 70) {
+                return Charset.forName(match.getName());
             }
 
             return StandardCharsets.UTF_8;
