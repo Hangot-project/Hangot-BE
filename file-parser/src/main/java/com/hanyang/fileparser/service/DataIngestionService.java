@@ -4,8 +4,7 @@ import com.hanyang.fileparser.core.exception.ParsingException;
 import com.hanyang.fileparser.core.exception.ResourceNotFoundException;
 import com.hanyang.fileparser.dto.MessageDto;
 import com.hanyang.fileparser.infrastructure.MongoManager;
-import com.hanyang.fileparser.service.parser.ParserStrategy;
-import com.hanyang.fileparser.service.parser.ParsingStrategyResolver;
+import com.hanyang.fileparser.service.parser.FileParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,7 @@ public class DataIngestionService {
 
     private static final int CHUNK_SIZE = 10000;
 
-    private final ParsingStrategyResolver parsingStrategyResolver;
+    private final FileParser fileParser;
     private final MongoManager mongoManager;
     private final FileService fileService;
 
@@ -32,13 +31,12 @@ public class DataIngestionService {
             throw new ResourceNotFoundException("파일 다운로드 링크가 없습니다.");
         }
 
-        ParserStrategy strategy = parsingStrategyResolver.getStrategy(messageDto.getType());
         Path resourcePath = fileService.downloadFile(messageDto.getResourceUrl(), messageDto.getType());
 
         try {
             final String[][] columns = new String[1][];
             
-            strategy.parse(
+            fileParser.parse(
                 resourcePath, 
                 messageDto.getDatasetId(),
                 header -> columns[0] = header.toArray(new String[0]),

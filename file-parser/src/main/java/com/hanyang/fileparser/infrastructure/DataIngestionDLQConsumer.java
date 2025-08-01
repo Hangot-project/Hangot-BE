@@ -50,6 +50,9 @@ public class DataIngestionDLQConsumer {
             String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
             log.error("DLQ 처리 실패 [{}] {}", timestamp, messageBody, e);
             saveToFailedMessages(messageBody, getFullStackTrace(e));
+        } catch (Exception e) {
+            log.error("DLQ 예상 하지 못한 에러로 예외처리가 필요: {}", e.getMessage());
+            saveToFailedMessages(messageBody, getFullStackTrace(e));
         }
     }
 
