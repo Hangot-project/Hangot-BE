@@ -26,11 +26,17 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue() {
-        Map<String, Object> args = new HashMap<>();
-        args.put("x-dead-letter-exchange", exchangeName + ".dlx");
-        args.put("x-dead-letter-routing-key", routingKey + ".dlq");
-        return QueueBuilder.durable(queue)
-                .withArguments(args)
+        return QueueBuilder.durable(queue).build();
+    }
+
+    @Bean
+    public Queue delayQueue() {
+        Map<String, Object> delayArgs = new HashMap<>();
+        delayArgs.put("x-message-ttl", 60000);
+        delayArgs.put("x-dead-letter-exchange", exchangeName + ".dlx");
+        delayArgs.put("x-dead-letter-routing-key", routingKey + ".dlq");
+        return QueueBuilder.durable(queue + ".delay")
+                .withArguments(delayArgs)
                 .build();
     }
 
@@ -45,9 +51,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public DirectExchange delayExchange() {
+        return new DirectExchange(exchangeName + ".delay");
+    }
+
+    @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange(exchangeName + ".dlx");
     }
+
+
 
     @Bean
     public Binding binding(Queue queue, DirectExchange exchange) {
@@ -55,7 +68,14 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Binding delayBinding(Queue delayQueue, DirectExchange delayExchange) {
+        return BindingBuilder.bind(delayQueue).to(delayExchange).with(routingKey + ".delay");
+    }
+
+    @Bean
     public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
         return BindingBuilder.bind(deadLetterQueue).to(deadLetterExchange).with(routingKey + ".dlq");
     }
+
+
 }
