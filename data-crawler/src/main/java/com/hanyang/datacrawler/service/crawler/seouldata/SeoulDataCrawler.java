@@ -125,14 +125,26 @@ public class SeoulDataCrawler implements DataCrawler {
 
     @Override
     public Optional<DatasetWithTag> crawlSingleDataset(String datasetUrl) {
-        log.info("서울 열린 데이터 광장 데이터셋 크롤링 시작 - sourceURL: {}", datasetUrl);
-        try {
-            String html = getHtmlWithHeaders(datasetUrl);
-            return htmlParser.parseDatasetDetail(html, datasetUrl);
-        } catch (Exception e) {
-            log.error("서울 열린 데이터 광장 크롤링 실패 - sourceURL: {}", datasetUrl, e);
+        log.info("서울 열린 데이터 광장 데이터셋 크롤링 시작 - URL: {}", datasetUrl);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+        headers.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        headers.set("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.8");
+        headers.set("Accept-Encoding", "gzip, deflate, br");
+        headers.set("Connection", "keep-alive");
+        headers.set("Upgrade-Insecure-Requests", "1");
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(datasetUrl, HttpMethod.GET, entity, String.class);
+        
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            log.warn("폐기된 데이터 - HTTP 상태코드 {}: {}", response.getStatusCode(), datasetUrl);
             return Optional.empty();
         }
+        
+        String html = response.getBody();
+        return htmlParser.parseDatasetDetail(html, datasetUrl);
     }
 
     private void sendDataParsingRequest(Dataset dataset) {

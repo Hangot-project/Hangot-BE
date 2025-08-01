@@ -4,15 +4,23 @@ configurations {
 
 dependencies {
     // MongoDB for failed message management
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation('org.springframework.boot:spring-boot-starter-data-mongodb') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+    implementation('org.springframework.boot:spring-boot-starter-thymeleaf') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
     implementation 'org.webjars:bootstrap:5.3.3'
     
     // Security for admin authentication
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation('org.springframework.boot:spring-boot-starter-security') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
     
     // Spring Boot Admin Server
-    implementation 'de.codecentric:spring-boot-admin-starter-server:3.1.0'
+    implementation('de.codecentric:spring-boot-admin-starter-server:3.1.0') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
     
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
