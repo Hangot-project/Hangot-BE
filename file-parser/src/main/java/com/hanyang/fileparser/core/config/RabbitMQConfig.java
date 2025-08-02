@@ -30,20 +30,16 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue delayQueue() {
-        Map<String, Object> delayArgs = new HashMap<>();
-        delayArgs.put("x-message-ttl", 60000);
-        delayArgs.put("x-dead-letter-exchange", exchangeName + ".dlx");
-        delayArgs.put("x-dead-letter-routing-key", routingKey + ".dlq");
-        return QueueBuilder.durable(queue + ".delay")
-                .withArguments(delayArgs)
+    public Queue retryQueue() {
+        Map<String, Object> retryArgs = new HashMap<>();
+        retryArgs.put("x-message-ttl", 300000); // 5분
+        retryArgs.put("x-dead-letter-exchange", exchangeName);
+        retryArgs.put("x-dead-letter-routing-key", routingKey);
+        return QueueBuilder.durable(queue + ".retry")
+                .withArguments(retryArgs)
                 .build();
     }
 
-    @Bean
-    public Queue deadLetterQueue() {
-        return QueueBuilder.durable(queue + ".dlq").build();
-    }
 
     @Bean
     public DirectExchange exchange() {
@@ -51,14 +47,10 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public DirectExchange delayExchange() {
-        return new DirectExchange(exchangeName + ".delay");
+    public DirectExchange retryExchange() {
+        return new DirectExchange(exchangeName + ".retry");
     }
 
-    @Bean
-    public DirectExchange deadLetterExchange() {
-        return new DirectExchange(exchangeName + ".dlx");
-    }
 
 
 
@@ -68,14 +60,10 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding delayBinding(Queue delayQueue, DirectExchange delayExchange) {
-        return BindingBuilder.bind(delayQueue).to(delayExchange).with(routingKey + ".delay");
+    public Binding retryBinding(Queue retryQueue, DirectExchange retryExchange) {
+        return BindingBuilder.bind(retryQueue).to(retryExchange).with(routingKey + ".retry");
     }
 
-    @Bean
-    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
-        return BindingBuilder.bind(deadLetterQueue).to(deadLetterExchange).with(routingKey + ".dlq");
-    }
 
 
 }
