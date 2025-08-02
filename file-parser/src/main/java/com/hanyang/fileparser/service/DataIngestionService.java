@@ -7,6 +7,7 @@ import com.hanyang.fileparser.infrastructure.MongoManager;
 import com.hanyang.fileparser.service.parser.FileParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -24,7 +25,7 @@ public class DataIngestionService {
     private final MongoManager mongoManager;
     private final FileService fileService;
 
-    public void createDataTable(MessageDto messageDto) throws ResourceNotFoundException,IllegalArgumentException, ParsingException {
+    public void createDataTable(MessageDto messageDto) throws ResourceNotFoundException,IllegalArgumentException, ParsingException, DataAccessException {
         mongoManager.dropCollection(messageDto.getDatasetId());
 
         if(messageDto.getResourceUrl() == null || messageDto.getResourceUrl().isEmpty()){

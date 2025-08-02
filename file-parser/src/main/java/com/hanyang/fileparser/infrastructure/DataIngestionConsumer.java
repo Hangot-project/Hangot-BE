@@ -13,10 +13,12 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +36,7 @@ public class DataIngestionConsumer {
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
 
-    @RabbitListener(queues = "${rabbitmq.queue.name}")
+    @RabbitListener(queues = {"${rabbitmq.queue.name}", "${rabbitmq.queue.name}.retry"})
     public void handleMessage(Message message){
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
         log.info("메세지 수령: : {}", messageBody);
@@ -56,9 +58,9 @@ public class DataIngestionConsumer {
         } catch (ParsingException e) {
             log.info("파싱 중 발생한 에러: {}", e.getMessage(),e);
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
-        } catch (DataAccessException e) {
-            sendToDelayQueue(message, e);
-        } catch (Exception e) {
+        } catch (DataAccessResourceFailureException e) {
+            sendToRetryQueue(message, e);
+        }  catch (Exception e) {
             //예상하지 못한 에러
             log.error("예상 하지 못한 에러로 예외처리가 필요: {}", e.getMessage());
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
@@ -72,12 +74,32 @@ public class DataIngestionConsumer {
         return sw.toString();
     }
     
-    private void sendToDelayQueue(Message message, Exception error) {
-        try {
-            rabbitTemplate.send(exchangeName + ".delay", routingKey + ".delay", message);
-            log.warn("지연 큐 전송 - MongoDB 연결 에러 (1분 후 DLQ로 전송): {}", error.getMessage());
-        } catch (Exception e) {
-            log.error("지연 큐 전송 실패: {}", e.getMessage());
+    private void sendToRetryQueue(Message message, Exception error) {
+        int retryCount = getRetryCount(message);
+        
+        if (retryCount < 3) {
+            try {
+                rabbitTemplate.send(exchangeName + ".retry", routingKey + ".retry", message);
+                log.warn("재시도 큐 전송 - MongoDB 연결 에러 ({}번째 재시도, 5분 후 재처리): {}", retryCount + 1, error.getMessage());
+            } catch (Exception e) {
+                log.error("재시도 큐 전송 실패: {}", e.getMessage());
+                String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
+                failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
+            }
+        } else {
+            String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
+            failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(error));
+            log.error("최대 재시도 횟수 초과 - MongoDB에 저장: {}", error.getMessage());
         }
+    }
+    
+    private int getRetryCount(Message message) {
+        List<Map<String, Object>> xDeathHeader = (List<Map<String, Object>>) message.getMessageProperties().getHeaders().get("x-death");
+        
+        if (xDeathHeader != null && !xDeathHeader.isEmpty()) {
+            Object count = xDeathHeader.get(0).get("count");
+            return count != null ? ((Number) count).intValue() : 0;
+        }
+        return 0;
     }
 }
