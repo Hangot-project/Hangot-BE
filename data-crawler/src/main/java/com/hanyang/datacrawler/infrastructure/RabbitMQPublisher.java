@@ -6,6 +6,7 @@ import com.hanyang.datacrawler.dto.MessageDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,7 @@ public class RabbitMQPublisher {
             
             MessageProperties props = new MessageProperties();
             props.setContentType("application/json");
+            props.setDeliveryMode(MessageDeliveryMode.PERSISTENT);
 
             Message message = new Message(jsonMessage.getBytes(StandardCharsets.UTF_8), props);
             rabbitTemplate.convertAndSend(exchangeName, routingKey, message);
