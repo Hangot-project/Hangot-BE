@@ -1,5 +1,6 @@
 package com.hanyang.api.dataset.service;
 
+import com.hanyang.api.autocomplete.AutocompleteQueryService;
 import com.hanyang.api.core.exception.ResourceNotFoundException;
 import com.hanyang.api.dataset.domain.Dataset;
 import com.hanyang.api.dataset.dto.DataSearch;
@@ -22,6 +23,7 @@ public class DatasetService {
     private final DatasetRepository datasetRepository;
     private final DatasetSearchRepository datasetSearchRepository;
     private final ScrapRepository scrapRepository;
+    private final AutocompleteQueryService autocompleteQueryService;
 
 
     @Transactional(readOnly = true)
@@ -62,15 +64,12 @@ public class DatasetService {
 
     @Transactional(readOnly = true)
     public List<String> searchTags(String keyword) {
-        return datasetRepository.findTagsContaining(keyword);
+        return autocompleteQueryService.searchTags(keyword);
     }
 
     @Transactional(readOnly = true)
     public List<String> searchTitles(String keyword) {
-        if (keyword == null) return List.of();
-        String processedKeyword = keyword.trim().replace(" ", "").replace("_", "");
-        if (processedKeyword.isEmpty()) return List.of();
-        return datasetRepository.findTitlesContaining(processedKeyword);
+        return autocompleteQueryService.searchTitles(keyword);
     }
 
 }

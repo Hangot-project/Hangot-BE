@@ -19,6 +19,7 @@ public class DatasetService {
 
     private final DatasetRepository datasetRepository;
     private final TagRepository tagRepository;
+    private final AutocompleteUpdateService autocompleteUpdateService;
 
     public Dataset updateResourceUrl(Dataset dataset, String resourceUrl) {
         dataset.setResourceUrl(resourceUrl);
@@ -44,7 +45,6 @@ public class DatasetService {
                 Dataset existing = existingDataset.get();
                 updateDatasetFields(existing, dataset);
                 savedDataset = existing;
-                tagRepository.deleteByDatasetOptimized(savedDataset);
             } else {
                 savedDataset = dataset;
             }
@@ -69,6 +69,8 @@ public class DatasetService {
             tagRepository.saveAll(allTags);
             log.debug("배치 처리 완료: 데이터셋 {}개, 태그 {}개", result.size(), allTags.size());
         }
+
+        autocompleteUpdateService.updateAfterDatasetSave();
 
         return result;
     }
