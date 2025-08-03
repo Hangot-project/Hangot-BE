@@ -1,6 +1,10 @@
 package com.hanyang.datacrawler.config;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -27,6 +31,9 @@ public class RabbitMQConfig {
     @Value("${spring.rabbitmq.password}")
     private String password;
 
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
+
     @Bean
     public DirectExchange exchange() {
         return new DirectExchange(exchangeName);
@@ -40,6 +47,16 @@ public class RabbitMQConfig {
         factory.setUsername(username);
         factory.setPassword(password);
         return factory;
+    }
+
+    @Bean
+    public Queue datasetQueue() {
+        return QueueBuilder.durable("dataset.queue").build();
+    }
+
+    @Bean
+    public Binding binding(Queue datasetQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(datasetQueue).to(exchange).with(routingKey);
     }
 
     @Bean

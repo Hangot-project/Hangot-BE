@@ -55,15 +55,14 @@ public class DataIngestionConsumer {
             dataIngestionService.createDataTable(messageDto);
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (IllegalArgumentException | ResourceNotFoundException e) {
-            // 데이터 시각화 지원하지 않거나,파일 다운로드를 지원하지 않음
             log.info("지원하지 않는 형식이거나 파일 링크가 없는 경우: {}", e.getMessage());
-        } catch (ParsingException e) {
+        }  catch (DataAccessResourceFailureException e) {
+            sendToRetryQueue(message, e);
+        }catch (ParsingException e) {
             log.info("파싱 중 발생한 에러: {}", e.getMessage(),e);
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
-        } catch (DataAccessResourceFailureException e) {
-            sendToRetryQueue(message, e);
         } catch (Throwable e) {
-            log.error("시스템 에러 발생 - DLQ로 이동: {}", e.getMessage());
+            log.error("시스템 에러 발생 {}", e.getMessage());
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
         }
     }
