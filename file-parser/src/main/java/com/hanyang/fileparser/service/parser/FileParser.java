@@ -38,7 +38,7 @@ public class FileParser {
     private ParserStrategy getParserStrategy(String extension) {
         return switch (extension) {
             case "csv" -> csvParser;
-            case "xlsx", "xls" -> excelParser;
+            case "xlsx" -> excelParser;
             default -> throw new IllegalArgumentException("지원하지 않는 파일 형식입니다: " + extension);
         };
     }
