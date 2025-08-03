@@ -32,6 +32,8 @@ public class DataIngestionService {
             throw new ResourceNotFoundException("파일 다운로드 링크가 없습니다.");
         }
 
+
+
         Path resourcePath = fileService.downloadFile(messageDto.getResourceUrl(), messageDto.getType());
 
         try {

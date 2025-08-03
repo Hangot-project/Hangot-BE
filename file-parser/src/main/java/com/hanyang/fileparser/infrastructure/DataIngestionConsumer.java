@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.stereotype.Component;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -60,16 +62,15 @@ public class DataIngestionConsumer {
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
         } catch (DataAccessResourceFailureException e) {
             sendToRetryQueue(message, e);
-        }  catch (Exception e) {
-            //예상하지 못한 에러
-            log.error("예상 하지 못한 에러로 예외처리가 필요: {}", e.getMessage());
+        } catch (Throwable e) {
+            log.error("시스템 에러 발생 - DLQ로 이동: {}", e.getMessage());
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
         }
     }
 
-    private String getFullStackTrace(Exception e) {
-        java.io.StringWriter sw = new java.io.StringWriter();
-        java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+    private String getFullStackTrace(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return sw.toString();
     }
