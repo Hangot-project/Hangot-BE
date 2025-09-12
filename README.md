@@ -43,8 +43,13 @@
 <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=RabbitMQ&logoColor=white"> <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=Docker&logoColor=white">
 
 ## 아키텍처
-<img width="947" height="395" alt="스크린샷 2025-07-30 오후 4 54 59" src="https://github.com/user-attachments/assets/042ea312-e3f8-46f0-9f7a-8def2d8caaa9" />
+<img width="725" height="313" alt="스크린샷 2025-08-02 오후 2 39 09" src="https://github.com/user-attachments/assets/0e4edf23-9a03-4d25-882f-0568de985d13" />
 
+## 핵심 경험
+
+[대용량 파일 파싱 OOM 해결기 ‐ 청킹 방식과 SRP](https://github.com/Hangot-project/Hangot-BE/wiki/%EB%8C%80%EC%9A%A9%EB%9F%89-%ED%8C%8C%EC%9D%BC-%ED%8C%8C%EC%8B%B1-OOM-%ED%95%B4%EA%B2%B0%EA%B8%B0-%E2%80%90-%EC%B2%AD%ED%82%B9-%EB%B0%A9%EC%8B%9D%EA%B3%BC-SRP)
+
+[비효율적인 데이터 파싱 오류 처리 프로세스 개선](https://github.com/Hangot-project/Hangot-BE/wiki/%EB%B9%84%ED%9A%A8%EC%9C%A8%EC%A0%81%EC%9D%B8-%EB%8D%B0%EC%9D%B4%ED%84%B0-%ED%8C%8C%EC%8B%B1-%EC%98%A4%EB%A5%98-%EC%B2%98%EB%A6%AC-%ED%94%84%EB%A1%9C%EC%84%B8%EC%8A%A4-%EA%B0%9C%EC%84%A0)
 
 ## 팀원
 <table>
