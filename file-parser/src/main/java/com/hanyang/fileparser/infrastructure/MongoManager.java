@@ -18,11 +18,6 @@ public class MongoManager {
         mongoTemplate.dropCollection(collectionName);
     }
 
-    public void insertDocuments(String collectionName, List<?> objects) {
-        if (objects == null || objects.isEmpty()) return;
-        mongoTemplate.insert(objects, collectionName);
-    }
-
     public void insertDataRows(String datasetId, String[] columns, List<List<String>> rows) {
         List<Map<String, Object>> documents = new ArrayList<>();
 
@@ -38,6 +33,12 @@ public class MongoManager {
             insertDocuments(datasetId, documents);
         }
     }
+
+    private void insertDocuments(String collectionName, List<?> objects) {
+        if (objects == null || objects.isEmpty()) return;
+        mongoTemplate.insert(objects, collectionName);
+    }
+
 
     private Map<String, Object> createDocument(List<String> row, String[] columns) {
         Map<String, Object> document = new LinkedHashMap<>();

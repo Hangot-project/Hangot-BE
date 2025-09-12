@@ -24,6 +24,7 @@ public class DataIngestionService {
     private final FileParser fileParser;
     private final MongoManager mongoManager;
     private final FileService fileService;
+    private final DatasetCountService datasetCountService;
 
     public void createDataTable(MessageDto messageDto) throws ResourceNotFoundException,IllegalArgumentException, ParsingException, DataAccessException {
         mongoManager.dropCollection(messageDto.getDatasetId());
@@ -38,13 +39,14 @@ public class DataIngestionService {
 
         try {
             final String[][] columns = new String[1][];
+            int dynamicChunkSize = datasetCountService.calculateDynamicChunkSize(messageDto.getDatasetId(), CHUNK_SIZE);
             
             fileParser.parse(
                 resourcePath, 
                 messageDto.getDatasetId(),
                 header -> columns[0] = header.toArray(new String[0]),
                 chunk -> mongoManager.insertDataRows(messageDto.getDatasetId(), columns[0], chunk),
-                CHUNK_SIZE
+                dynamicChunkSize
             );
         } catch (Exception e) {
             mongoManager.dropCollection(messageDto.getDatasetId());

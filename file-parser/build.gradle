@@ -22,6 +22,9 @@ dependencies {
 
     // HTTP Client for RestTemplate
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

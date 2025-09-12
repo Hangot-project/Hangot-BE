@@ -6,16 +6,21 @@ import com.hanyang.fileparser.core.exception.ParsingException;
 import com.hanyang.fileparser.core.exception.ResourceNotFoundException;
 import com.hanyang.fileparser.dto.MessageDto;
 import com.hanyang.fileparser.service.DataIngestionService;
+import com.hanyang.fileparser.service.DatasetCountService;
 import com.hanyang.fileparser.service.FailedMessageService;
+import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +36,7 @@ public class DataIngestionConsumer {
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbitTemplate;
     private final FailedMessageService failedMessageService;
+    private final DatasetCountService datasetCountService;
 
     @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
@@ -38,32 +44,38 @@ public class DataIngestionConsumer {
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
 
-    @RabbitListener(queues = {"${rabbitmq.queue.name}", "${rabbitmq.queue.name}.retry"})
-    public void handleMessage(Message message){
+    @RabbitListener(queues = {"${rabbitmq.queue.name}", "${rabbitmq.queue.name}.retry"}, ackMode = "MANUAL")
+    public void handleMessage(Message message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
         String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
         log.info("메세지 수령: : {}", messageBody);
 
-        MessageDto messageDto;
+        MessageDto messageDto = null;
         try {
             messageDto = objectMapper.readValue(messageBody, MessageDto.class);
         } catch (JsonProcessingException e) {
             log.error("JSON 파싱 실패, 메시지 버림: {}", messageBody);
+            channel.basicAck(deliveryTag, false);
             return;
         }
 
+        datasetCountService.incrementProcessingCount(messageDto.getDatasetId());
+        
         try{
             dataIngestionService.createDataTable(messageDto);
             log.info("메세지 처리 완료: {}", messageBody);
         } catch (IllegalArgumentException | ResourceNotFoundException e) {
             log.info("지원하지 않는 형식이거나 파일 링크가 없는 경우: {}", e.getMessage());
-        }  catch (DataAccessResourceFailureException e) {
+        } catch (DataAccessResourceFailureException e) {
             sendToRetryQueue(message, e);
-        }catch (ParsingException e) {
+        } catch (ParsingException e) {
             log.info("파싱 중 발생한 에러: {}", e.getMessage(),e);
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
         } catch (Throwable e) {
             log.error("시스템 에러 발생 {}", e.getMessage());
             failedMessageService.saveFailedMessage(messageBody, getFullStackTrace(e));
+        } finally {
+            channel.basicAck(deliveryTag, false);
+            datasetCountService.removeKey(messageDto.getDatasetId());
         }
     }
 
