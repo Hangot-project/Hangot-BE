@@ -46,6 +46,9 @@ public class DataIngestionService {
                 chunk -> mongoManager.insertDataRows(messageDto.getDatasetId(), columns[0], chunk),
                 CHUNK_SIZE
             );
+        } catch (Exception e) {
+            mongoManager.dropCollection(messageDto.getDatasetId());
+            throw e;
         } finally {
             try {
                 Files.deleteIfExists(resourcePath);
