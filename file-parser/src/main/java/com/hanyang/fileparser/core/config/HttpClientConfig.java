@@ -17,7 +17,7 @@ public class HttpClientConfig {
 
     static final int MAX_CONN_TOTAL = 2;
     static final int MAX_CONN_PER_ROUTE = 20;
-    static final int READ_TIMEOUT = 5000;
+    static final int READ_TIMEOUT = 30000;
     static final int CONN_TIMEOUT = 5000;
 
 
