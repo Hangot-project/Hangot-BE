@@ -32,7 +32,7 @@ public class RabbitMQConfig {
     @Bean
     public Queue retryQueue() {
         Map<String, Object> retryArgs = new HashMap<>();
-        retryArgs.put("x-message-ttl", 300000); // 5분
+        retryArgs.put("x-message-ttl", 300000);
         retryArgs.put("x-dead-letter-exchange", exchangeName);
         retryArgs.put("x-dead-letter-routing-key", routingKey);
         return QueueBuilder.durable(queue + ".retry")
