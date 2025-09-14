@@ -41,6 +41,7 @@ public class AutocompleteQueryService {
 
         return rawResults.stream()
                 .map(Object::toString)
+                .filter(word -> word.startsWith(normalizedPrefix))
                 .toList();
     }
 
