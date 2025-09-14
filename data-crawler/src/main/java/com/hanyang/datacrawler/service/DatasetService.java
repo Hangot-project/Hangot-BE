@@ -19,7 +19,7 @@ public class DatasetService {
 
     private final DatasetRepository datasetRepository;
     private final TagRepository tagRepository;
-    private final AutocompleteUpdateService autocompleteUpdateService;
+    private final AutoCompleteService autoCompleteService;
 
     public Dataset updateResourceUrl(Dataset dataset, String resourceUrl) {
         dataset.setResourceUrl(resourceUrl);
@@ -64,13 +64,23 @@ public class DatasetService {
         }
 
         List<Dataset> result = datasetRepository.saveAll(savedDatasets);
-        
+
         if (!allTags.isEmpty()) {
             tagRepository.saveAll(allTags);
             log.debug("배치 처리 완료: 데이터셋 {}개, 태그 {}개", result.size(), allTags.size());
         }
 
-        autocompleteUpdateService.updateAfterDatasetSave();
+        List<String> newTitles = result.stream()
+                .map(Dataset::getTitle)
+                .distinct()
+                .toList();
+
+        List<String> newTagStrings = allTags.stream()
+                .map(Tag::getTag)
+                .distinct()
+                .toList();
+
+        autoCompleteService.addTitleAndTag(newTitles, newTagStrings);
 
         return result;
     }

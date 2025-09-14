@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +16,6 @@ public class RedisTrieService {
     private static final String TRIE_PREFIX = "trie:";
     private static final String NODE_SUFFIX = ":nodes";
     private static final String COMPLETE_SUFFIX = ":complete";
-    private static final String DELIMITER = ",";
     
     public void addWord(String type, String word) {
         if (word == null || word.trim().isEmpty()) {
@@ -42,24 +38,7 @@ public class RedisTrieService {
     }
     
     private void addToHashSet(String hashKey, String field, String value) {
-        String existing = (String) redisTemplate.opsForHash().get(hashKey, field);
-        Set<String> values = new HashSet<>();
-        
-        if (existing != null && !existing.isEmpty()) {
-            values.addAll(Arrays.asList(existing.split(DELIMITER)));
-        }
-        values.add(value);
-        
-        redisTemplate.opsForHash().put(hashKey, field, String.join(DELIMITER, values));
-    }
-    
-    public void addWords(String type, List<String> words) {
-        words.forEach(word -> addWord(type, word));
-    }
-    
-    public void clearTrie(String type) {
-        String hashKey = TRIE_PREFIX + type;
-        redisTemplate.delete(hashKey);
+        redisTemplate.opsForSet().add(hashKey + ":" + field, value);
     }
     
     private String normalizeWord(String word) {
@@ -67,9 +46,9 @@ public class RedisTrieService {
                 .replace(" ", "")
                 .replace("_", "");
     }
-    
-    public void refreshTrieData(String type, List<String> words) {
-        clearTrie(type);
-        addWords(type, words);
+
+    public void addWordsIncremental(String type, List<String> words) {
+        words.forEach(word -> addWord(type, word));
     }
+
 }
